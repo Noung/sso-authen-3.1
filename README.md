@@ -480,5 +480,5 @@ echo "ยินดีต้อนรับ, " . htmlspecialchars($currentUser['n
 * API Contract is Key: การแยกหน้าที่ระหว่าง "Authentication" (โดย sso-authen) และ "Authorization" (โดย Client App) เกิดขึ้นผ่าน user_handler_endpoint การที่ Client App จัดการฐานข้อมูลผู้ใช้และกำหนดสิทธิ์ (role) ของตัวเอง ทำให้ sso-authen ไม่ต้องยุ่งเกี่ยวกับตรรกะภายในของแต่ละแอปเลย
 * Backward Compatibility: การตั้งค่า user_handler_endpoint เป็น null สำหรับ Client ใดๆ ใน config.php จะทำให้ SsoHandler สลับไปทำงานใน "Legacy Mode" โดยจะเรียกใช้ findOrCreateUser() จากไฟล์ user_handler.php และสร้าง $_SESSION โดยตรง เหมาะสำหรับแอปพลิเคชัน PHP รุ่นเก่าที่ไม่ต้องการปรับปรุงเป็น JWT Flow
 * Security:
-** Redirect URI Validation: login.php จะตรวจสอบ redirect_uri ที่ Client ส่งมากับค่าที่ลงทะเบียนไว้ใน config.php ทุกครั้ง เพื่อป้องกันการโจมตีแบบ Open Redirect
-** State Parameter: ไลบรารี jumbojett/openid-connect-php ที่ใช้ภายในมีการจัดการ state parameter โดยอัตโนมัติ เพื่อป้องกันการโจมตีแบบ CSRF ระหว่างการ Redirect
+  *  Redirect URI Validation: login.php จะตรวจสอบ redirect_uri ที่ Client ส่งมากับค่าที่ลงทะเบียนไว้ใน config.php ทุกครั้ง เพื่อป้องกันการโจมตีแบบ Open Redirect
+  *  State Parameter: ไลบรารี jumbojett/openid-connect-php ที่ใช้ภายในมีการจัดการ state parameter โดยอัตโนมัติ เพื่อป้องกันการโจมตีแบบ CSRF ระหว่างการ Redirect
