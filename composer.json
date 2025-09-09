@@ -1,0 +1,11 @@
+{
+    "require": {
+        "jumbojett/openid-connect-php": "^1.0",
+        "firebase/php-jwt": "^6.11"
+    },
+    "autoload": {
+        "psr-4": {
+            "SsoAuthen\\": "src/"
+        }
+    }
+}
