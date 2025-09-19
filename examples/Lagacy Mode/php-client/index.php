@@ -24,7 +24,7 @@ if (!session_id()) {
     <div class="container mt-5">
         <div class="card">
             <div class="card-header">
-                ระบบทดสอบ SSO Authen Library
+                ระบบทดสอบ SSO Authen (PHP Client App)
             </div>
             <div class="card-body text-center">
                 <?php if (isset($_SESSION['user_is_logged_in']) && $_SESSION['user_is_logged_in']): ?>
