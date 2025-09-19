@@ -3,7 +3,7 @@
 // หน้านี้ทำหน้าที่เป็นตัวอย่างของหน้าที่ต้องการการยืนยันตัวตน
 
 // 1. โหลดการตั้งค่าของแอปพลิเคชัน (เพื่อให้รู้ว่าจะ Redirect ไปที่ไหน)
-require_once __DIR__ . '/index.php'; // เราสามารถ re-use ตัวแปรจาก index.php ได้
+// require_once __DIR__ . '/index.php'; // เราสามารถ re-use ตัวแปรจาก index.php ได้
 
 if (!session_id()) {
     session_start();
