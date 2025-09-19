@@ -13,7 +13,8 @@ return [
     'providerURL'  => 'https://login.microsoftonline.com/common/v2.0', // นี่คือ Issuer URL ของ Microsoft
 
     // **สำคัญ:** path ต้องมี /public/ เพิ่มเข้ามาให้ตรงกับโครงสร้างใหม่
-    'redirectUri'  => $absoluteRedirectUri . '/public/callback.php',
+    // 'redirectUri'  => $absoluteRedirectUri . '/public/callback.php',
+    'redirectUri'  => 'http://sso-authen.test/public/callback.php',
 
     'scopes'       => ['openid', 'profile', 'email'],
 
