@@ -23,7 +23,7 @@ try {
 
     // 5. ถอดรหัสและตรวจสอบ Token
     // ใช้ Secret Key ที่แชร์ร่วมกันกับ sso-authen
-    $decoded = JWT::decode($jwt, new Key(JWT_SHARED_SECRET_KEY, 'HS256'));
+    $decoded = JWT::decode($jwt, new Key(JWT_SECRET_KEY, 'HS256'));
 
     // แปลงข้อมูลผู้ใช้จาก object เป็น array
     $userInfo = (array) $decoded->data;
