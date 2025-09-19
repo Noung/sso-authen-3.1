@@ -10,7 +10,7 @@
 // สร้าง Key แบบสุ่มความยาว 64 ตัวอักษร
 // $secure_key = bin2hex(random_bytes(32));
 
-define('APP_API_SECRET_KEY', 'YOUR_STRONG_SECRET_KEY'); // <-- **สำคัญ:** ต้องตรงกัน
+define('API_SECRET_KEY', 'YOUR_STRONG_SECRET_KEY'); // <-- **สำคัญ:** ต้องตรงกัน
 
 // 2. ข้อมูลเชื่อมต่อฐานข้อมูลของ Web Application
 define('DB_HOST', 'localhost');
@@ -26,7 +26,7 @@ header('Content-Type: application/json');
 
 // 1. ตรวจสอบความปลอดภัยของ Request
 $apiKey = $_SERVER['HTTP_X_API_SECRET'] ?? '';
-if ($apiKey !== APP_API_SECRET_KEY) {
+if ($apiKey !== API_SECRET_KEY) {
     http_response_code(401); // Unauthorized
     echo json_encode(['error' => 'Invalid API Key']);
     exit;
