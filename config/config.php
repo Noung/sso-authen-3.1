@@ -21,7 +21,7 @@ if (!session_id()) {
  * ----------------------------------------------------------------------
  */
 // 3. เลือกว่าจะใช้ Provider (มหาวิทยาลัย) ไหน
-$activeProvider = 'psu';
+$activeProvider = 'psu'; // ตัวอย่าง: 'psu', 'cmu', 'ku', 'google', 'auth0', 'okta', 'custom_oidc' เป็นต้น
 
 // 4. โหลดไฟล์ตั้งค่าของ Provider ที่เลือก
 $providerConfigFile = __DIR__ . '/providers/' . $activeProvider . '.php';
