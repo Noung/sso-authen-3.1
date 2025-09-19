@@ -13,7 +13,8 @@ return [
     'providerURL'  => 'https://accounts.google.com', // นี่คือ Issuer URL ของ Google
 
     // **สำคัญ:** path ต้องมี /public/ เพิ่มเข้ามาให้ตรงกับโครงสร้างใหม่
-    'redirectUri'  => $absoluteRedirectUri . '/public/callback.php',
+    // 'redirectUri'  => $absoluteRedirectUri . '/public/callback.php',
+    'redirectUri'  => 'http://sso-authen.test/public/callback.php',
 
     'scopes'       => ['openid', 'profile', 'email'], // Scopes มาตรฐานของ Google
 
