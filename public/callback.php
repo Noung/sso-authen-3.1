@@ -38,7 +38,7 @@ try {
 
     // 5. สร้าง Instance ของ SsoHandler และจัดการ Callback
     $handler = new SsoHandler($providerConfig);
-    $internalUser = $handler->handleCallback();
+    $internalUser = $handler->handleCallback($clientConfig);
 
     if (!$internalUser || !isset($internalUser['id'])) {
         throw new \Exception("ไม่ได้รับข้อมูลผู้ใช้จาก Web App API หรือข้อมูลไม่ถูกต้อง");

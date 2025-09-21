@@ -35,49 +35,96 @@ $providerConfig = require_once $providerConfigFile;
  * ----------------------------------------------------------------------
  * ✨ (V.3) การตั้งค่าแอปพลิเคชันที่ได้รับอนุญาต (Authorized Clients)
  * ----------------------------------------------------------------------
- * นี่คือส่วนที่ใช้ลงทะเบียนเว็บแอปพลิเคชันต่างๆ ที่จะมาเชื่อมต่อกับ SSO กลางแห่งนี้
- * 'key' ของ array คือ 'client_id' ที่แต่ละแอปต้องส่งมาเพื่อแนะนำตัวเอง
+ * โหลดข้อมูล clients จาก database แทน hard-coded array
+ * ข้อมูลจะถูกจัดการผ่าน Admin Panel
  */
-$authorized_clients = [
-    // ตัวอย่างสำหรับ React/JS App
-    'my_react_app' => [
-        // URL ที่จะให้ Redirect กลับไปหลัง Login สำเร็จ (ต้องตรงกับที่แอปส่งมา)
-        'app_redirect_uri'      => 'http://localhost:3000/callback',
-        // URL ปลายทางหลังจาก Logout
-        'post_logout_redirect_uri' => 'http://localhost:3000/logout-success',
-        // API Endpoint ของแอปนั้นๆ สำหรับจัดการข้อมูลผู้ใช้
-        'user_handler_endpoint' => 'http://localhost:8080/api/sso-user-handler',
-        // Secret Key สำหรับคุยกับ API ของแอปนั้นๆ
-        'api_secret_key'        => 'VERY_SECRET_KEY_FOR_REACT_APP'
-    ],
 
-    // ตัวอย่างสำหรับ JavaScript App (ที่ใช้ Live Server)
-    'my_js_app' => [
-        'app_redirect_uri'      => 'http://localhost:5500/public/callback.html', // Port อาจต่างไป
-        'post_logout_redirect_uri' => 'http://localhost:5500/public/index.html',
-        'user_handler_endpoint' => 'http://localhost:8080/sso-user-handler',
-        'api_secret_key'        => 'VERY_SECRET_KEY_FOR_JS_APP'
-    ],
+/**
+ * โหลดข้อมูล authorized clients จาก database
+ * @return array
+ */
+function loadAuthorizedClientsFromDatabase() {
+    try {
+        // โหลดการตั้งค่า admin สำหรับเชื่อมต่อ database
+        $adminConfig = require_once __DIR__ . '/../admin/config/admin_config.php';
+        
+        // เชื่อมต่อ database
+        $dsn = sprintf(
+            'mysql:host=%s;dbname=%s;charset=%s',
+            $adminConfig['database']['host'],
+            $adminConfig['database']['dbname'],
+            $adminConfig['database']['charset']
+        );
+        
+        $pdo = new PDO(
+            $dsn,
+            $adminConfig['database']['username'],
+            $adminConfig['database']['password'],
+            $adminConfig['database']['options']
+        );
+        
+        // ดึงข้อมูล clients ที่ active จาก database
+        $stmt = $pdo->prepare("
+            SELECT client_id, app_redirect_uri, post_logout_redirect_uri,
+                   user_handler_endpoint, api_secret_key
+            FROM clients 
+            WHERE status = 'active'
+        ");
+        $stmt->execute();
+        
+        $clients = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $clients[$row['client_id']] = [
+                'app_redirect_uri' => $row['app_redirect_uri'],
+                'post_logout_redirect_uri' => $row['post_logout_redirect_uri'],
+                'user_handler_endpoint' => $row['user_handler_endpoint'],
+                'api_secret_key' => $row['api_secret_key']
+            ];
+        }
+        
+        return $clients;
+        
+    } catch (Exception $e) {
+        // หากเกิดข้อผิดพลาดในการเชื่อมต่อ database ให้ใช้ fallback clients
+        error_log("Failed to load clients from database: " . $e->getMessage());
+        return getFallbackClients();
+    }
+}
 
-    // ตัวอย่างสำหรับ Legacy PHP App (ที่ต้องการใช้ JWT)
-    'legacy_php_app' => [
-        'app_redirect_uri'      => 'http://my-php-app.test/sso_callback.php',
-        'post_logout_redirect_uri' => 'http://my-php-app.test/',
-        'user_handler_endpoint' => 'http://my-php-app.test/api/user_handler.php',
-        'api_secret_key'        => 'ANOTHER_SECRET_KEY_FOR_PHP_APP'
-    ],
+/**
+ * Fallback clients สำหรับกรณีที่ database ไม่สามารถเชื่อมต่อได้
+ * @return array
+ */
+function getFallbackClients() {
+    return [
+        // ตัวอย่างสำหรับ React/JS App
+        'my_react_app' => [
+            'app_redirect_uri'      => 'http://localhost:3000/callback',
+            'post_logout_redirect_uri' => 'http://localhost:3000/logout-success',
+            'user_handler_endpoint' => 'http://localhost:8080/api/sso-user-handler',
+            'api_secret_key'        => 'VERY_SECRET_KEY_FOR_REACT_APP'
+        ],
+        
+        // ตัวอย่างสำหรับ JavaScript App (ที่ใช้ Live Server)
+        'my_js_app' => [
+            'app_redirect_uri'      => 'http://localhost:5500/public/callback.html',
+            'post_logout_redirect_uri' => 'http://localhost:5500/public/index.html',
+            'user_handler_endpoint' => 'http://localhost:8080/sso-user-handler',
+            'api_secret_key'        => 'VERY_SECRET_KEY_FOR_JS_APP'
+        ],
+        
+        // ตัวอย่างสำหรับ Legacy PHP App
+        'legacy_php_app' => [
+            'app_redirect_uri'      => 'http://my-php-app.test/sso_callback.php',
+            'post_logout_redirect_uri' => 'http://my-php-app.test/',
+            'user_handler_endpoint' => 'http://my-php-app.test/api/user_handler.php',
+            'api_secret_key'        => 'ANOTHER_SECRET_KEY_FOR_PHP_APP'
+        ]
+    ];
+}
 
-    // ตัวอย่างสำหรับ Legacy PHP App (ที่ยังใช้ Session แบบ V.2)
-    // สำหรับโหมดนี้ user_handler_endpoint จะเป็น null
-    'very_old_php_app' => [
-        'app_redirect_uri'      => 'http://old-app.test/index.php', // Redirect กลับไปหน้าแรก
-        'post_logout_redirect_uri' => 'http://old-app.test/',
-        'user_handler_endpoint' => null, // ตั้งเป็น null เพื่อให้ SsoHandler ใช้ user_handler.php
-        'api_secret_key'        => null // ไม่ได้ใช้ API จึงเป็น null
-    ]
-
-    // ... สามารถเพิ่มแอปพลิเคชันอื่นๆ ต่อท้ายที่นี่ได้ ...
-];
+// โหลดข้อมูล clients จาก database
+$authorized_clients = loadAuthorizedClientsFromDatabase();
 
 
 /**

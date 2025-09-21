@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# Redirect to index.php for admin panel routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Set up directory index
+DirectoryIndex index.php
+
+# Enable error reporting for debugging
+php_flag display_errors On
+php_flag log_errors On

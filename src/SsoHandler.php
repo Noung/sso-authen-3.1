@@ -58,10 +58,11 @@ class SsoHandler {
 
     /**
      * เมธอดสำหรับจัดการ Callback, ตรวจสอบ Token, และดึงข้อมูลผู้ใช้
+     * @param array $clientConfig ข้อมูล client configuration จาก database
      * @return array ข้อมูลผู้ใช้จากระบบภายในหลังจากผ่านการตรวจสอบแล้ว
      * @throws Exception หากกระบวนการล้มเหลว
      */
-    public function handleCallback(): array {
+    public function handleCallback(array $clientConfig = []): array {
         $this->oidc->setRedirectURL($this->config['redirectUri']);
 
         // 1. ตรวจสอบ Token และ State
@@ -90,15 +91,30 @@ class SsoHandler {
         // $internalUser = findOrCreateUser($normalizedUser, $ssoUserInfo);
 
         // -- v.3 (ปรับปรุง) --
-        if (defined('USER_HANDLER_ENDPOINT') && !is_null(USER_HANDLER_ENDPOINT)) {
+        if (!empty($clientConfig['user_handler_endpoint'])) {
             // --- โหมด API (สำหรับ V2 API,V3 JWT) ---
-            $internalUser = $this->callUserHandlerApi($normalizedUser, $ssoUserInfo);
+            $internalUser = $this->callUserHandlerApi($normalizedUser, $ssoUserInfo, $clientConfig);
             return $internalUser; // จบการทำงานและส่งค่ากลับไปให้ callback.php สร้าง JWT
         } else {
             // --- โหมด Legacy (สำหรับ V1 Session) ---
-            $userHandlerPath = __DIR__ . '/../user_handler.php';
+            
+            // ตรวจสอบว่ามี user_handler_endpoint ที่กำหนดไว้สำหรับ Legacy Mode ไหม
+            $userHandlerPath = null;
+            if (!empty($clientConfig['user_handler_endpoint'])) {
+                // ถ้ามี endpoint และเป็น local file path
+                if (strpos($clientConfig['user_handler_endpoint'], 'http') !== 0) {
+                    // เป็น local path เช่น /api/user_handler.php
+                    $userHandlerPath = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . '/' . ltrim($clientConfig['user_handler_endpoint'], '/');
+                }
+            }
+            
+            // Legacy Mode requires explicit path - no fallback
+            if (!$userHandlerPath) {
+                throw new \Exception("Legacy Mode requires explicit User Handler File Path. Please configure user_handler_endpoint in client settings.");
+            }
+            
             if (!file_exists($userHandlerPath)) {
-                throw new \Exception("ไม่พบไฟล์ user_handler.php โปรดสร้างไฟล์นี้ตามเทมเพลต");
+                throw new \Exception("ไม่พบไฟล์ user_handler.php ที่: {$userHandlerPath} โปรดสร้างไฟล์นี้ตามเทมเพลต");
             }
             require_once $userHandlerPath;
 
@@ -121,12 +137,13 @@ class SsoHandler {
      *
      * @param array $normalizedUser ข้อมูลผู้ใช้ที่แปลงแล้ว
      * @param object $ssoUserInfo ข้อมูลดิบจาก SSO
+     * @param array $clientConfig ข้อมูล client configuration
      * @return array ข้อมูลผู้ใช้จาก Web Application
      * @throws \Exception
      */
-    private function callUserHandlerApi(array $normalizedUser, object $ssoUserInfo): array
+    private function callUserHandlerApi(array $normalizedUser, object $ssoUserInfo, array $clientConfig): array
     {
-        $endpointUrl = USER_HANDLER_ENDPOINT;
+        $endpointUrl = $clientConfig['user_handler_endpoint'];
 
         $payload = json_encode([
             'normalizedUser' => $normalizedUser,
@@ -140,7 +157,7 @@ class SsoHandler {
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
             'Content-Length: ' . strlen($payload),
-            'X-API-SECRET: ' . (defined('API_SECRET_KEY') ? API_SECRET_KEY : '')
+            'X-API-SECRET: ' . ($clientConfig['api_secret_key'] ?? '')
         ]);
 
         $response = curl_exec($ch);
