@@ -43,26 +43,27 @@ $providerConfig = require_once $providerConfigFile;
  * โหลดข้อมูล authorized clients จาก database
  * @return array
  */
-function loadAuthorizedClientsFromDatabase() {
+function loadAuthorizedClientsFromDatabase()
+{
     try {
         // โหลดการตั้งค่า admin สำหรับเชื่อมต่อ database
-        $adminConfig = require_once __DIR__ . '/../admin/config/admin_config.php';
-        
+        $adminConfig = require __DIR__ . '/../admin/config/admin_config.php';
+
         // เชื่อมต่อ database
         $dsn = sprintf(
             'mysql:host=%s;dbname=%s;charset=%s',
             $adminConfig['database']['host'],
-            $adminConfig['database']['dbname'],
-            $adminConfig['database']['charset']
+            $adminConfig['database']['database'],
+            'utf8mb4'
         );
-        
+
         $pdo = new PDO(
             $dsn,
             $adminConfig['database']['username'],
             $adminConfig['database']['password'],
             $adminConfig['database']['options']
         );
-        
+
         // ดึงข้อมูล clients ที่ active จาก database
         $stmt = $pdo->prepare("
             SELECT client_id, app_redirect_uri, post_logout_redirect_uri,
@@ -71,7 +72,7 @@ function loadAuthorizedClientsFromDatabase() {
             WHERE status = 'active'
         ");
         $stmt->execute();
-        
+
         $clients = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $clients[$row['client_id']] = [
@@ -81,9 +82,8 @@ function loadAuthorizedClientsFromDatabase() {
                 'api_secret_key' => $row['api_secret_key']
             ];
         }
-        
+
         return $clients;
-        
     } catch (Exception $e) {
         // หากเกิดข้อผิดพลาดในการเชื่อมต่อ database ให้ใช้ fallback clients
         error_log("Failed to load clients from database: " . $e->getMessage());
@@ -95,7 +95,8 @@ function loadAuthorizedClientsFromDatabase() {
  * Fallback clients สำหรับกรณีที่ database ไม่สามารถเชื่อมต่อได้
  * @return array
  */
-function getFallbackClients() {
+function getFallbackClients()
+{
     return [
         // ตัวอย่างสำหรับ React/JS App
         'my_react_app' => [
@@ -104,7 +105,7 @@ function getFallbackClients() {
             'user_handler_endpoint' => 'http://localhost:8080/api/sso-user-handler',
             'api_secret_key'        => 'VERY_SECRET_KEY_FOR_REACT_APP'
         ],
-        
+
         // ตัวอย่างสำหรับ JavaScript App (ที่ใช้ Live Server)
         'my_js_app' => [
             'app_redirect_uri'      => 'http://localhost:5500/public/callback.html',
@@ -112,7 +113,7 @@ function getFallbackClients() {
             'user_handler_endpoint' => 'http://localhost:8080/sso-user-handler',
             'api_secret_key'        => 'VERY_SECRET_KEY_FOR_JS_APP'
         ],
-        
+
         // ตัวอย่างสำหรับ Legacy PHP App
         'legacy_php_app' => [
             'app_redirect_uri'      => 'http://my-php-app.test/sso_callback.php',

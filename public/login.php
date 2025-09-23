@@ -37,7 +37,30 @@ try {
     $_SESSION['current_client_id'] = $clientId;
     $_SESSION['login_start_uri'] = $redirectUri; // บันทึกไว้เผื่อใช้ในหน้า error
 
-    // 7. สร้าง SsoHandler และเริ่มกระบวนการยืนยันตัวตน
+    // 7. Log the authentication attempt
+    try {
+        require_once __DIR__ . '/../admin/src/Database/Connection.php';
+        $db = SsoAdmin\Database\Connection::getPdo();
+
+        $stmt = $db->prepare("
+            INSERT INTO audit_logs (admin_email, action, resource_type, resource_id, ip_address, user_agent, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ");
+
+        $stmt->execute([
+            'system', // Since this is a user action, not admin
+            'oidc_login_initiated',
+            'authentication',
+            $clientId,
+            $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+            $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+        ]);
+    } catch (Exception $dbError) {
+        // Log silently fails, don't interrupt login process
+        error_log('Failed to log OIDC login attempt: ' . $dbError->getMessage());
+    }
+
+    // 8. สร้าง SsoHandler และเริ่มกระบวนการยืนยันตัวตน
     $handler = new SsoHandler($providerConfig);
     $handler->login();
 } catch (Exception $e) {

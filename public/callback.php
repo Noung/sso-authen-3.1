@@ -55,6 +55,29 @@ try {
     ];
     $jwt = JWT::encode($payload, JWT_SECRET_KEY, 'HS256');
 
+    // 6.5. Log successful OIDC authentication
+    try {
+        require_once __DIR__ . '/../admin/src/Database/Connection.php';
+        $db = SsoAdmin\Database\Connection::getPdo();
+
+        $stmt = $db->prepare("
+            INSERT INTO audit_logs (admin_email, action, resource_type, resource_id, ip_address, user_agent, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ");
+
+        $stmt->execute([
+            $internalUser['email'] ?? 'unknown_user', // Use actual user email
+            'oidc_auth_success',
+            'authentication',
+            $clientId,
+            $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+            $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+        ]);
+    } catch (Exception $dbError) {
+        // Log silently fails, don't interrupt authentication
+        error_log('Failed to log OIDC authentication success: ' . $dbError->getMessage());
+    }
+
     // 7. Redirect กลับไปที่ Web App ที่ถูกต้อง พร้อมแนบ Token
     $redirectUrl = $clientConfig['app_redirect_uri'] . '?token=' . $jwt;
 
@@ -64,6 +87,29 @@ try {
     header("Location: " . $redirectUrl);
     exit;
 } catch (Exception $e) {
+    // Log failed OIDC authentication
+    try {
+        require_once __DIR__ . '/../admin/src/Database/Connection.php';
+        $db = SsoAdmin\Database\Connection::getPdo();
+
+        $stmt = $db->prepare("
+            INSERT INTO audit_logs (admin_email, action, resource_type, resource_id, ip_address, user_agent, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ");
+
+        $clientId = $_SESSION['current_client_id'] ?? 'unknown';
+        $stmt->execute([
+            'system', // Unknown user since auth failed
+            'oidc_auth_failed',
+            'authentication',
+            $clientId,
+            $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+            $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+        ]);
+    } catch (Exception $dbError) {
+        error_log('Failed to log OIDC authentication failure: ' . $dbError->getMessage());
+    }
+
     // หากเกิดข้อผิดพลาด ให้ส่งกลับไปที่หน้าที่ผู้ใช้เริ่มต้นกด Login
     // หรือถ้าไม่มี ก็ส่งไปหน้าหลักของ sso-authen เอง
     $redirect_url_on_error = $_SESSION['login_start_uri'] ?? '/';
