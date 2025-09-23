@@ -433,102 +433,102 @@ function saveClient() {
 }
 
 function viewClient(id) {
+    console.log('Starting viewClient for ID:', id);
+    
+    // First, try to fetch just the client details
     fetch(`${basePath}/api/clients/${id}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const client = data.data;
-                const content = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Basic Information</h6>
-                            <table class="table table-sm">
-                                <tr><td><strong>Client ID:</strong></td><td><code>${escapeHtml(client.client_id)}</code> <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboardText('${escapeHtml(client.client_id)}')" title="Copy Client ID"><i class="fas fa-copy"></i></button></td></tr>
-                                <tr><td><strong>Client Name:</strong></td><td>${escapeHtml(client.client_name)}</td></tr>
-                                <tr><td><strong>Description:</strong></td><td>${escapeHtml(client.client_description || 'No description')}</td></tr>
-                                <tr><td><strong>Status:</strong></td><td>${getStatusBadge(client.status)}</td></tr>
-                                <tr><td><strong>Created:</strong></td><td>${new Date(client.created_at).toLocaleString('th-TH')} by ${client.created_by || 'N/A'}</td></tr>
-                                <tr><td><strong>Updated:</strong></td><td>${new Date(client.updated_at).toLocaleString('th-TH')} by ${client.updated_by || 'N/A'}</td></tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Configuration</h6>
-                            <table class="table table-sm">
-                                <tr><td><strong>Redirect URI:</strong></td><td class="text-break">${escapeHtml(client.app_redirect_uri)}</td></tr>
-                                <tr><td><strong>Post Logout URI:</strong></td><td class="text-break">${escapeHtml(client.post_logout_redirect_uri || 'Not set')}</td></tr>
-                                <tr><td><strong>User Handler:</strong></td><td class="text-break">${escapeHtml(client.user_handler_endpoint || 'Not set')}</td></tr>
-                                ${client.user_handler_endpoint ? '<tr><td><strong>API Secret Key:</strong></td><td>' + (client.api_secret_key ? '<code>' + client.api_secret_key.substring(0, 20) + '...</code> <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboardText(\'' + escapeHtml(client.api_secret_key) + '\')" title="Copy API Secret"><i class="fas fa-copy"></i></button>' : 'Not set') + '</td></tr>' : ''}
-                                <tr><td><strong>Allowed Scopes:</strong></td><td>${escapeHtml(client.allowed_scopes || 'openid,profile,email')}</td></tr>
-                                <tr><td><strong>Auth Mode:</strong></td><td>${client.user_handler_endpoint ? '<span class="badge bg-primary">JWT Mode</span>' : '<span class="badge bg-secondary">Legacy Mode</span><br><small class="text-warning">⚠️ Same domain required</small>'}</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-12">
-                            <h6>System Configuration</h6>
-                            <div class="alert alert-info">
-                                <strong>JWT Secret Key (Global):</strong> 
-                                <code id="jwtSecretDisplay">••••••••••••••••••••</code>
-                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleJwtSecret()" id="jwtToggleBtn">
-                                    <i class="fas fa-eye" id="jwtToggleIcon"></i> <span id="jwtToggleText">Show</span>
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary ms-1" onclick="copyJwtSecret()" id="jwtCopyBtn">
-                                    <i class="fas fa-copy"></i> Copy
-                                </button>
-                                <br><small class="text-muted">This key is used by all applications to verify JWT tokens</small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById('clientDetailsContent').innerHTML = content;
-                new bootstrap.Modal(document.getElementById('viewClientModal')).show();
+        .then(response => {
+            console.log('Client API Response Status:', response.status);
+            return response.json();
+        })
+        .then(clientData => {
+            console.log('Client API Data:', clientData);
+            
+            if (clientData.success) {
+                // Now try to fetch JWT secret
+                return fetch(`${basePath}/api/jwt-secret`)
+                    .then(response => {
+                        console.log('JWT API Response Status:', response.status);
+                        return response.json();
+                    })
+                    .then(jwtData => {
+                        console.log('JWT API Data:', jwtData);
+                        
+                        if (jwtData.success) {
+                            displayClientDetails(clientData.data, jwtData.jwt_secret);
+                        } else {
+                            console.error('JWT API failed:', jwtData.message);
+                            // Show client details without JWT secret
+                            displayClientDetails(clientData.data, 'Error loading JWT secret');
+                        }
+                    });
             } else {
-                Swal.fire('Error', data.message, 'error');
+                console.error('Client API failed:', clientData.message);
+                Swal.fire('Error', clientData.message, 'error');
             }
         })
         .catch(error => {
-            console.error('Error loading client:', error);
-            Swal.fire('Error', 'Failed to load client details', 'error');
+            console.error('Error in viewClient:', error);
+            Swal.fire('Error', 'Failed to load client details: ' + error.message, 'error');
         });
 }
 
-function toggleJwtSecret() {
-    const display = document.getElementById('jwtSecretDisplay');
-    const icon = document.getElementById('jwtToggleIcon');
-    const toggleText = document.getElementById('jwtToggleText');
-    const copyBtn = document.getElementById('jwtCopyBtn');
+function displayClientDetails(client, jwtSecret) {
+    console.log('Displaying client details:', client);
     
-    if (display.textContent.includes('••••')) {
-        // Show the secret - you'll need to get this from config
-        fetch(`${basePath}/api/system/jwt-secret`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    display.textContent = data.data.jwt_secret;
-                    icon.className = 'fas fa-eye-slash';
-                    toggleText.textContent = 'Hide';
-                    copyBtn.setAttribute('data-secret', data.data.jwt_secret);
-                } else {
-                    Swal.fire('Error', 'Unable to retrieve JWT secret', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading JWT secret:', error);
-                // Fallback display
-                display.textContent = 'YOUR_SUPER_SECRET_KEY_FOR_JWT_GENERATION';
-                icon.className = 'fas fa-eye-slash';
-                toggleText.textContent = 'Hide';
-                copyBtn.setAttribute('data-secret', 'YOUR_SUPER_SECRET_KEY_FOR_JWT_GENERATION');
-            });
-    } else {
-        // Hide the secret
-        display.textContent = '••••••••••••••••••••';
-        icon.className = 'fas fa-eye';
-        toggleText.textContent = 'Show';
-        // Copy button remains visible and functional with stored secret
-    }
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Basic Information</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Client ID:</strong></td><td><code>${escapeHtml(client.client_id)}</code> <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboardText('${escapeHtml(client.client_id)}')" title="Copy Client ID"><i class="fas fa-copy"></i></button></td></tr>
+                    <tr><td><strong>Client Name:</strong></td><td>${escapeHtml(client.client_name)}</td></tr>
+                    <tr><td><strong>Description:</strong></td><td>${escapeHtml(client.client_description || 'No description')}</td></tr>
+                    <tr><td><strong>Status:</strong></td><td>${getStatusBadge(client.status)}</td></tr>
+                    <tr><td><strong>Created:</strong></td><td>${new Date(client.created_at).toLocaleString('th-TH')} by ${client.created_by || 'N/A'}</td></tr>
+                    <tr><td><strong>Updated:</strong></td><td>${new Date(client.updated_at).toLocaleString('th-TH')} by ${client.updated_by || 'N/A'}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Configuration</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Redirect URI:</strong></td><td class="text-break">${escapeHtml(client.app_redirect_uri)}</td></tr>
+                    <tr><td><strong>Post Logout URI:</strong></td><td class="text-break">${escapeHtml(client.post_logout_redirect_uri || 'Not set')}</td></tr>
+                    <tr><td><strong>User Handler:</strong></td><td class="text-break">${escapeHtml(client.user_handler_endpoint || 'Not set')}</td></tr>
+                    ${client.user_handler_endpoint ? '<tr><td><strong>API Secret Key:</strong></td><td>' + (client.api_secret_key ? '<code>' + client.api_secret_key.substring(0, 20) + '...</code> <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboardText(\'' + escapeHtml(client.api_secret_key) + '\')" title="Copy API Secret"><i class="fas fa-copy"></i></button>' : 'Not set') + '</td></tr>' : ''}
+                    <tr><td><strong>Allowed Scopes:</strong></td><td>${escapeHtml(client.allowed_scopes || 'openid,profile,email')}</td></tr>
+                    <tr><td><strong>Auth Mode:</strong></td><td>${client.user_handler_endpoint ? '<span class="badge bg-primary">JWT Mode</span>' : '<span class="badge bg-secondary">Legacy Mode</span><br><small class="text-warning">⚠️ Same domain required</small>'}</td></tr>
+                </table>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-12">
+                <h6>System Configuration</h6>
+                <div class="alert alert-warning">
+                    <i class="fas fa-key me-2"></i>
+                    <strong>JWT Secret Key:</strong> 
+                    <div class="input-group mt-2">
+                        <input type="password" class="form-control" id="jwtSecretField" value="${escapeHtml(jwtSecret)}" readonly>
+                        <button class="btn btn-outline-secondary" onclick="toggleJwtSecret(${client.id})" id="toggleJwtBtn" title="Show/Hide JWT Secret">
+                            <i class="fas fa-eye" id="toggleJwtIcon"></i> Show
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="copyToClipboardText('${escapeHtml(jwtSecret)}')"
+                                title="Copy JWT Secret">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>For Developers:</strong> Use this secret to verify JWT tokens in your server-side application. Never expose it in client-side code.
+                    </small>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('clientDetailsContent').innerHTML = content;
+    new bootstrap.Modal(document.getElementById('viewClientModal')).show();
 }
 
 function deleteClient(id, clientName) {
@@ -675,6 +675,53 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
+// JWT Secret show/hide toggle function
+function toggleJwtSecret(clientId) {
+    const field = document.getElementById('jwtSecretField');
+    const btn = document.getElementById('toggleJwtBtn');
+    const icon = document.getElementById('toggleJwtIcon');
+    
+    if (field.type === 'password') {
+        // Show the secret and log the action
+        field.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+        btn.innerHTML = '<i class="fas fa-eye-slash" id="toggleJwtIcon"></i> Hide';
+        btn.title = 'Hide JWT Secret';
+        
+        // Log JWT secret view to audit log
+        logJwtSecretView(clientId);
+    } else {
+        // Hide the secret
+        field.type = 'password';
+        icon.className = 'fas fa-eye';
+        btn.innerHTML = '<i class="fas fa-eye" id="toggleJwtIcon"></i> Show';
+        btn.title = 'Show JWT Secret';
+    }
+}
+
+// Log JWT secret view to audit log
+function logJwtSecretView(clientId) {
+    fetch(`${basePath}/api/log-jwt-view`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            client_id: clientId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('JWT view logged:', data);
+        if (!data.success) {
+            console.error('Failed to log JWT view:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error logging JWT view:', error);
+    });
+}
+
 // Utility functions for new features
 function updateScopesInput() {
     const checkboxes = document.querySelectorAll('.scope-checkbox:checked');
@@ -763,35 +810,6 @@ function handleAuthModeChange() {
     }
 }
 
-// Copy JWT Secret
-function copyJwtSecret() {
-    const copyBtn = document.getElementById('jwtCopyBtn');
-    const display = document.getElementById('jwtSecretDisplay');
-    let secret = copyBtn.getAttribute('data-secret');
-    
-    // If secret is not cached, fetch it first
-    if (!secret) {
-        fetch(`${basePath}/api/system/jwt-secret`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    secret = data.data.jwt_secret;
-                    copyBtn.setAttribute('data-secret', secret);
-                    copyToClipboardText(secret);
-                } else {
-                    Swal.fire('Error', 'Unable to retrieve JWT secret for copying', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading JWT secret:', error);
-                // Fallback
-                secret = 'YOUR_SUPER_SECRET_KEY_FOR_JWT_GENERATION';
-                copyBtn.setAttribute('data-secret', secret);
-                copyToClipboardText(secret);
-            });
-    } else {
-        copyToClipboardText(secret);
-    }
-}
+
 
 // Helper function to copy text to clipboard

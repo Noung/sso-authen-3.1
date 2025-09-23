@@ -31,16 +31,15 @@ class ClientController
                 'success' => true,
                 'data' => $result
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json');
-            
         } catch (Exception $e) {
             $body = $response->getBody();
             $body->write(json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -53,14 +52,14 @@ class ClientController
         try {
             $id = (int)$args['id'];
             $client = Client::getById($id);
-            
+
             if (!$client) {
                 $body = $response->getBody();
                 $body->write(json_encode([
                     'success' => false,
                     'message' => 'Client not found'
                 ]));
-                
+
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
             }
 
@@ -69,16 +68,15 @@ class ClientController
                 'success' => true,
                 'data' => $client
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json');
-            
         } catch (Exception $e) {
             $body = $response->getBody();
             $body->write(json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -90,14 +88,14 @@ class ClientController
     {
         try {
             $data = json_decode($request->getBody()->getContents(), true);
-            
+
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $body = $response->getBody();
                 $body->write(json_encode([
                     'success' => false,
                     'message' => 'Invalid JSON data'
                 ]));
-                
+
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
             }
 
@@ -112,16 +110,15 @@ class ClientController
                 'data' => $client,
                 'message' => 'Client created successfully'
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
-            
         } catch (Exception $e) {
             $body = $response->getBody();
             $body->write(json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -134,14 +131,14 @@ class ClientController
         try {
             $id = (int)$args['id'];
             $data = json_decode($request->getBody()->getContents(), true);
-            
+
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $body = $response->getBody();
                 $body->write(json_encode([
                     'success' => false,
                     'message' => 'Invalid JSON data'
                 ]));
-                
+
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
             }
 
@@ -159,16 +156,15 @@ class ClientController
                 'data' => $client,
                 'message' => 'Client updated successfully'
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json');
-            
         } catch (Exception $e) {
             $body = $response->getBody();
             $body->write(json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -180,7 +176,7 @@ class ClientController
     {
         try {
             $id = (int)$args['id'];
-            
+
             // Get client name for logging
             $client = Client::getById($id);
             if (!$client) {
@@ -189,7 +185,7 @@ class ClientController
                     'success' => false,
                     'message' => 'Client not found'
                 ]));
-                
+
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
             }
 
@@ -203,16 +199,15 @@ class ClientController
                 'success' => true,
                 'message' => 'Client deleted successfully'
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json');
-            
         } catch (Exception $e) {
             $body = $response->getBody();
             $body->write(json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -232,16 +227,15 @@ class ClientController
                 'success' => true,
                 'data' => $stats
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json');
-            
         } catch (Exception $e) {
             $body = $response->getBody();
             $body->write(json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -253,7 +247,7 @@ class ClientController
     {
         try {
             $id = (int)$args['id'];
-            
+
             $client = Client::getById($id);
             if (!$client) {
                 $body = $response->getBody();
@@ -261,7 +255,7 @@ class ClientController
                     'success' => false,
                     'message' => 'Client not found'
                 ]));
-                
+
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
             }
 
@@ -280,16 +274,15 @@ class ClientController
                 'data' => $updatedClient,
                 'message' => "Client status changed to {$newStatus}"
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json');
-            
         } catch (Exception $e) {
             $body = $response->getBody();
             $body->write(json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -307,16 +300,15 @@ class ClientController
                 'success' => true,
                 'data' => $statuses
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json');
-            
         } catch (Exception $e) {
             $body = $response->getBody();
             $body->write(json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -327,21 +319,53 @@ class ClientController
     private function logActivity($action, $description, $clientId = null)
     {
         try {
-            $sql = 'INSERT INTO audit_logs (admin_id, action, description, target_type, target_id, created_at) 
-                    VALUES (?, ?, ?, ?, ?, NOW())';
-            
-            $adminId = $_SESSION['admin_id'] ?? null;
-            
+            // Get admin info from session
+            $adminEmail = $_SESSION['admin_email'] ?? 'unknown';
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $ipAddress = $this->getClientIpAddress();
+
+            $sql = 'INSERT INTO audit_logs (admin_email, action, resource_type, resource_id, ip_address, user_agent, created_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, NOW())';
+
             Connection::query($sql, [
-                $adminId,
+                $adminEmail,
                 $action,
-                $description,
                 'client',
-                $clientId
+                $clientId,
+                $ipAddress,
+                $userAgent
             ]);
         } catch (Exception $e) {
             // Log silently fails, don't interrupt main operation
             error_log('Failed to log activity: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Get client IP address safely
+     */
+    private function getClientIpAddress()
+    {
+        // Check for shared IP
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            // Take the first IP if multiple
+            if (strpos($ip, ',') !== false) {
+                $ip = trim(explode(',', $ip)[0]);
+            }
+        } elseif (!empty($_SERVER['HTTP_X_REAL_IP'])) {
+            $ip = $_SERVER['HTTP_X_REAL_IP'];
+        } elseif (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            $ip = $_SERVER['HTTP_CLIENT_IP'];
+        } else {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        }
+
+        // Validate IP address
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            $ip = 'unknown';
+        }
+
+        return $ip;
     }
 }

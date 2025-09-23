@@ -39,7 +39,7 @@ class DashboardController
                 'success' => true,
                 'data' => $stats
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $body = $response->getBody();
@@ -47,7 +47,7 @@ class DashboardController
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -60,7 +60,7 @@ class DashboardController
         try {
             $queryParams = $request->getQueryParams();
             $limit = isset($queryParams['limit']) ? (int)$queryParams['limit'] : 10;
-            
+
             $activities = $this->getRecentActivitiesFromDb($limit);
 
             $body = $response->getBody();
@@ -68,7 +68,7 @@ class DashboardController
                 'success' => true,
                 'data' => $activities
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $body = $response->getBody();
@@ -76,7 +76,7 @@ class DashboardController
                 'success' => false,
                 'message' => $e->getMessage()
             ]));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
         }
     }
@@ -115,7 +115,7 @@ class DashboardController
         try {
             $sql = 'SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ?';
             $activities = Connection::fetchAll($sql, [$limit]);
-            
+
             // Format activities for display
             $formatted = [];
             foreach ($activities as $activity) {
@@ -127,7 +127,7 @@ class DashboardController
                     'created_at' => $activity['created_at'],
                 ];
             }
-            
+
             return $formatted;
         } catch (\Exception $e) {
             // Return sample data if database is not available
@@ -157,7 +157,7 @@ class DashboardController
     {
         $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
         $adminName = $_SESSION['admin_name'] ?? 'Administrator';
-        
+
         return '<!DOCTYPE html>
 <html lang="th">
 <head>
@@ -199,6 +199,11 @@ class DashboardController
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/clients">
                                 <i class="fas fa-users me-2"></i>Client Applications
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/statistics">
+                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
                     </ul>

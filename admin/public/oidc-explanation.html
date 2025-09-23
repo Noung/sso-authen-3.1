@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OIDC Actions Explanation - SSO Admin</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .action-type {
+        border-left: 4px solid;
+        padding: 1rem;
+        margin: 0.5rem 0;
+      }
+      .oidc-actions {
+        border-left-color: #198754;
+        background-color: #d1e7dd;
+      }
+      .admin-actions {
+        border-left-color: #0d6efd;
+        background-color: #cff4fc;
+      }
+      .mock-actions {
+        border-left-color: #fd7e14;
+        background-color: #fff3cd;
+      }
+      .code-block {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        font-family: "Courier New", monospace;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
+              <li class="breadcrumb-item">
+                <a href="index.php#statistics">Statistics</a>
+              </li>
+              <li class="breadcrumb-item active">OIDC Actions Explanation</li>
+            </ol>
+          </nav>
+
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">
+              <i class="fas fa-question-circle text-info me-2"></i>OIDC Actions
+              Explanation
+            </h1>
+            <a href="index.php#statistics" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-1"></i>Back to Statistics
+            </a>
+          </div>
+
+          <!-- Main Explanation -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header bg-info text-white">
+                  <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Understanding Different Types of Actions in SSO System
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <p class="lead">
+                    The SSO system tracks different types of activities. Here's
+                    the difference between
+                    <strong>real OIDC user authentication actions</strong> and
+                    <strong>admin panel activities</strong>:
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real OIDC Actions -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="action-type oidc-actions">
+                <h4>
+                  <i class="fas fa-users text-success me-2"></i>Real OIDC User
+                  Authentication Actions
+                </h4>
+                <p class="mb-3">
+                  These are <strong>actual user login events</strong> from
+                  client applications through the OIDC flow:
+                </p>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>
+                      <i class="fas fa-play-circle me-1"></i>Action Types:
+                    </h6>
+                    <ul class="list-unstyled ms-3">
+                      <li>
+                        <code class="text-success">oidc_login_initiated</code> -
+                        User starts login process
+                      </li>
+                      <li>
+                        <code class="text-success">oidc_auth_success</code> -
+                        User successfully authenticates
+                      </li>
+                      <li>
+                        <code class="text-danger">oidc_auth_failed</code> - User
+                        authentication fails
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6">
+                    <h6><i class="fas fa-route me-1"></i>OIDC Flow:</h6>
+                    <ol class="small">
+                      <li>User clicks "Login" in React/JS app</li>
+                      <li>App redirects to <code>/public/login.php</code></li>
+                      <li>System redirects to PSU SSO</li>
+                      <li>User authenticates with PSU</li>
+                      <li>
+                        PSU redirects back to <code>/public/callback.php</code>
+                      </li>
+                      <li>System creates JWT and sends to app</li>
+                    </ol>
+                  </div>
+                </div>
+
+                <div class="code-block mt-3">
+                  <strong>Example Log Entry:</strong><br />
+                  <span class="text-muted">admin_email:</span>
+                  student01@psu.ac.th<br />
+                  <span class="text-muted">action:</span>
+                  oidc_auth_success<br />
+                  <span class="text-muted">resource_type:</span>
+                  authentication<br />
+                  <span class="text-muted">resource_id:</span>
+                  my_react_app<br />
+                  <span class="text-muted">description:</span> User
+                  student01@psu.ac.th successfully authenticated via OIDC for
+                  React Application
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin Panel Actions -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="action-type admin-actions">
+                <h4>
+                  <i class="fas fa-user-shield text-primary me-2"></i>Admin
+                  Panel Activities
+                </h4>
+                <p class="mb-3">
+                  These are <strong>administrator actions</strong> within the
+                  admin panel for managing the SSO system:
+                </p>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6><i class="fas fa-cogs me-1"></i>Action Types:</h6>
+                    <ul class="list-unstyled ms-3">
+                      <li>
+                        <code class="text-primary">admin_login</code> - Admin
+                        logs into panel
+                      </li>
+                      <li>
+                        <code class="text-primary">client_viewed</code> - Admin
+                        views client details
+                      </li>
+                      <li>
+                        <code class="text-primary">client_updated</code> - Admin
+                        modifies client
+                      </li>
+                      <li>
+                        <code class="text-warning">jwt_secret_viewed</code> -
+                        Admin views JWT secret
+                      </li>
+                      <li>
+                        <code class="text-info">dashboard_accessed</code> -
+                        Admin accesses dashboard
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6">
+                    <h6><i class="fas fa-tools me-1"></i>Admin Tasks:</h6>
+                    <ul class="small">
+                      <li>Managing client applications</li>
+                      <li>Viewing usage statistics</li>
+                      <li>Configuring system settings</li>
+                      <li>Monitoring authentication logs</li>
+                      <li>Generating demo data</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="code-block mt-3">
+                  <strong>Example Log Entry:</strong><br />
+                  <span class="text-muted">admin_email:</span>
+                  admin@psu.ac.th<br />
+                  <span class="text-muted">action:</span> client_viewed<br />
+                  <span class="text-muted">resource_type:</span> client<br />
+                  <span class="text-muted">resource_id:</span> 1<br />
+                  <span class="text-muted">description:</span> Viewed client
+                  details for React Application
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mock Data -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="action-type mock-actions">
+                <h4>
+                  <i class="fas fa-database text-warning me-2"></i>Mock Data for
+                  Demo
+                </h4>
+                <p class="mb-3">
+                  Generated test data to simulate both types of activities for
+                  demonstration purposes:
+                </p>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>
+                      <i class="fas fa-magic me-1"></i>What Mock Data Includes:
+                    </h6>
+                    <ul class="list-unstyled ms-3">
+                      <li>
+                        <i class="fas fa-check text-success me-1"></i> Realistic
+                        OIDC user authentications
+                      </li>
+                      <li>
+                        <i class="fas fa-check text-success me-1"></i> Admin
+                        panel activities
+                      </li>
+                      <li>
+                        <i class="fas fa-check text-success me-1"></i> Business
+                        hours patterns
+                      </li>
+                      <li>
+                        <i class="fas fa-check text-success me-1"></i> Thai IP
+                        addresses
+                      </li>
+                      <li>
+                        <i class="fas fa-check text-success me-1"></i> 88%
+                        success rate for users
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>
+                      <i class="fas fa-chart-line me-1"></i>Why Mock Data:
+                    </h6>
+                    <ul class="small">
+                      <li>Demonstrates system capabilities</li>
+                      <li>Shows realistic usage patterns</li>
+                      <li>Tests dashboard visualizations</li>
+                      <li>Prepares for real deployment</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="alert alert-warning">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  <strong>Note:</strong> The current statistics show mostly mock
+                  data because there haven't been real users authenticating
+                  through the OIDC flow yet. Once you deploy client applications
+                  and users start logging in, you'll see real
+                  <code>oidc_auth_success</code> and
+                  <code>oidc_auth_failed</code> entries.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Implementation -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header bg-success text-white">
+                  <h5 class="card-title mb-0">
+                    <i class="fas fa-code me-2"></i>Current Implementation
+                    Status
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <h6>
+                        <i class="fas fa-check-circle text-success me-1"></i
+                        >Implemented:
+                      </h6>
+                      <ul>
+                        <li>
+                          OIDC authentication flow in <code>login.php</code> and
+                          <code>callback.php</code>
+                        </li>
+                        <li>Real-time logging of OIDC authentication events</li>
+                        <li>Admin panel activity tracking</li>
+                        <li>Mock data generation for demonstration</li>
+                        <li>Usage statistics dashboard</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-6">
+                      <h6>
+                        <i class="fas fa-clock text-info me-1"></i>Next Steps:
+                      </h6>
+                      <ul>
+                        <li>Deploy client applications (React, PHP, etc.)</li>
+                        <li>Configure real OIDC providers (PSU SSO)</li>
+                        <li>Test with real user authentication</li>
+                        <li>Monitor actual usage patterns</li>
+                        <li>Implement backup/restore features</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="row">
+            <div class="col-12 text-center">
+              <hr />
+              <p class="text-muted">
+                <i class="fas fa-lightbulb me-1"></i>
+                This explanation helps distinguish between mock data and real
+                OIDC authentication events in your SSO system.
+              </p>
+              <a href="index.php#statistics" class="btn btn-primary">
+                <i class="fas fa-chart-bar me-1"></i>View Statistics Dashboard
+              </a>
+              <a
+                href="mock-data-demo.html"
+                class="btn btn-outline-warning ms-2"
+              >
+                <i class="fas fa-database me-1"></i>Generate Demo Data
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
