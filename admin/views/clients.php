@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,20 +13,26 @@
             border-radius: 10px;
             overflow: hidden;
         }
-        .btn-group-sm > .btn, .btn-sm {
+
+        .btn-group-sm>.btn,
+        .btn-sm {
             padding: 0.25rem 0.5rem;
             font-size: 0.775rem;
         }
+
         .status-badge {
             font-size: 0.75rem;
         }
+
         .client-card {
             transition: all 0.3s ease;
         }
+
         .client-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .secret-field {
             font-family: 'Courier New', monospace;
             background-color: #f8f9fa;
@@ -34,17 +41,23 @@
             padding: 8px;
             font-size: 12px;
         }
+
         .copy-btn {
             cursor: pointer;
         }
+
+        .text-small {
+            font-size: 0.9rem;
+        }
     </style>
 </head>
+
 <body>
     <?php
     $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
     ?>
-    
+
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
@@ -76,6 +89,11 @@
                         <li class="nav-item">
                             <a class="nav-link active" href="<?php echo $basePath; ?>/clients">
                                 <i class="fas fa-users me-2"></i>Client Applications
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
+                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
                     </ul>
@@ -205,7 +223,7 @@
                                 <p class="mt-2">กำลังโหลดข้อมูล...</p>
                             </div>
                         </div>
-                        
+
                         <!-- Pagination -->
                         <nav aria-label="Client pagination" id="pagination-container" style="display: none;">
                             <ul class="pagination justify-content-center" id="pagination">
@@ -233,13 +251,13 @@
                             <input type="text" class="form-control" id="clientName" required>
                             <div class="form-text">Display name for this client application</div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="clientDescription" class="form-label">Description</label>
                             <textarea class="form-control" id="clientDescription" rows="3"></textarea>
                             <div class="form-text">Brief description of the client application (optional)</div>
                         </div>
-                        
+
                         <!-- Authentication Mode Selection -->
                         <div class="mb-3">
                             <label class="form-label">Authentication Mode</label>
@@ -262,7 +280,8 @@
                                         <div class="form-text small">
                                             <strong class="text-warning">⚠️ Same Domain Required:</strong> Session-based authentication for PHP apps installed in the same domain as this SSO Gateway only
                                             <br><small class="text-muted">App must create user_handler.php file within the same server</small>
-                                            <br><div class="alert alert-warning mt-2 p-2">
+                                            <br>
+                                            <div class="alert alert-warning mt-2 p-2">
                                                 <small><i class="fas fa-exclamation-triangle"></i> <strong>Notice:</strong> Legacy Mode is being phased out due to subdomain limitations. Please use JWT Mode for new applications.</small>
                                             </div>
                                         </div>
@@ -270,7 +289,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="clientStatus" class="form-label">Status</label>
                             <select class="form-select" id="clientStatus">
@@ -351,7 +370,7 @@
                                 Scopes define what user information your application can access. <strong>openid</strong> is always required.
                             </div>
                         </div>
-                        
+
                         <!-- Client ID Display (Edit Mode Only) -->
                         <div id="credentialsSection" style="display: none;">
                             <hr>
@@ -444,7 +463,7 @@
                 e.preventDefault();
                 saveClient();
             });
-            
+
             // Scope checkboxes
             document.querySelectorAll('.scope-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
@@ -456,7 +475,7 @@
                     updateScopesInput();
                 });
             });
-            
+
             // Authentication mode change
             document.querySelectorAll('input[name="authMode"]').forEach(radio => {
                 radio.addEventListener('change', handleAuthModeChange);
@@ -464,4 +483,5 @@
         }
     </script>
 </body>
+
 </html>

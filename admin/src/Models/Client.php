@@ -121,6 +121,8 @@ class Client
     public static function create($data)
     {
         try {
+            Connection::beginTransaction();
+
             // Validate required fields
             $required = ['client_name', 'app_redirect_uri'];
             foreach ($required as $field) {
@@ -129,9 +131,9 @@ class Client
                 }
             }
 
-            // Validate redirect URI format
-            if (!filter_var($data['app_redirect_uri'], FILTER_VALIDATE_URL)) {
-                throw new Exception('Invalid redirect URI format');
+            // Validate redirect URI format and scheme
+            if (!self::isValidUrl($data['app_redirect_uri'])) {
+                throw new Exception('Invalid redirect URI format or unsupported scheme. Only http:// and https:// are allowed.');
             }
 
             // Generate client ID
@@ -142,12 +144,24 @@ class Client
             $allowedScopes = $data['allowed_scopes'] ?? 'openid,profile,email';
             $postLogoutUri = $data['post_logout_redirect_uri'] ?? '';
             $userHandlerEndpoint = $data['user_handler_endpoint'] ?? null;
-            $apiSecretKey = $data['api_secret_key'] ?? null;
+            $apiSecretKey = isset($data['api_secret_key']) && !empty($data['api_secret_key']) ? $data['api_secret_key'] : null;
             $status = $data['status'] ?? self::STATUS_ACTIVE;
 
             // Validate status
             if (!in_array($status, [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_SUSPENDED])) {
                 $status = self::STATUS_ACTIVE;
+            }
+
+            // Validate post logout URI if provided
+            if (!empty($postLogoutUri) && !self::isValidUrl($postLogoutUri)) {
+                throw new Exception('Invalid post logout redirect URI format or unsupported scheme. Only http:// and https:// are allowed.');
+            }
+
+            // Validate user handler endpoint URL if in JWT mode
+            if (!empty($userHandlerEndpoint) && !empty($apiSecretKey)) {
+                if (!self::isValidUrl($userHandlerEndpoint)) {
+                    throw new Exception('Invalid user handler endpoint format or unsupported scheme. Only http:// and https:// are allowed.');
+                }
             }
 
             $sql = 'INSERT INTO clients (client_id, client_name, client_description, app_redirect_uri, post_logout_redirect_uri, user_handler_endpoint, api_secret_key, allowed_scopes, status, created_at, updated_at, created_by) 
@@ -169,6 +183,8 @@ class Client
             Connection::query($sql, $params);
             $newId = Connection::lastInsertId();
 
+            Connection::commit();
+
             // Return created client
             return [
                 'id' => $newId,
@@ -183,6 +199,7 @@ class Client
                 'status' => $status
             ];
         } catch (Exception $e) {
+            Connection::rollback();
             throw new Exception('Error creating client: ' . $e->getMessage());
         }
     }
@@ -208,8 +225,14 @@ class Client
             $allowedFields = ['client_name', 'client_description', 'app_redirect_uri', 'post_logout_redirect_uri', 'user_handler_endpoint', 'api_secret_key', 'allowed_scopes', 'status'];
             foreach ($allowedFields as $field) {
                 if (isset($data[$field]) && $data[$field] !== '') {
-                    if ($field === 'app_redirect_uri' && !filter_var($data[$field], FILTER_VALIDATE_URL)) {
-                        throw new Exception('Invalid redirect URI format');
+                    if ($field === 'app_redirect_uri' && !self::isValidUrl($data[$field])) {
+                        throw new Exception('Invalid redirect URI format or unsupported scheme. Only http:// and https:// are allowed.');
+                    }
+                    if ($field === 'post_logout_redirect_uri' && !empty($data[$field]) && !self::isValidUrl($data[$field])) {
+                        throw new Exception('Invalid post logout redirect URI format or unsupported scheme. Only http:// and https:// are allowed.');
+                    }
+                    if ($field === 'user_handler_endpoint' && !empty($data[$field]) && !empty($data['api_secret_key']) && !self::isValidUrl($data[$field])) {
+                        throw new Exception('Invalid user handler endpoint format or unsupported scheme. Only http:// and https:// are allowed.');
                     }
                     if ($field === 'status' && !in_array($data[$field], [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_SUSPENDED])) {
                         throw new Exception('Invalid status value');
@@ -292,6 +315,40 @@ class Client
     }
 
     /**
+     * Validate URL with security checks
+     */
+    private static function isValidUrl($url)
+    {
+        // Basic URL validation
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return false;
+        }
+
+        // Parse URL to check scheme
+        $parsed = parse_url($url);
+        if (!$parsed || !isset($parsed['scheme'])) {
+            return false;
+        }
+
+        // Only allow http and https schemes
+        $allowedSchemes = ['http', 'https'];
+        if (!in_array(strtolower($parsed['scheme']), $allowedSchemes)) {
+            return false;
+        }
+
+        // Additional security checks
+        if (isset($parsed['host'])) {
+            // Prevent localhost bypass (optional - uncomment if needed)
+            // $host = strtolower($parsed['host']);
+            // if (in_array($host, ['localhost', '127.0.0.1', '::1'])) {
+            //     return false;
+            // }
+        }
+
+        return true;
+    }
+
+    /**
      * Generate unique client ID
      */
     private static function generateClientId()
@@ -311,7 +368,7 @@ class Client
     {
         return [
             self::STATUS_ACTIVE => 'Active',
-            self::STATUS_INACTIVE => 'Inactive', 
+            self::STATUS_INACTIVE => 'Inactive',
             self::STATUS_SUSPENDED => 'Suspended'
         ];
     }
