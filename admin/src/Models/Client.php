@@ -140,7 +140,7 @@ class Client
             $clientId = self::generateClientId();
 
             // Default values
-            $description = $data['description'] ?? null;
+            $description = $data['client_description'] ?? null;
             $allowedScopes = $data['allowed_scopes'] ?? 'openid,profile,email';
             $postLogoutUri = $data['post_logout_redirect_uri'] ?? '';
             $userHandlerEndpoint = $data['user_handler_endpoint'] ?? null;
@@ -190,7 +190,7 @@ class Client
                 'id' => $newId,
                 'client_id' => $clientId,
                 'client_name' => $data['client_name'],
-                'description' => $description,
+                'client_description' => $description,
                 'app_redirect_uri' => $data['app_redirect_uri'],
                 'post_logout_redirect_uri' => $postLogoutUri,
                 'user_handler_endpoint' => $userHandlerEndpoint,

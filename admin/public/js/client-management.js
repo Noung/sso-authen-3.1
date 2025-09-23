@@ -66,6 +66,7 @@ function renderClientsTable(clients) {
                     <th>Client Name</th>
                     <th>Client ID</th>
                     <th>Redirect URI</th>
+                    <th>Auth Mode</th>
                     <th>Status</th>
                     <th>Created</th>
                     <th>Actions</th>
@@ -101,6 +102,7 @@ function renderClientsTable(clients) {
                         ${escapeHtml(truncatedUri)}
                     </span>
                 </td>
+                <td>${client.user_handler_endpoint ? '<span class="badge bg-primary">JWT</span>' : '<span class="badge bg-secondary">Legacy</span>'}</td>
                 <td>${statusBadge}</td>
                 <td>${createdDate}</td>
                 <td>
@@ -387,7 +389,7 @@ function saveClient() {
             bootstrap.Modal.getInstance(document.getElementById('clientModal')).hide();
             
             if (!isEditing) {
-                // Show success message for new client (no more secret display)
+                // Show success message for new client with all credentials
                 Swal.fire({
                     title: 'Client Created Successfully!',
                     html: `
@@ -398,15 +400,37 @@ function saveClient() {
                                 <label class="form-label fw-bold">Client ID:</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control secret-field" value="${data.data.client_id}" readonly id="newClientId">
-                                    <button class="btn btn-outline-secondary" onclick="copyToClipboard('newClientId')">
+                                    <button class="btn btn-outline-secondary copy-btn" data-target="newClientId" title="Copy Client ID">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
                             </div>
                             
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Use this Client ID to integrate with your application.
+                            ${data.data.api_secret_key ? `
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">API Secret Key:</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control secret-field" value="${data.data.api_secret_key}" readonly id="newApiSecret">
+                                    <button class="btn btn-outline-secondary toggle-btn" data-target="newApiSecret" title="Show/Hide API Secret">
+                                        <i class="fas fa-eye" id="toggleApiSecretIcon"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary copy-btn" data-target="newApiSecret" title="Copy API Secret">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>` : ''}
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">JWT Secret:</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control secret-field" value="System JWT Secret (Same for all clients)" readonly id="newJwtSecret">
+                                    <button class="btn btn-outline-secondary toggle-btn" data-target="newJwtSecret" title="Show/Hide JWT Secret">
+                                        <i class="fas fa-eye" id="toggleJwtSecretIcon"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary copy-btn" data-target="newJwtSecret" title="Copy JWT Secret">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `,
@@ -414,8 +438,58 @@ function saveClient() {
                     width: '600px',
                     showCloseButton: true,
                     confirmButtonText: 'Got it!',
-                    confirmButtonColor: '#198754'
+                    confirmButtonColor: '#198754',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    allowEnterKey: false
+                }).then((result) => {
+                    // This runs after the modal is closed
                 });
+                
+                // Use setTimeout to ensure the DOM is ready
+                setTimeout(() => {
+                    // Add event listeners for copy buttons
+                    document.querySelectorAll('.copy-btn').forEach(button => {
+                        button.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const targetId = this.getAttribute('data-target');
+                            const targetElement = document.getElementById(targetId);
+                            if (targetElement) {
+                                const text = targetElement.value;
+                                // Copy to clipboard using the existing function (no toast notification)
+                                copyToClipboardText(text);
+                                
+                                // Show feedback on the button itself as well
+                                const originalHTML = this.innerHTML;
+                                this.innerHTML = '<i class="fas fa-check"></i>';
+                                setTimeout(() => {
+                                    this.innerHTML = originalHTML;
+                                }, 2000);
+                            }
+                        });
+                    });
+                    
+                    // Add event listeners for toggle buttons
+                    document.querySelectorAll('.toggle-btn').forEach(button => {
+                        button.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const targetId = this.getAttribute('data-target');
+                            const targetElement = document.getElementById(targetId);
+                            if (targetElement) {
+                                const isPassword = targetElement.type === 'password';
+                                targetElement.type = isPassword ? 'text' : 'password';
+                                const icon = this.querySelector('i');
+                                if (icon) {
+                                    icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+                                }
+                            }
+                        });
+                    });
+                }, 100);
             } else {
                 Swal.fire('Success', data.message, 'success');
             }
@@ -445,6 +519,9 @@ function viewClient(id) {
             console.log('Client API Data:', clientData);
             
             if (clientData.success) {
+                // Log the client description specifically
+                console.log('Client Description:', clientData.data.client_description);
+                
                 // Now try to fetch JWT secret
                 return fetch(`${basePath}/api/jwt-secret`)
                     .then(response => {
@@ -475,6 +552,8 @@ function viewClient(id) {
 
 function displayClientDetails(client, jwtSecret) {
     console.log('Displaying client details:', client);
+    console.log('Client description value:', client.client_description);
+    console.log('Client description type:', typeof client.client_description);
     
     const content = `
         <div class="row">
@@ -675,6 +754,36 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
+// Custom copy success notification that doesn't interfere with existing modals
+function showCustomCopySuccess() {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.innerHTML = `
+        <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-check-circle me-2"></i>Copied to clipboard successfully!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(toast);
+    
+    // Initialize and show toast
+    const bsToast = new bootstrap.Toast(toast.querySelector('.toast'), {
+        delay: 1500
+    });
+    bsToast.show();
+    
+    // Remove from DOM after hidden
+    toast.querySelector('.toast').addEventListener('hidden.bs.toast', function() {
+        document.body.removeChild(toast);
+    });
+}
+
 // JWT Secret show/hide toggle function
 function toggleJwtSecret(clientId) {
     const field = document.getElementById('jwtSecretField');
@@ -720,6 +829,77 @@ function logJwtSecretView(clientId) {
     .catch(error => {
         console.error('Error logging JWT view:', error);
     });
+}
+
+// Toggle secret visibility (show/hide)
+function toggleSecretVisibility(elementId) {
+    const field = document.getElementById(elementId);
+    if (field) {
+        if (field.type === 'password') {
+            field.type = 'text';
+            // Update icon in the closest button
+            const button = field.closest('.input-group').querySelector('button[title*="Show/Hide"]');
+            if (button) {
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-eye-slash';
+                }
+            }
+        } else {
+            field.type = 'password';
+            // Update icon in the closest button
+            const button = field.closest('.input-group').querySelector('button[title*="Show/Hide"]');
+            if (button) {
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-eye';
+                }
+            }
+        }
+    }
+}
+
+// Show JWT Secret
+function showJwtSecret() {
+    fetch(`${basePath}/api/jwt-secret`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'JWT Secret',
+                    html: `
+                        <div class="text-start">
+                            <div class="mb-3">
+                                <label class="form-label">JWT Secret Key:</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control secret-field" value="${data.jwt_secret}" readonly id="jwtSecretDisplay">
+                                    <button class="btn btn-outline-secondary" onclick="toggleSecretVisibility('jwtSecretDisplay')" title="Show/Hide JWT Secret">
+                                        <i class="fas fa-eye" id="toggleJwtSecretIcon"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="copyToClipboardText('${data.jwt_secret}')" title="Copy JWT Secret">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Security Notice:</strong> Keep this secret secure and never expose it in client-side code.
+                            </div>
+                        </div>
+                    `,
+                    icon: 'info',
+                    width: '600px',
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#198754'
+                });
+            } else {
+                Swal.fire('Error', 'Failed to retrieve JWT secret', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching JWT secret:', error);
+            Swal.fire('Error', 'Failed to retrieve JWT secret', 'error');
+        });
 }
 
 // Utility functions for new features
@@ -812,4 +992,43 @@ function handleAuthModeChange() {
 
 
 
+// Toggle secret visibility (show/hide)
+function toggleSecretVisibility(elementId) {
+    const field = document.getElementById(elementId);
+    if (field) {
+        if (field.type === 'password') {
+            field.type = 'text';
+            // Update icon in the closest button
+            const button = field.closest('.input-group').querySelector('button[title*="Show/Hide"]');
+            if (button) {
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-eye-slash';
+                }
+            }
+        } else {
+            field.type = 'password';
+            // Update icon in the closest button
+            const button = field.closest('.input-group').querySelector('button[title*="Show/Hide"]');
+            if (button) {
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-eye';
+                }
+            }
+        }
+    }
+}
+
 // Helper function to copy text to clipboard
+function copyToClipboardText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showCopySuccess();
+        }).catch(err => {
+            fallbackCopyTextToClipboard(text);
+        });
+    } else {
+        fallbackCopyTextToClipboard(text);
+    }
+}

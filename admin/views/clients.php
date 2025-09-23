@@ -17,7 +17,7 @@
         .btn-group-sm>.btn,
         .btn-sm {
             padding: 0.25rem 0.5rem;
-            font-size: 0.775rem;
+            font-size: 0.85rem;
         }
 
         .status-badge {
@@ -247,7 +247,7 @@
                     <form id="clientForm">
                         <input type="hidden" id="clientId">
                         <div class="mb-3">
-                            <label for="clientName" class="form-label">Client Name *</label>
+                            <label for="clientName" class="form-label">Client Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="clientName" required>
                             <div class="form-text">Display name for this client application</div>
                         </div>
@@ -299,18 +299,18 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="redirectUri" class="form-label">Redirect URI *</label>
+                            <label for="redirectUri" class="form-label">Redirect URI <span class="text-danger">*</span></label>
                             <input type="url" class="form-control" id="redirectUri" required>
                             <div class="form-text">The URI where users will be redirected after authentication</div>
                         </div>
                         <div class="mb-3">
-                            <label for="postLogoutUri" class="form-label">Post Logout Redirect URI *</label>
+                            <label for="postLogoutUri" class="form-label">Post Logout Redirect URI <span class="text-danger">*</span></label>
                             <input type="url" class="form-control" id="postLogoutUri" required>
                             <div class="form-text">The URI where users will be redirected after logout</div>
                         </div>
                         <div class="mb-3" id="userHandlerSection">
-                            <label for="userHandlerEndpoint" class="form-label">User Handler Endpoint</label>
-                            <input type="url" class="form-control" id="userHandlerEndpoint">
+                            <label for="userHandlerEndpoint" class="form-label">User Handler Endpoint <span class="text-danger">*</span></label>
+                            <input type="url" class="form-control" id="userHandlerEndpoint" required>
                             <div class="form-text">API endpoint to handle user registration/update <strong>(required for JWT mode)</strong></div>
                         </div>
                         <div class="mb-3">
@@ -417,7 +417,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="<?php echo $basePath; ?>/js/client-management.js"></script>
+    <script src="<?php echo $basePath; ?>/js/client-management.js?v=<?php echo time(); ?>"></script>
     <script>
         const basePath = '<?php echo $basePath; ?>';
         let currentPage = 1;

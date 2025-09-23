@@ -30,8 +30,8 @@ class DashboardController
             $stats = [
                 'total_clients' => $this->getTotalClients(),
                 'active_clients' => $this->getActiveClients(),
-                'total_requests_today' => 0, // TODO: Implement from audit logs
-                'success_rate' => 95.5, // TODO: Calculate from audit logs
+                'total_requests_today' => $this->getRequestsToday(),
+                'success_rate' => $this->getSuccessRate(),
             ];
 
             $body = $response->getBody();
@@ -108,6 +108,49 @@ class DashboardController
     }
 
     /**
+     * Get requests count for today
+     */
+    private function getRequestsToday()
+    {
+        try {
+            $today = date('Y-m-d');
+            $sql = "SELECT COUNT(*) as count FROM audit_logs WHERE DATE(created_at) = ?";
+            $result = Connection::fetchOne($sql, [$today]);
+            return $result ? (int)$result['count'] : 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Get authentication success rate
+     */
+    private function getSuccessRate()
+    {
+        try {
+            // Get total authentication attempts (both success and failure)
+            $sql = "SELECT COUNT(*) as total FROM audit_logs WHERE action IN ('auth_success', 'auth_failed', 'oidc_auth_success', 'oidc_auth_failed')";
+            $totalResult = Connection::fetchOne($sql);
+            $total = $totalResult ? (int)$totalResult['total'] : 0;
+
+            if ($total == 0) {
+                return 0;
+            }
+
+            // Get successful authentications
+            $sql = "SELECT COUNT(*) as success FROM audit_logs WHERE action IN ('auth_success', 'oidc_auth_success')";
+            $successResult = Connection::fetchOne($sql);
+            $success = $successResult ? (int)$successResult['success'] : 0;
+
+            // Calculate success rate as percentage
+            $successRate = ($success / $total) * 100;
+            return round($successRate, 1);
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
      * Get recent activities from database
      */
     private function getRecentActivitiesFromDb($limit)
@@ -119,11 +162,14 @@ class DashboardController
             // Format activities for display
             $formatted = [];
             foreach ($activities as $activity) {
+                // Create a user-friendly description based on the action
+                $description = $this->formatActivityDescription($activity);
+
                 $formatted[] = [
                     'id' => $activity['id'],
                     'action' => $activity['action'],
-                    'description' => $activity['description'],
-                    'admin_id' => $activity['admin_id'],
+                    'description' => $description,
+                    'admin_email' => $activity['admin_email'],
                     'created_at' => $activity['created_at'],
                 ];
             }
@@ -136,17 +182,68 @@ class DashboardController
                     'id' => 1,
                     'action' => 'client_created',
                     'description' => 'สร้าง client application ใหม่',
-                    'admin_id' => 1,
+                    'admin_email' => 'admin@psu.ac.th',
                     'created_at' => date('Y-m-d H:i:s'),
                 ],
                 [
                     'id' => 2,
                     'action' => 'client_updated',
                     'description' => 'แก้ไขข้อมูล client application',
-                    'admin_id' => 1,
+                    'admin_email' => 'admin@psu.ac.th',
                     'created_at' => date('Y-m-d H:i:s', strtotime('-1 hour')),
                 ],
             ];
+        }
+    }
+
+    /**
+     * Format activity description for display
+     */
+    private function formatActivityDescription($activity)
+    {
+        // If description already exists in the database, use it
+        if (!empty($activity['description'])) {
+            return $activity['description'];
+        }
+
+        // Otherwise, generate a description based on the action and resource
+        $action = $activity['action'];
+        $resourceType = $activity['resource_type'];
+        $adminEmail = $activity['admin_email'];
+
+        switch ($action) {
+            case 'client_created':
+                return "Admin {$adminEmail} สร้าง client application ใหม่";
+            case 'client_updated':
+                return "Admin {$adminEmail} แก้ไขข้อมูล client application";
+            case 'client_deleted':
+                return "Admin {$adminEmail} ลบ client application";
+            case 'client_status_changed':
+                return "Admin {$adminEmail} เปลี่ยนสถานะ client application";
+            case 'auth_success':
+                return "Admin {$adminEmail} เข้าสู่ระบบสำเร็จ";
+            case 'auth_failed':
+                return "Admin {$adminEmail} เข้าสู่ระบบไม่สำเร็จ";
+            case 'oidc_auth_success':
+                return "ผู้ใช้ {$adminEmail} เข้าสู่ระบบผ่าน OIDC สำเร็จ";
+            case 'oidc_auth_failed':
+                return "ผู้ใช้ {$adminEmail} เข้าสู่ระบบผ่าน OIDC ไม่สำเร็จ";
+            case 'oidc_login_initiated':
+                return "ผู้ใช้ {$adminEmail} เริ่มต้นการเข้าสู่ระบบผ่าน OIDC";
+            case 'jwt_secret_viewed':
+                return "Admin {$adminEmail} ดู JWT secret";
+            case 'admin_login':
+                return "Admin {$adminEmail} เข้าสู่ระบบผู้ดูแล";
+            case 'client_viewed':
+                return "Admin {$adminEmail} ดูรายละเอียด client";
+            case 'dashboard_accessed':
+                return "Admin {$adminEmail} เข้าถึง dashboard";
+            case 'statistics_viewed':
+                return "Admin {$adminEmail} ดูสถิติการใช้งาน";
+            case 'config_checked':
+                return "Admin {$adminEmail} ตรวจสอบการตั้งค่าระบบ";
+            default:
+                return "กิจกรรม: {$action} โดย {$adminEmail}";
         }
     }
 
@@ -212,11 +309,16 @@ class DashboardController
 
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Dashboard</h1>
+                    <h1 class="h2">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshStats()">
                                 <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
+                                <i class="fas fa-pause-circle me-1"></i>Stop Auto Refresh
                             </button>
                         </div>
                     </div>
@@ -297,9 +399,51 @@ class DashboardController
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Auto-refresh interval (in milliseconds)
+        let autoRefreshInterval = null;
+        const refreshInterval = 30000; // 30 seconds
+
         document.addEventListener("DOMContentLoaded", function() {
             loadDashboardData();
+            startAutoRefresh();
         });
+
+        function startAutoRefresh() {
+            // Clear any existing interval
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // Set up automatic refresh
+            autoRefreshInterval = setInterval(function() {
+                loadDashboardData();
+            }, refreshInterval);
+            
+            console.log("Auto-refresh started - updating every " + (refreshInterval/1000) + " seconds");
+            updateAutoRefreshButton(true);
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                console.log("Auto-refresh stopped");
+            }
+            updateAutoRefreshButton(false);
+        }
+
+        function updateAutoRefreshButton(isActive) {
+            const button = document.getElementById("auto-refresh-btn");
+            if (button) {
+                if (isActive) {
+                    button.innerHTML = "<i class=\"fas fa-pause-circle me-1\"></i>Stop Auto Refresh";
+                    button.className = "btn btn-sm btn-outline-primary";
+                } else {
+                    button.innerHTML = "<i class=\"fas fa-play-circle me-1\"></i>Start Auto Refresh";
+                    button.className = "btn btn-sm btn-outline-success";
+                }
+            }
+        }
 
         function loadDashboardData() {
             loadStats();
@@ -329,13 +473,13 @@ class DashboardController
                         renderRecentActivities(data.data);
                     } else {
                         document.getElementById("recent-activities").innerHTML = 
-                            `<p class="text-center text-muted">ไม่สามารถโหลดข้อมูลได้</p>`;
+                            "<p class=\"text-center text-muted\">ไม่สามารถโหลดข้อมูลได้</p>";
                     }
                 })
                 .catch(error => {
                     console.error("Error loading activities:", error);
                     document.getElementById("recent-activities").innerHTML = 
-                        `<p class="text-center text-muted">ไม่สามารถโหลดข้อมูลได้</p>`;
+                        "<p class=\"text-center text-muted\">ไม่สามารถโหลดข้อมูลได้</p>";
                 });
         }
 
@@ -350,22 +494,22 @@ class DashboardController
             const container = document.getElementById("recent-activities");
             
             if (activities.length === 0) {
-                container.innerHTML = `<p class="text-center text-muted">ไม่มีกิจกรรมล่าสุด</p>`;
+                container.innerHTML = "<p class=\"text-center text-muted\">ไม่มีกิจกรรมล่าสุด</p>";
                 return;
             }
 
-            let html = `<div class="list-group list-group-flush">`;
+            let html = "<div class=\"list-group list-group-flush\">";
             activities.forEach(activity => {
                 const date = new Date(activity.created_at).toLocaleString("th-TH");
-                html += `<div class="list-group-item">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">${activity.description}</h6>
-                        <small>${date}</small>
-                    </div>
-                    <small class="text-muted">Action: ${activity.action}</small>
-                </div>`;
+                html += "<div class=\"list-group-item\">"+
+                    "<div class=\"d-flex w-100 justify-content-between\">"+
+                        "<h6 class=\"mb-1\">" + activity.description + "</h6>"+
+                        "<small>" + date + "</small>"+
+                    "</div>"+
+                    "<small class=\"text-muted\">Action: " + activity.action + "</small>"+
+                "</div>";
             });
-            html += `</div>`;
+            html += "</div>";
             
             container.innerHTML = html;
         }
@@ -379,6 +523,15 @@ class DashboardController
                 timer: 1500,
                 showConfirmButton: false
             });
+        }
+
+        // Toggle auto-refresh
+        function toggleAutoRefresh() {
+            if (autoRefreshInterval) {
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh();
+            }
         }
     </script>
 </body>
