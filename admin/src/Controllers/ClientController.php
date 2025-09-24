@@ -148,7 +148,7 @@ class ClientController
             $this->logActivity('client_updated', "Updated client: {$client['client_name']}", $id);
 
             // Remove sensitive data
-            unset($client['client_secret']);
+            // unset($client['client_secret']); // client_secret field has been removed
 
             $body = $response->getBody();
             $body->write(json_encode([

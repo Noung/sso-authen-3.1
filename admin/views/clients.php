@@ -121,12 +121,12 @@
                 <!-- Statistics Cards -->
                 <div class="row mb-4" id="stats-cards">
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-primary text-white">
+                        <div class="card bg-primary text-white h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="card-title">Total Clients</h6>
-                                        <h3 id="total-clients">-</h3>
+                                        <h6 class="card-title mb-0">Total Clients</h6>
+                                        <h3 id="total-clients" class="mb-0">-</h3>
                                     </div>
                                     <i class="fas fa-users fa-2x opacity-75"></i>
                                 </div>
@@ -134,12 +134,12 @@
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-success text-white">
+                        <div class="card bg-success text-white h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="card-title">Active</h6>
-                                        <h3 id="active-clients">-</h3>
+                                        <h6 class="card-title mb-0">Active</h6>
+                                        <h3 id="active-clients" class="mb-0">-</h3>
                                     </div>
                                     <i class="fas fa-check-circle fa-2x opacity-75"></i>
                                 </div>
@@ -147,12 +147,12 @@
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-warning text-white">
+                        <div class="card bg-warning text-white h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="card-title">Inactive</h6>
-                                        <h3 id="inactive-clients">-</h3>
+                                        <h6 class="card-title mb-0">Inactive</h6>
+                                        <h3 id="inactive-clients" class="mb-0">-</h3>
                                     </div>
                                     <i class="fas fa-pause-circle fa-2x opacity-75"></i>
                                 </div>
@@ -160,12 +160,12 @@
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-danger text-white">
+                        <div class="card bg-danger text-white h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="card-title">Suspended</h6>
-                                        <h3 id="suspended-clients">-</h3>
+                                        <h6 class="card-title mb-0">Suspended</h6>
+                                        <h3 id="suspended-clients" class="mb-0">-</h3>
                                     </div>
                                     <i class="fas fa-ban fa-2x opacity-75"></i>
                                 </div>
@@ -263,26 +263,44 @@
                             <label class="form-label">Authentication Mode</label>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="authMode" value="jwt" id="authModeJWT" checked>
-                                        <label class="form-check-label" for="authModeJWT">
-                                            <strong>JWT Mode</strong> <small class="text-muted">(Recommended)</small>
-                                        </label>
-                                        <div class="form-text small">Stateless authentication using JWT tokens. Requires User Handler Endpoint.</div>
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="authMode" value="jwt" id="authModeJWT" checked>
+                                                <label class="form-check-label" for="authModeJWT">
+                                                    <strong>JWT Mode</strong> <small class="text-muted">(Recommended)</small>
+                                                </label>
+                                            </div>
+                                            <div class="mt-2">
+                                                <ul class="small text-muted">
+                                                    <li>Stateless authentication using JWT tokens</li>
+                                                    <li>Works across subdomains and different servers</li>
+                                                    <li>More secure and scalable</li>
+                                                    <li>Requires User Handler Endpoint</li>
+                                                </ul>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="authMode" value="legacy" id="authModeLegacy">
-                                        <label class="form-check-label" for="authModeLegacy">
-                                            <strong>Legacy Mode</strong> <span class="badge bg-warning text-dark">DEPRECATED</span>
-                                        </label>
-                                        <div class="form-text small">
-                                            <strong class="text-warning">⚠️ Same Domain Required:</strong> Session-based authentication for PHP apps installed in the same domain as this SSO Gateway only
-                                            <br><small class="text-muted">App must create user_handler.php file within the same server</small>
-                                            <br>
-                                            <div class="alert alert-warning mt-2 p-2">
-                                                <small><i class="fas fa-exclamation-triangle"></i> <strong>Notice:</strong> Legacy Mode is being phased out due to subdomain limitations. Please use JWT Mode for new applications.</small>
+                                    <div class="card h-100 border-warning">
+                                        <div class="card-body">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="authMode" value="legacy" id="authModeLegacy">
+                                                <label class="form-check-label" for="authModeLegacy">
+                                                    <strong>Legacy Mode</strong> <span class="badge bg-warning text-dark">DEPRECATED</span>
+                                                </label>
+                                            </div>
+                                            <div class="mt-2">
+                                                <ul class="small text-muted">
+                                                    <li>Session-based authentication</li>
+                                                    <li>Only works within the same domain</li>
+                                                    <li>Limited to PHP applications</li>
+                                                    <li>Requires local file path</li>
+                                                </ul>
+                                                <div class="alert alert-warning mt-2 p-2 small">
+                                                    <i class="fas fa-exclamation-triangle"></i> <strong>Notice:</strong> Legacy Mode is being phased out due to subdomain limitations. Please use JWT Mode for new applications.
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -417,6 +435,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo $basePath; ?>/js/shared.js?v=<?php echo time(); ?>"></script>
     <script src="<?php echo $basePath; ?>/js/client-management.js?v=<?php echo time(); ?>"></script>
     <script>
         const basePath = '<?php echo $basePath; ?>';

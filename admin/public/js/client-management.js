@@ -50,10 +50,13 @@ function renderClientsTable(clients) {
     
     if (clients.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-4">
+            <div class="text-center py-5">
                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                 <h5>ไม่มีข้อมูล Client Applications</h5>
                 <p class="text-muted">คลิก "Add New Client" เพื่อเพิ่ม client แรก</p>
+                <button class="btn btn-primary mt-2" onclick="showAddClientModal()">
+                    <i class="fas fa-plus me-1"></i>Add New Client
+                </button>
             </div>
         `;
         return;
@@ -63,13 +66,13 @@ function renderClientsTable(clients) {
         <table class="table table-hover">
             <thead class="table-dark">
                 <tr>
-                    <th>Client Name</th>
-                    <th>Client ID</th>
-                    <th>Redirect URI</th>
-                    <th>Auth Mode</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>Actions</th>
+                    <th style="width: 25%">Client Name</th>
+                    <th style="width: 20%">Client ID</th>
+                    <th style="width: 20%">Redirect URI</th>
+                    <th style="width: 15%">Authentication Mode</th>
+                    <th style="width: 10%">Status</th>
+                    <th style="width: 10%">Created</th>
+                    <th style="width: 5%">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -78,45 +81,81 @@ function renderClientsTable(clients) {
     clients.forEach(client => {
         const createdDate = new Date(client.created_at).toLocaleDateString('th-TH');
         const statusBadge = getStatusBadge(client.status);
-        const truncatedUri = client.app_redirect_uri.length > 50 
-            ? client.app_redirect_uri.substring(0, 50) + '...' 
+        const truncatedUri = client.app_redirect_uri.length > 30 
+            ? client.app_redirect_uri.substring(0, 30) + '...' 
             : client.app_redirect_uri;
+            
+        // Determine authentication mode based on the format of user_handler_endpoint
+        let authMode = 'Unknown';
+        let authModeBadge = '<span class="badge bg-secondary" title="Unknown Mode">Unknown</span>';
+        
+        if (client.user_handler_endpoint && client.user_handler_endpoint.trim() !== '') {
+            if (client.user_handler_endpoint.startsWith('http')) {
+                // JWT Mode: URL starting with http
+                authMode = 'JWT';
+                authModeBadge = '<span class="badge bg-primary" title="JWT Mode"><i class="fas fa-key me-1"></i>JWT</span>';
+            } else if (client.user_handler_endpoint.startsWith('/')) {
+                // Legacy Mode: File path starting with /
+                authMode = 'Legacy';
+                authModeBadge = '<span class="badge bg-secondary" title="Legacy Mode"><i class="fas fa-server me-1"></i>Legacy</span>';
+            } else {
+                // Unknown mode
+                authModeBadge = '<span class="badge bg-dark" title="Unknown Mode">Unknown</span>';
+            }
+        } else {
+            // No user handler endpoint
+            authModeBadge = '<span class="badge bg-dark" title="No Handler">None</span>';
+        }
             
         html += `
             <tr>
                 <td>
-                    <strong>${escapeHtml(client.client_name)}</strong>
-                    ${client.client_description ? '<br><small class="text-muted">' + escapeHtml(client.client_description) + '</small>' : ''}
-                    <br><small class="text-info">${escapeHtml(client.allowed_scopes || 'openid,profile,email')}</small>
+                    <div class="d-flex align-items-center">
+                        <div class="me-2">
+                            <i class="fas fa-${client.user_handler_endpoint ? (client.user_handler_endpoint.startsWith('http') ? 'key' : 'server') : 'question'} fa-lg text-${client.user_handler_endpoint ? (client.user_handler_endpoint.startsWith('http') ? 'primary' : 'secondary') : 'muted'}"></i>
+                        </div>
+                        <div>
+                            <strong>${escapeHtml(client.client_name)}</strong>
+                            ${client.client_description ? '<br><small class="text-muted">' + escapeHtml(client.client_description) + '</small>' : ''}
+                        </div>
+                    </div>
                 </td>
                 <td>
-                    <code class="small">${escapeHtml(client.client_id)}</code>
-                    <button class="btn btn-sm btn-outline-secondary copy-btn ms-1" 
-                            onclick="copyToClipboardText('${escapeHtml(client.client_id)}')"
-                            title="Copy Client ID">
-                        <i class="fas fa-copy"></i>
-                    </button>
+                    <div class="d-flex align-items-center">
+                        <code class="small me-1">${escapeHtml(client.client_id)}</code>
+                        <button class="btn btn-sm btn-outline-secondary copy-btn" 
+                                onclick="copyToClipboardText('${escapeHtml(client.client_id)}')"
+                                title="Copy Client ID">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
                 </td>
                 <td>
                     <span class="small" title="${escapeHtml(client.app_redirect_uri)}">
                         ${escapeHtml(truncatedUri)}
                     </span>
                 </td>
-                <td>${client.user_handler_endpoint ? '<span class="badge bg-primary">JWT</span>' : '<span class="badge bg-secondary">Legacy</span>'}</td>
-                <td>${statusBadge}</td>
-                <td>${createdDate}</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-outline-info" onclick="viewClient(${client.id})" title="View Details">
+                <td class="text-center">
+                    ${authModeBadge}
+                </td>
+                <td class="text-center">${statusBadge}</td>
+                <td class="text-center">
+                    <span title="${new Date(client.created_at).toLocaleString('th-TH')}">
+                        ${createdDate}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-info" onclick="viewClient(${client.id})" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editClient(${client.id})" title="Edit">
+                        <button class="btn btn-outline-primary" onclick="editClient(${client.id})" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-warning" onclick="toggleClientStatus(${client.id}, '${client.status}')" title="Toggle Status">
+                        <button class="btn btn-outline-${client.status === 'active' ? 'warning' : 'success'}" onclick="toggleClientStatus(${client.id}, '${client.status}')" title="${client.status === 'active' ? 'Deactivate' : 'Activate'}">
                             <i class="fas fa-toggle-${client.status === 'active' ? 'on' : 'off'}"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteClient(${client.id}, '${escapeHtml(client.client_name)}')" title="Delete">
+                        <button class="btn btn-outline-danger" onclick="deleteClient(${client.id}, '${escapeHtml(client.client_name)}')" title="Delete">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -247,16 +286,26 @@ function editClient(id) {
                 document.getElementById('userHandlerEndpoint').value = client.user_handler_endpoint || '';
                 document.getElementById('apiSecretKey').value = client.api_secret_key || '';
                 
-                // Set authentication mode
-                const authMode = client.user_handler_endpoint ? 'jwt' : 'legacy';
-                document.getElementById('authModeJWT').checked = (authMode === 'jwt');
-                document.getElementById('authModeLegacy').checked = (authMode === 'legacy');
+                // Set authentication mode - check if client has user_handler_endpoint to determine mode
+                // JWT Mode: URL starting with http
+                // Legacy Mode: File path starting with /
+                let isJWTMode = false;
+                if (client.user_handler_endpoint && client.user_handler_endpoint.trim() !== '') {
+                    if (client.user_handler_endpoint.startsWith('http')) {
+                        isJWTMode = true;
+                    } else if (client.user_handler_endpoint.startsWith('/')) {
+                        isJWTMode = false;
+                    }
+                }
+                
+                document.getElementById('authModeJWT').checked = isJWTMode;
+                document.getElementById('authModeLegacy').checked = !isJWTMode;
                 
                 // Handle auth mode first to show/hide fields
                 handleAuthModeChange();
                 
                 // Set API Secret Key based on mode AFTER handleAuthModeChange
-                if (authMode === 'jwt') {
+                if (isJWTMode) {
                     document.getElementById('apiSecretKey').value = client.api_secret_key || '';
                     document.getElementById('apiSecretKey').disabled = false;
                 } else {
@@ -291,13 +340,14 @@ function editClient(id) {
 
 function saveClient() {
     const isJWTMode = document.getElementById('authModeJWT').checked;
+    const userHandlerEndpoint = document.getElementById('userHandlerEndpoint').value.trim();
     
     const formData = {
         client_name: document.getElementById('clientName').value.trim(),
         client_description: document.getElementById('clientDescription').value.trim(),
         app_redirect_uri: document.getElementById('redirectUri').value.trim(),
         post_logout_redirect_uri: document.getElementById('postLogoutUri').value.trim(),
-        user_handler_endpoint: document.getElementById('userHandlerEndpoint').value.trim(),
+        user_handler_endpoint: userHandlerEndpoint,
         api_secret_key: isJWTMode ? document.getElementById('apiSecretKey').value.trim() : '', // Empty for Legacy Mode
         allowed_scopes: document.getElementById('allowedScopes').value.trim(),
         status: document.getElementById('clientStatus').value
@@ -345,18 +395,27 @@ function saveClient() {
         return;
     }
     
-    // Optional URL validations
+    // Validation based on authentication mode
     if (formData.user_handler_endpoint && formData.user_handler_endpoint !== '') {
         if (isJWTMode) {
-            // JWT Mode requires valid URL
+            // JWT Mode requires valid URL starting with http
+            if (!formData.user_handler_endpoint.startsWith('http')) {
+                Swal.fire('Validation Error', 'User Handler Endpoint for JWT mode must be a valid URL starting with http:// or https://', 'warning');
+                return;
+            }
             try {
                 new URL(formData.user_handler_endpoint);
             } catch (e) {
                 Swal.fire('Validation Error', 'Please enter a valid user handler endpoint URL for JWT mode', 'warning');
                 return;
             }
+        } else {
+            // Legacy Mode requires file path starting with /
+            if (!formData.user_handler_endpoint.startsWith('/')) {
+                Swal.fire('Validation Error', 'User Handler File Path for Legacy mode must be a valid file path starting with /', 'warning');
+                return;
+            }
         }
-        // Legacy Mode: file path validation (no URL validation needed)
     }
     
     const clientId = document.getElementById('clientId').value;
@@ -389,55 +448,91 @@ function saveClient() {
             bootstrap.Modal.getInstance(document.getElementById('clientModal')).hide();
             
             if (!isEditing) {
+                // Determine if this is JWT mode (has user handler endpoint)
+                const isJWTMode = data.data.user_handler_endpoint && data.data.user_handler_endpoint.trim() !== '' && data.data.user_handler_endpoint.startsWith('http');
+                
                 // Show success message for new client with all credentials
                 Swal.fire({
-                    title: 'Client Created Successfully!',
+                    title: '<i class="fas fa-check-circle text-success me-2"></i>Client Created Successfully!',
                     html: `
                         <div class="text-start">
-                            <p class="mb-3">Your new client application has been created successfully.</p>
+                            <div class="alert alert-success">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Success!</strong> Your new client application has been created successfully.
+                            </div>
                             
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Client ID:</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control secret-field" value="${data.data.client_id}" readonly id="newClientId">
-                                    <button class="btn btn-outline-secondary copy-btn" data-target="newClientId" title="Copy Client ID">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-key me-2"></i>Credentials</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Client ID:</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control secret-field" value="${data.data.client_id}" readonly id="newClientId">
+                                            <button class="btn btn-outline-secondary copy-btn" data-target="newClientId" title="Copy Client ID">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Use this ID to identify your application when making authentication requests.
+                                        </div>
+                                    </div>
+                                    
+                                    ${data.data.api_secret_key ? `
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">API Secret Key:</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control secret-field" value="${data.data.api_secret_key}" readonly id="newApiSecret">
+                                            <button class="btn btn-outline-secondary toggle-btn" data-target="newApiSecret" title="Show/Hide API Secret">
+                                                <i class="fas fa-eye" id="toggleApiSecretIcon"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary copy-btn" data-target="newApiSecret" title="Copy API Secret">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text text-muted">
+                                            <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
+                                            <strong>Security Note:</strong> Keep this secret key secure and never expose it in client-side code.
+                                        </div>
+                                    </div>` : ''}
+                                    
+                                    ${isJWTMode ? `
+                                    <div class="mb-0">
+                                        <label class="form-label fw-bold">JWT Secret:</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control secret-field" value="System JWT Secret (Same for all clients)" readonly id="newJwtSecret">
+                                            <button class="btn btn-outline-secondary toggle-btn" data-target="newJwtSecret" title="Show/Hide JWT Secret">
+                                                <i class="fas fa-eye" id="toggleJwtSecretIcon"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary copy-btn" data-target="newJwtSecret" title="Copy JWT Secret">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            This is the shared JWT secret used to verify tokens. Same for all clients.
+                                        </div>
+                                    </div>` : ''}
                                 </div>
                             </div>
                             
-                            ${data.data.api_secret_key ? `
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">API Secret Key:</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control secret-field" value="${data.data.api_secret_key}" readonly id="newApiSecret">
-                                    <button class="btn btn-outline-secondary toggle-btn" data-target="newApiSecret" title="Show/Hide API Secret">
-                                        <i class="fas fa-eye" id="toggleApiSecretIcon"></i>
-                                    </button>
-                                    <button class="btn btn-outline-secondary copy-btn" data-target="newApiSecret" title="Copy API Secret">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </div>
-                            </div>` : ''}
-                            
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">JWT Secret:</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control secret-field" value="System JWT Secret (Same for all clients)" readonly id="newJwtSecret">
-                                    <button class="btn btn-outline-secondary toggle-btn" data-target="newJwtSecret" title="Show/Hide JWT Secret">
-                                        <i class="fas fa-eye" id="toggleJwtSecretIcon"></i>
-                                    </button>
-                                    <button class="btn btn-outline-secondary copy-btn" data-target="newJwtSecret" title="Copy JWT Secret">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <strong>Next Steps:</strong> 
+                                <ul class="mb-0 mt-2">
+                                    <li>Copy and securely store your credentials</li>
+                                    <li>Configure your application with these credentials</li>
+                                    <li>Test the authentication flow</li>
+                                </ul>
                             </div>
                         </div>
                     `,
                     icon: 'success',
-                    width: '600px',
+                    width: '700px',
                     showCloseButton: true,
-                    confirmButtonText: 'Got it!',
+                    confirmButtonText: '<i class="fas fa-check me-1"></i>Got it!',
                     confirmButtonColor: '#198754',
                     allowOutsideClick: false,
                     allowEscapeKey: false,
@@ -458,12 +553,12 @@ function saveClient() {
                             const targetElement = document.getElementById(targetId);
                             if (targetElement) {
                                 const text = targetElement.value;
-                                // Copy to clipboard using the existing function (no toast notification)
+                                // Copy to clipboard using the existing function with custom toast notification
                                 copyToClipboardText(text);
                                 
                                 // Show feedback on the button itself as well
                                 const originalHTML = this.innerHTML;
-                                this.innerHTML = '<i class="fas fa-check"></i>';
+                                this.innerHTML = '<i class="fas fa-check text-success"></i>';
                                 setTimeout(() => {
                                     this.innerHTML = originalHTML;
                                 }, 2000);
@@ -491,7 +586,12 @@ function saveClient() {
                     });
                 }, 100);
             } else {
-                Swal.fire('Success', data.message, 'success');
+                Swal.fire({
+                    title: '<i class="fas fa-check-circle text-success me-2"></i>Success!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#198754'
+                });
             }
             
             loadClients();
@@ -513,6 +613,16 @@ function viewClient(id) {
     fetch(`${basePath}/api/clients/${id}`)
         .then(response => {
             console.log('Client API Response Status:', response.status);
+            // Check if response is OK (2xx status)
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            // Check content type
+            const contentType = response.headers.get('content-type');
+            console.log('Content-Type:', contentType);
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Received non-JSON response');
+            }
             return response.json();
         })
         .then(clientData => {
@@ -526,6 +636,16 @@ function viewClient(id) {
                 return fetch(`${basePath}/api/jwt-secret`)
                     .then(response => {
                         console.log('JWT API Response Status:', response.status);
+                        // Check if response is OK (2xx status)
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        // Check content type
+                        const contentType = response.headers.get('content-type');
+                        console.log('JWT Content-Type:', contentType);
+                        if (!contentType || !contentType.includes('application/json')) {
+                            throw new Error('Received non-JSON response from JWT API');
+                        }
                         return response.json();
                     })
                     .then(jwtData => {
@@ -538,6 +658,11 @@ function viewClient(id) {
                             // Show client details without JWT secret
                             displayClientDetails(clientData.data, 'Error loading JWT secret');
                         }
+                    })
+                    .catch(jwtError => {
+                        console.error('Error fetching JWT secret:', jwtError);
+                        // Show client details without JWT secret
+                        displayClientDetails(clientData.data, 'Error loading JWT secret');
                     });
             } else {
                 console.error('Client API failed:', clientData.message);
@@ -546,7 +671,12 @@ function viewClient(id) {
         })
         .catch(error => {
             console.error('Error in viewClient:', error);
-            Swal.fire('Error', 'Failed to load client details: ' + error.message, 'error');
+            // Check if it's an authentication error
+            if (error.message.includes('401') || error.message.includes('403')) {
+                Swal.fire('Authentication Error', 'Your session may have expired. Please refresh the page and try again.', 'error');
+            } else {
+                Swal.fire('Error', 'Failed to load client details: ' + error.message, 'error');
+            }
         });
 }
 
@@ -555,37 +685,67 @@ function displayClientDetails(client, jwtSecret) {
     console.log('Client description value:', client.client_description);
     console.log('Client description type:', typeof client.client_description);
     
+    // Format dates
+    const createdDate = new Date(client.created_at);
+    const updatedDate = new Date(client.updated_at);
+    
+    // Format scopes
+    const scopes = client.allowed_scopes ? client.allowed_scopes.split(',').map(scope => 
+        `<span class="badge bg-info me-1">${scope.trim()}</span>`
+    ).join('') : '';
+    
+    // Determine authentication mode based on the format of user_handler_endpoint
+    let authMode = 'Unknown';
+    let authModeBadge = '<span class="badge bg-secondary">Unknown</span>';
+    
+    if (client.user_handler_endpoint && client.user_handler_endpoint.trim() !== '') {
+        if (client.user_handler_endpoint.startsWith('http')) {
+            // JWT Mode: URL starting with http
+            authMode = 'JWT';
+            authModeBadge = '<span class="badge bg-primary">JWT Mode</span>';
+        } else if (client.user_handler_endpoint.startsWith('/')) {
+            // Legacy Mode: File path starting with /
+            authMode = 'Legacy';
+            authModeBadge = '<span class="badge bg-secondary">Legacy Mode</span><br><small class="text-warning">⚠️ Same domain required</small>';
+        } else {
+            // Unknown mode
+            authModeBadge = '<span class="badge bg-dark">Unknown Mode</span>';
+        }
+    } else {
+        // No user handler endpoint
+        authModeBadge = '<span class="badge bg-dark">No Handler</span>';
+    }
+    
     const content = `
         <div class="row">
             <div class="col-md-6">
-                <h6>Basic Information</h6>
-                <table class="table table-sm">
-                    <tr><td><strong>Client ID:</strong></td><td><code>${escapeHtml(client.client_id)}</code> <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboardText('${escapeHtml(client.client_id)}')" title="Copy Client ID"><i class="fas fa-copy"></i></button></td></tr>
-                    <tr><td><strong>Client Name:</strong></td><td>${escapeHtml(client.client_name)}</td></tr>
-                    <tr><td><strong>Description:</strong></td><td>${escapeHtml(client.client_description || 'No description')}</td></tr>
-                    <tr><td><strong>Status:</strong></td><td>${getStatusBadge(client.status)}</td></tr>
-                    <tr><td><strong>Created:</strong></td><td>${new Date(client.created_at).toLocaleString('th-TH')} by ${client.created_by || 'N/A'}</td></tr>
-                    <tr><td><strong>Updated:</strong></td><td>${new Date(client.updated_at).toLocaleString('th-TH')} by ${client.updated_by || 'N/A'}</td></tr>
+                <h5><i class="fas fa-info-circle me-2 text-primary"></i>Basic Information</h5>
+                <table class="table table-borderless table-sm">
+                    <tr><td class="text-muted" style="width: 30%">Client ID:</td><td><code>${escapeHtml(client.client_id)}</code> <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboardText('${escapeHtml(client.client_id)}')" title="Copy Client ID"><i class="fas fa-copy"></i></button></td></tr>
+                    <tr><td class="text-muted">Client Name:</td><td><strong>${escapeHtml(client.client_name)}</strong></td></tr>
+                    <tr><td class="text-muted">Description:</td><td>${escapeHtml(client.client_description || 'No description')}</td></tr>
+                    <tr><td class="text-muted">Status:</td><td>${getStatusBadge(client.status)}</td></tr>
+                    <tr><td class="text-muted">Created:</td><td>${createdDate.toLocaleString('th-TH')}<br><small class="text-muted">by ${client.created_by || 'N/A'}</small></td></tr>
+                    <tr><td class="text-muted">Updated:</td><td>${updatedDate.toLocaleString('th-TH')}<br><small class="text-muted">by ${client.updated_by || 'N/A'}</small></td></tr>
                 </table>
             </div>
             <div class="col-md-6">
-                <h6>Configuration</h6>
-                <table class="table table-sm">
-                    <tr><td><strong>Redirect URI:</strong></td><td class="text-break">${escapeHtml(client.app_redirect_uri)}</td></tr>
-                    <tr><td><strong>Post Logout URI:</strong></td><td class="text-break">${escapeHtml(client.post_logout_redirect_uri || 'Not set')}</td></tr>
-                    <tr><td><strong>User Handler:</strong></td><td class="text-break">${escapeHtml(client.user_handler_endpoint || 'Not set')}</td></tr>
-                    ${client.user_handler_endpoint ? '<tr><td><strong>API Secret Key:</strong></td><td>' + (client.api_secret_key ? '<code>' + client.api_secret_key.substring(0, 20) + '...</code> <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboardText(\'' + escapeHtml(client.api_secret_key) + '\')" title="Copy API Secret"><i class="fas fa-copy"></i></button>' : 'Not set') + '</td></tr>' : ''}
-                    <tr><td><strong>Allowed Scopes:</strong></td><td>${escapeHtml(client.allowed_scopes || 'openid,profile,email')}</td></tr>
-                    <tr><td><strong>Auth Mode:</strong></td><td>${client.user_handler_endpoint ? '<span class="badge bg-primary">JWT Mode</span>' : '<span class="badge bg-secondary">Legacy Mode</span><br><small class="text-warning">⚠️ Same domain required</small>'}</td></tr>
+                <h5><i class="fas fa-cog me-2 text-primary"></i>Configuration</h5>
+                <table class="table table-borderless table-sm">
+                    <tr><td class="text-muted" style="width: 30%">Redirect URI:</td><td class="text-break">${escapeHtml(client.app_redirect_uri)}</td></tr>
+                    <tr><td class="text-muted">Post Logout URI:</td><td class="text-break">${escapeHtml(client.post_logout_redirect_uri || 'Not set')}</td></tr>
+                    <tr><td class="text-muted">User Handler:</td><td class="text-break">${escapeHtml(client.user_handler_endpoint || 'Not set')}</td></tr>
+                    ${client.user_handler_endpoint ? '<tr><td class="text-muted">API Secret Key:</td><td>' + (client.api_secret_key ? '<code>' + client.api_secret_key.substring(0, 20) + '...</code> <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboardText(\'' + escapeHtml(client.api_secret_key) + '\')" title="Copy API Secret"><i class="fas fa-copy"></i></button>' : 'Not set') + '</td></tr>' : ''}
+                    <tr><td class="text-muted">Allowed Scopes:</td><td>${scopes}</td></tr>
+                    <tr><td class="text-muted">Auth Mode:</td><td>${authModeBadge}</td></tr>
                 </table>
             </div>
         </div>
         <hr>
         <div class="row">
             <div class="col-12">
-                <h6>System Configuration</h6>
+                <h5><i class="fas fa-key me-2 text-warning"></i>System Configuration</h5>
                 <div class="alert alert-warning">
-                    <i class="fas fa-key me-2"></i>
                     <strong>JWT Secret Key:</strong> 
                     <div class="input-group mt-2">
                         <input type="password" class="form-control" id="jwtSecretField" value="${escapeHtml(jwtSecret)}" readonly>
@@ -612,15 +772,22 @@ function displayClientDetails(client, jwtSecret) {
 
 function deleteClient(id, clientName) {
     Swal.fire({
-        title: 'Delete Client?',
-        html: `Are you sure you want to delete <strong>${escapeHtml(clientName)}</strong>?<br><br>
-               <span class="text-danger">This action cannot be undone.</span>`,
+        title: '<i class="fas fa-exclamation-triangle text-danger me-2"></i>Delete Client?',
+        html: `
+            <div class="text-start">
+                <p>Are you sure you want to delete this client?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All associated data will be permanently removed.
+                </div>
+            </div>
+        `,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc3545',
         cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: '<i class="fas fa-trash me-1"></i>Yes, delete it!',
+        cancelButtonText: '<i class="fas fa-times me-1"></i>Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
             fetch(`${basePath}/api/clients/${id}`, {
@@ -629,16 +796,31 @@ function deleteClient(id, clientName) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire('Deleted!', data.message, 'success');
+                    Swal.fire({
+                        title: '<i class="fas fa-check-circle text-success me-2"></i>Deleted!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonColor: '#198754'
+                    });
                     loadClients();
                     loadClientStatistics();
                 } else {
-                    Swal.fire('Error', data.message, 'error');
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonColor: '#198754'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error deleting client:', error);
-                Swal.fire('Error', 'Failed to delete client', 'error');
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to delete client',
+                    icon: 'error',
+                    confirmButtonColor: '#198754'
+                });
             });
         }
     });
@@ -647,16 +829,23 @@ function deleteClient(id, clientName) {
 function toggleClientStatus(id, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     const action = newStatus === 'active' ? 'activate' : 'deactivate';
+    const actionText = newStatus === 'active' ? 'Activate' : 'Deactivate';
+    const actionIcon = newStatus === 'active' ? 'fa-toggle-on' : 'fa-toggle-off';
+    const actionColor = newStatus === 'active' ? '#198754' : '#ffc107';
     
     Swal.fire({
-        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Client?`,
-        text: `Are you sure you want to ${action} this client?`,
+        title: `${actionText} Client?`,
+        html: `
+            <div class="text-start">
+                <p>Are you sure you want to ${action} this client?</p>
+            </div>
+        `,
         icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: newStatus === 'active' ? '#198754' : '#ffc107',
+        confirmButtonColor: actionColor,
         cancelButtonColor: '#6c757d',
-        confirmButtonText: `Yes, ${action}!`,
-        cancelButtonText: 'Cancel'
+        confirmButtonText: `<i class="fas ${actionIcon} me-1"></i>Yes, ${action}!`,
+        cancelButtonText: '<i class="fas fa-times me-1"></i>Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
             fetch(`${basePath}/api/clients/${id}/toggle-status`, {
@@ -665,37 +854,60 @@ function toggleClientStatus(id, currentStatus) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire('Updated!', data.message, 'success');
+                    Swal.fire({
+                        title: '<i class="fas fa-check-circle text-success me-2"></i>Updated!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonColor: '#198754'
+                    });
                     loadClients();
                     loadClientStatistics();
                 } else {
-                    Swal.fire('Error', data.message, 'error');
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonColor: '#198754'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error toggling client status:', error);
-                Swal.fire('Error', 'Failed to update client status', 'error');
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to update client status',
+                    icon: 'error',
+                    confirmButtonColor: '#198754'
+                });
             });
         }
     });
 }
 
 function refreshClients() {
+    // Show loading indicator
+    const refreshBtn = document.querySelector('button[onclick="refreshClients()"]');
+    const originalHTML = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+    refreshBtn.disabled = true;
+    
     loadClients();
     loadClientStatistics();
-    Swal.fire({
-        title: 'Refreshed!',
-        text: 'Data has been updated',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false
-    });
+    
+    // Show success message using toast notification for consistency across the application
+    showCustomCopySuccess('Data has been updated successfully');
+    
+    // Restore button after a short delay
+    setTimeout(() => {
+        refreshBtn.innerHTML = originalHTML;
+        refreshBtn.disabled = false;
+    }, 1500);
 }
 
 function copyToClipboardText(text) {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
-            showCopySuccess();
+            showCustomCopySuccess();
         }).catch(err => {
             fallbackCopyTextToClipboard(text);
         });
@@ -722,7 +934,7 @@ function fallbackCopyTextToClipboard(text) {
     
     try {
         document.execCommand('copy');
-        showCopySuccess();
+        showCustomCopySuccess();
     } catch (err) {
         console.error('Fallback: Oops, unable to copy', err);
         Swal.fire('Copy Failed', 'Unable to copy to clipboard', 'error');
@@ -755,35 +967,6 @@ function escapeHtml(text) {
 }
 
 // Custom copy success notification that doesn't interfere with existing modals
-function showCustomCopySuccess() {
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.innerHTML = `
-        <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="fas fa-check-circle me-2"></i>Copied to clipboard successfully!
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        </div>
-    `;
-    
-    // Add to document
-    document.body.appendChild(toast);
-    
-    // Initialize and show toast
-    const bsToast = new bootstrap.Toast(toast.querySelector('.toast'), {
-        delay: 1500
-    });
-    bsToast.show();
-    
-    // Remove from DOM after hidden
-    toast.querySelector('.toast').addEventListener('hidden.bs.toast', function() {
-        document.body.removeChild(toast);
-    });
-}
-
 // JWT Secret show/hide toggle function
 function toggleJwtSecret(clientId) {
     const field = document.getElementById('jwtSecretField');
@@ -861,6 +1044,9 @@ function toggleSecretVisibility(elementId) {
 
 // Show JWT Secret
 function showJwtSecret() {
+    // Log JWT secret access
+    logJwtSecretView(null);
+    
     fetch(`${basePath}/api/jwt-secret`)
         .then(response => response.json())
         .then(data => {
@@ -964,11 +1150,12 @@ function handleAuthModeChange() {
                 <div class="text-start">
                     <p><i class="fas fa-exclamation-triangle text-warning"></i> <strong>Legacy Mode is being deprecated</strong></p>
                     <hr>
-                    <p><strong>Known Limitations:</strong></p>
+                    <p><strong>Benefits of JWT Mode:</strong></p>
                     <ul class="text-muted">
-                        <li>Session cookies don't work across subdomains</li>
-                        <li>Complex file path configuration required</li>
-                        <li>Same-server deployment constraint</li>
+                        <li>Works across subdomains and different servers</li>
+                        <li>More secure and scalable</li>
+                        <li>No domain restrictions</li>
+                        <li>Better for modern web applications</li>
                     </ul>
                     <p><strong class="text-primary">Recommendation:</strong> Use JWT Mode for better compatibility and security.</p>
                 </div>
@@ -990,7 +1177,97 @@ function handleAuthModeChange() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    loadClientStatistics();
+    loadClients();
+    setupEventListeners();
+});
 
+function setupEventListeners() {
+    // Search input with debounce
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = this.value;
+            currentPage = 1;
+            loadClients();
+        }, 300); // Reduced debounce time for better responsiveness
+    });
+    
+    // Add Enter key support for search
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            clearTimeout(searchTimeout);
+            currentSearch = this.value;
+            currentPage = 1;
+            loadClients();
+        }
+    });
+
+    // Status filter
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        currentStatus = this.value;
+        currentPage = 1;
+        loadClients();
+    });
+
+    // Per page selector
+    document.getElementById('perPageSelect').addEventListener('change', function() {
+        currentPerPage = parseInt(this.value);
+        currentPage = 1;
+        loadClients();
+    });
+
+    // Form validation
+    document.getElementById('clientForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveClient();
+    });
+
+    // Scope checkboxes
+    document.querySelectorAll('.scope-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // Ensure openid is always checked
+            if (this.value === 'openid' && !this.checked) {
+                this.checked = true;
+                Swal.fire({
+                    title: 'Info',
+                    text: 'openid scope is required and cannot be unchecked',
+                    icon: 'info',
+                    confirmButtonColor: '#198754'
+                });
+            }
+            updateScopesInput();
+        });
+    });
+
+    // Authentication mode change
+    document.querySelectorAll('input[name="authMode"]').forEach(radio => {
+        radio.addEventListener('change', handleAuthModeChange);
+    });
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + N to add new client
+        if (e.ctrlKey && e.key === 'n') {
+            e.preventDefault();
+            showAddClientModal();
+        }
+        
+        // ESC to close modals
+        if (e.key === 'Escape') {
+            const modals = document.querySelectorAll('.modal.show');
+            modals.forEach(modal => {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) {
+                    bsModal.hide();
+                }
+            });
+        }
+    });
+}
 
 // Toggle secret visibility (show/hide)
 function toggleSecretVisibility(elementId) {
@@ -1024,7 +1301,7 @@ function toggleSecretVisibility(elementId) {
 function copyToClipboardText(text) {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
-            showCopySuccess();
+            showCustomCopySuccess();
         }).catch(err => {
             fallbackCopyTextToClipboard(text);
         });

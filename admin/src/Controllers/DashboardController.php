@@ -314,7 +314,7 @@ class DashboardController
                     </h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshStats()">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-btn" onclick="refreshStats()">
                                 <i class="fas fa-sync-alt me-1"></i>Refresh
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
@@ -398,6 +398,7 @@ class DashboardController
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="' . $basePath . '/js/shared.js?v=' . time() . '"></script>
     <script>
         // Auto-refresh interval (in milliseconds)
         let autoRefreshInterval = null;
@@ -514,15 +515,29 @@ class DashboardController
             container.innerHTML = html;
         }
 
+
         function refreshStats() {
+            // Show loading indicator
+            const refreshBtn = document.getElementById("refresh-btn");
+            let originalHTML = "";
+            if (refreshBtn) {
+                originalHTML = refreshBtn.innerHTML;
+                refreshBtn.innerHTML = "<i class=\"fas fa-spinner fa-spin me-1\"></i>Refreshing...";
+                refreshBtn.disabled = true;
+            }
+            
             loadDashboardData();
-            Swal.fire({
-                title: "Refreshed",
-                text: "ข้อมูลได้รับการปรับปรุงแล้ว",
-                icon: "success",
-                timer: 1500,
-                showConfirmButton: false
-            });
+            
+            // Show success message using custom toast notification for consistency across the application
+            showCustomCopySuccess("Data has been updated successfully");
+            
+            // Restore button after a short delay
+            if (refreshBtn) {
+                setTimeout(() => {
+                    refreshBtn.innerHTML = originalHTML;
+                    refreshBtn.disabled = false;
+                }, 1500);
+            }
         }
 
         // Toggle auto-refresh

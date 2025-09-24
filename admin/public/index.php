@@ -661,6 +661,7 @@ function handleApiToggleStatus($id)
  */
 function handleApiJwtSecret()
 {
+    checkAdminAuth();
     header('Content-Type: application/json');
 
     // Load JWT secret from config
@@ -669,6 +670,10 @@ function handleApiJwtSecret()
         require_once $configPath;
 
         $jwtSecret = defined('JWT_SECRET_KEY') ? JWT_SECRET_KEY : null;
+
+        // Debug logging
+        error_log("JWT Secret Key Defined: " . ($jwtSecret ? 'Yes' : 'No'));
+        error_log("JWT Secret Value: " . ($jwtSecret ? substr($jwtSecret, 0, 10) . '...' : 'N/A'));
 
         if (!$jwtSecret) {
             echo json_encode([
