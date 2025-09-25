@@ -3,6 +3,7 @@
 namespace SsoAdmin\Controllers;
 
 use SsoAdmin\Database\Connection;
+use SsoAdmin\Models\UsageStatistics;
 
 /**
  * Dashboard Controller
@@ -30,8 +31,14 @@ class DashboardController
             $stats = [
                 'total_clients' => $this->getTotalClients(),
                 'active_clients' => $this->getActiveClients(),
+                'inactive_clients' => $this->getInactiveClients(),
+                'suspended_clients' => $this->getSuspendedClients(),
                 'total_requests_today' => $this->getRequestsToday(),
+                'total_requests' => $this->getTotalRequests(),
                 'success_rate' => $this->getSuccessRate(),
+                'recent_activities_count' => $this->getRecentActivitiesCount(),
+                'top_client_activities' => $this->getTopClientActivities(),
+                'system_usage_trend' => $this->getSystemUsageTrend()
             ];
 
             $body = $response->getBody();
@@ -108,6 +115,32 @@ class DashboardController
     }
 
     /**
+     * Get inactive clients count
+     */
+    private function getInactiveClients()
+    {
+        try {
+            $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients WHERE status = ?', ['inactive']);
+            return $result ? (int)$result['count'] : 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Get suspended clients count
+     */
+    private function getSuspendedClients()
+    {
+        try {
+            $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients WHERE status = ?', ['suspended']);
+            return $result ? (int)$result['count'] : 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
      * Get requests count for today
      */
     private function getRequestsToday()
@@ -116,6 +149,20 @@ class DashboardController
             $today = date('Y-m-d');
             $sql = "SELECT COUNT(*) as count FROM audit_logs WHERE DATE(created_at) = ?";
             $result = Connection::fetchOne($sql, [$today]);
+            return $result ? (int)$result['count'] : 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Get total requests count
+     */
+    private function getTotalRequests()
+    {
+        try {
+            $sql = "SELECT COUNT(*) as count FROM audit_logs";
+            $result = Connection::fetchOne($sql);
             return $result ? (int)$result['count'] : 0;
         } catch (\Exception $e) {
             return 0;
@@ -147,6 +194,57 @@ class DashboardController
             return round($successRate, 1);
         } catch (\Exception $e) {
             return 0;
+        }
+    }
+
+    /**
+     * Get recent activities count
+     */
+    private function getRecentActivitiesCount()
+    {
+        try {
+            // Change from 7 days to total activities
+            $sql = "SELECT COUNT(*) as count FROM audit_logs";
+            $result = Connection::fetchOne($sql);
+            return $result ? (int)$result['count'] : 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Get top client activities
+     */
+    private function getTopClientActivities()
+    {
+        try {
+            $sql = "SELECT c.client_name, COUNT(al.id) as activity_count 
+                    FROM clients c 
+                    LEFT JOIN audit_logs al ON (c.id = al.resource_id AND al.resource_type = 'client') 
+                    WHERE al.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                    GROUP BY c.id, c.client_name 
+                    ORDER BY activity_count DESC 
+                    LIMIT 5";
+            return Connection::fetchAll($sql);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Get system usage trend (last 7 days)
+     */
+    private function getSystemUsageTrend()
+    {
+        try {
+            $sql = "SELECT DATE(created_at) as date, COUNT(*) as count 
+                    FROM audit_logs 
+                    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                    GROUP BY DATE(created_at) 
+                    ORDER BY date";
+            return Connection::fetchAll($sql);
+        } catch (\Exception $e) {
+            return [];
         }
     }
 
@@ -314,7 +412,7 @@ class DashboardController
                     </h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-btn" onclick="refreshStats()">
+                            <button type="button" class="btn btn-me btn-outline-secondary" id="refresh-btn" onclick="refreshStats()">
                                 <i class="fas fa-sync-alt me-1"></i>Refresh
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
@@ -324,8 +422,8 @@ class DashboardController
                     </div>
                 </div>
 
-                <!-- Statistics Cards -->
-                <div class="row mb-4" id="stats-cards">
+                <!-- Client Statistics Cards -->
+                <div class="row mb-4" id="client-stats-cards">
                     <div class="col-lg-3 col-md-6 mb-3">
                         <div class="card bg-primary text-white">
                             <div class="card-body">
@@ -353,6 +451,36 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card bg-secondary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Inactive Clients</h6>
+                                        <h3 id="inactive-clients">-</h3>
+                                    </div>
+                                    <i class="fas fa-pause-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Suspended Clients</h6>
+                                        <h3 id="suspended-clients">-</h3>
+                                    </div>
+                                    <i class="fas fa-ban fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Statistics Cards -->
+                <div class="row mb-4" id="system-stats-cards">
+                    <div class="col-lg-3 col-md-6 mb-3">
                         <div class="card bg-info text-white">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
@@ -361,6 +489,19 @@ class DashboardController
                                         <h3 id="requests-today">-</h3>
                                     </div>
                                     <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Total Requests</h6>
+                                        <h3 id="total-requests">-</h3>
+                                    </div>
+                                    <i class="fas fa-chart-bar fa-2x opacity-75"></i>
                                 </div>
                             </div>
                         </div>
@@ -378,18 +519,66 @@ class DashboardController
                             </div>
                         </div>
                     </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card bg-purple text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Total Activities</h6>
+                                        <h3 id="recent-activities-count">-</h3>
+                                    </div>
+                                    <i class="fas fa-history fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Additional Information -->
+                <div class="row mb-4">
+                    <!-- Top Client Activities Chart -->
+                    <div class="col-lg-6 mb-3">
+                        <div class="card shadow">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-chart-bar me-2"></i>Top Client Activities (30 days)
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="topClientActivitiesChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Usage Trend Chart -->
+                    <div class="col-lg-6 mb-3">
+                        <div class="card shadow">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-chart-line me-2"></i>System Usage Trend (7 days)
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="systemUsageTrendChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Recent Activities -->
-                <div class="card shadow">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-history me-2"></i>Recent Activities
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="recent-activities">
-                            <p class="text-center">Loading...</p>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-history me-2"></i>Recent Activities
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="recent-activities">
+                                    <p class="text-center">Loading...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -403,6 +592,10 @@ class DashboardController
         // Auto-refresh interval (in milliseconds)
         let autoRefreshInterval = null;
         const refreshInterval = 30000; // 30 seconds
+
+        // Chart instances
+        let topClientActivitiesChart = null;
+        let systemUsageTrendChart = null;
 
         document.addEventListener("DOMContentLoaded", function() {
             loadDashboardData();
@@ -457,6 +650,7 @@ class DashboardController
                 .then(data => {
                     if (data.success) {
                         updateStatsCards(data.data);
+                        updateCharts(data.data);
                     } else {
                         Swal.fire("Error", data.message, "error");
                     }
@@ -487,8 +681,78 @@ class DashboardController
         function updateStatsCards(stats) {
             document.getElementById("total-clients").textContent = stats.total_clients;
             document.getElementById("active-clients").textContent = stats.active_clients;
+            document.getElementById("inactive-clients").textContent = stats.inactive_clients;
+            document.getElementById("suspended-clients").textContent = stats.suspended_clients;
             document.getElementById("requests-today").textContent = stats.total_requests_today;
+            document.getElementById("total-requests").textContent = stats.total_requests;
             document.getElementById("success-rate").textContent = stats.success_rate + "%";
+            document.getElementById("recent-activities-count").textContent = stats.recent_activities_count;
+        }
+
+        function updateCharts(stats) {
+            // Update Top Client Activities Chart
+            if (topClientActivitiesChart) {
+                topClientActivitiesChart.destroy();
+            }
+            
+            const topClientCtx = document.getElementById("topClientActivitiesChart").getContext("2d");
+            topClientActivitiesChart = new Chart(topClientCtx, {
+                type: "bar",
+                data: {
+                    labels: stats.top_client_activities.map(item => item.client_name),
+                    datasets: [{
+                        label: "Activities",
+                        data: stats.top_client_activities.map(item => item.activity_count),
+                        backgroundColor: "rgba(54, 162, 235, 0.6)",
+                        borderColor: "rgba(54, 162, 235, 1)",
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Update System Usage Trend Chart
+            if (systemUsageTrendChart) {
+                systemUsageTrendChart.destroy();
+            }
+            
+            const trendCtx = document.getElementById("systemUsageTrendChart").getContext("2d");
+            systemUsageTrendChart = new Chart(trendCtx, {
+                type: "line",
+                data: {
+                    labels: stats.system_usage_trend.map(item => item.date),
+                    datasets: [{
+                        label: "Activities",
+                        data: stats.system_usage_trend.map(item => item.count),
+                        fill: false,
+                        borderColor: "rgb(75, 192, 192)",
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function renderRecentActivities(activities) {
@@ -514,7 +778,6 @@ class DashboardController
             
             container.innerHTML = html;
         }
-
 
         function refreshStats() {
             // Show loading indicator
@@ -549,6 +812,11 @@ class DashboardController
             }
         }
     </script>
+    <style>
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
+    </style>
 </body>
 </html>';
     }

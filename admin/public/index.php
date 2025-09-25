@@ -1430,7 +1430,7 @@ function renderStatisticsPage()
                                 <option value="90">Last 90 days</option>
                             </select>
                         </div>
-                        <div class="btn-group me-2">
+                        <!--<div class="btn-group me-2">
                             <button type="button" class="btn btn-success" onclick="generateMockData()">
                                 <i class="fas fa-magic me-1"></i>Generate Demo Data
                             </button>
@@ -1440,7 +1440,7 @@ function renderStatisticsPage()
                         </div>
                         <button type="button" class="btn btn-outline-secondary" onclick="loadStatistics()">
                             <i class="fas fa-sync-alt me-1"></i>Refresh
-                        </button>
+                        </button>-->
                     </div>
                 </div>
 
