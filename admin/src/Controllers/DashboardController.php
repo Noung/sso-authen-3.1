@@ -161,7 +161,8 @@ class DashboardController
     private function getTotalRequests()
     {
         try {
-            $sql = "SELECT COUNT(*) as count FROM audit_logs";
+            // Count only authentication-related requests
+            $sql = "SELECT COUNT(*) as count FROM audit_logs WHERE action IN ('auth_success', 'auth_failed', 'oidc_auth_success', 'oidc_auth_failed', 'oidc_login_initiated')";
             $result = Connection::fetchOne($sql);
             return $result ? (int)$result['count'] : 0;
         } catch (\Exception $e) {
@@ -375,7 +376,7 @@ class DashboardController
                     <i class="fas fa-user me-1"></i>' . $adminName . '
                 </span>
                 <a class="nav-link" href="' . $basePath . '/auth/logout">
-                    <i class="fas fa-sign-out-alt me-1"></i>ออกจากระบบ
+                    <i class="fas fa-sign-out-alt me-1"></i>Sign out
                 </a>
             </div>
         </div>
@@ -405,7 +406,7 @@ class DashboardController
                 </div>
             </nav>
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">
                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard
@@ -425,7 +426,7 @@ class DashboardController
                 <!-- Client Statistics Cards -->
                 <div class="row mb-4" id="client-stats-cards">
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-primary text-white">
+                        <div class="card bg-vibrant-blue text-white">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -438,7 +439,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-success text-white">
+                        <div class="card bg-vibrant-green text-white">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -451,7 +452,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-secondary text-white">
+                        <div class="card bg-vibrant-dark-gray text-white">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -464,7 +465,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-danger text-white">
+                        <div class="card bg-vibrant-red text-white">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -481,7 +482,7 @@ class DashboardController
                 <!-- System Statistics Cards -->
                 <div class="row mb-4" id="system-stats-cards">
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-info text-white">
+                        <div class="card bg-vibrant-orange text-white">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -494,7 +495,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-primary text-white">
+                        <div class="card bg-vibrant-yellow text-white">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -507,7 +508,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-warning text-white">
+                        <div class="card bg-vibrant-teal text-white">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -520,7 +521,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-purple text-white">
+                        <div class="card bg-vibrant-purple text-white">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -813,8 +814,32 @@ class DashboardController
         }
     </script>
     <style>
-        .bg-purple {
-            background-color: #6f42c1 !important;
+        .bg-vibrant-blue {
+            background-color: #3498DB !important;
+        }
+        .bg-vibrant-green {
+            background-color: #2ECC71 !important;
+        }
+        .bg-vibrant-orange {
+            background-color: #E67E22 !important;
+        }
+        .bg-vibrant-purple {
+            background-color: #9B59B6 !important;
+        }
+        .bg-vibrant-red {
+            background-color: #E74C3C !important;
+        }
+        .bg-vibrant-yellow {
+            background-color: #F1C40F !important;
+        }
+        .bg-vibrant-teal {
+            background-color: #1ABC9C !important;
+        }
+        .bg-vibrant-dark-gray {
+            background-color: #34495E !important;
+        }
+        .admin-content {
+            margin-bottom: 20px;
         }
     </style>
 </body>

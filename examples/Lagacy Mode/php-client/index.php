@@ -32,7 +32,7 @@ if (!session_id()) {
                     <p class="card-text">คุณได้เข้าสู่ระบบเรียบร้อยแล้ว (Role: <?php echo htmlspecialchars($_SESSION['user_info']['role']); ?>)</p>
                     <div class="text-center">
                         <a href="userinfo.php" class="btn btn-info">หน้าสมาชิก</a>
-                        <a href="sso-authen/public/logout.php" class="btn btn-danger">ออกจากระบบ</a>
+                        <a href="sso-authen/public/logout.php" class="btn btn-danger">Sign out</a>
                     </div>
                 <?php else: ?>
                     <h5 class="card-title" style="color:red">คุณยังไม่ได้เข้าสู่ระบบ</h5>

@@ -69,7 +69,7 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
                                     <i class="fas fa-user me-1"></i><?php echo $_SESSION['admin_name']; ?>
                                 </span>
                                 <a class="nav-link" href="?logout=1">
-                                    <i class="fas fa-sign-out-alt me-1"></i>ออกจากระบบ
+                                    <i class="fas fa-sign-out-alt me-1"></i>Sign out
                                 </a>
                             </div>
                         </div>
@@ -195,8 +195,8 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
             session_destroy();
             echo '<script>
                 Swal.fire({
-                    title: "ออกจากระบบสำเร็จ",
-                    text: "คุณได้ออกจากระบบเรียบร้อยแล้ว",
+                    title: "Sign out successful",
+                    text: "You have successfully signed out.",
                     icon: "success"
                 }).then(() => {
                     window.location.href = "simple_admin.php";

@@ -186,7 +186,7 @@ function handleAuthLogout() {
     $_SESSION = array();
     session_destroy();
     
-    echo renderAlert('ออกจากระบบสำเร็จ', 'คุณได้ออกจากระบบเรียบร้อยแล้ว', 'success', '/admin/public/auth/login.php');
+    echo renderAlert('Sign out successful', 'You have successfully signed out.', 'success', '/admin/public/auth/login.php');
 }
 
 function handleClientsPage() {
@@ -378,7 +378,7 @@ function renderClientsPage() {
                     <i class="fas fa-user me-1"></i>' . ($_SESSION['admin_name'] ?? 'Administrator') . '
                 </span>
                 <a class="nav-link" href="/admin/public/auth/logout">
-                    <i class="fas fa-sign-out-alt me-1"></i>ออกจากระบบ
+                    <i class="fas fa-sign-out-alt me-1"></i>Sign out
                 </a>
             </div>
         </div>

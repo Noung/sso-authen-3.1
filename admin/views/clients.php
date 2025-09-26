@@ -49,6 +49,10 @@
         .text-small {
             font-size: 0.9rem;
         }
+        
+        .admin-content {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
@@ -69,7 +73,7 @@
                     <i class="fas fa-user me-1"></i><?php echo $adminName; ?>
                 </span>
                 <a class="nav-link" href="<?php echo $basePath; ?>/auth/logout">
-                    <i class="fas fa-sign-out-alt me-1"></i>ออกจากระบบ
+                    <i class="fas fa-sign-out-alt me-1"></i>Sign out
                 </a>
             </div>
         </div>
@@ -101,7 +105,7 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">
                         <i class="fas fa-users me-2"></i>Client Management
@@ -119,7 +123,7 @@
                 </div>
 
                 <!-- Statistics Cards -->
-                <div class="row mb-4" id="stats-cards">
+                <!-- <div class="row mb-4" id="stats-cards">
                     <div class="col-lg-3 col-md-6 mb-3">
                         <div class="card bg-primary text-white h-100">
                             <div class="card-body">
@@ -172,7 +176,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- Search and Filter -->
                 <div class="card shadow mb-4">
@@ -263,7 +267,7 @@
                             <label class="form-label">Authentication Mode</label>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="card h-100">
+                                    <div class="card h-100 border-primary">
                                         <div class="card-body">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="radio" name="authMode" value="jwt" id="authModeJWT" checked>

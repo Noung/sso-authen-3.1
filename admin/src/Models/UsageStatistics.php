@@ -35,6 +35,10 @@ class UsageStatistics
             return ['error' => 'Client not found'];
         }
 
+        // Add total requests to client data
+        $totalRequests = $this->getClientTotalRequests($client['client_id'], $days);
+        $client['total_requests'] = $totalRequests;
+
         // Get activity statistics
         $activityStats = $this->getClientActivityStats($clientId, $days);
 
@@ -56,6 +60,23 @@ class UsageStatistics
             'top_admins' => $topAdmins,
             'generated_at' => date('Y-m-d H:i:s')
         ];
+    }
+
+    /**
+     * Get total requests for a client
+     */
+    private function getClientTotalRequests($clientId, $days)
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) as count 
+            FROM audit_logs 
+            WHERE resource_type = 'authentication' 
+                AND resource_id = ? 
+                AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+        ");
+        $stmt->execute([$clientId, $days]);
+        $result = $stmt->fetch();
+        return $result ? (int)$result['count'] : 0;
     }
 
     /**
@@ -258,14 +279,15 @@ class UsageStatistics
                 COUNT(al.id) as total_activities,
                 COUNT(DISTINCT al.action) as unique_actions,
                 COUNT(DISTINCT al.admin_email) as unique_admins,
-                MAX(al.created_at) as last_activity
+                MAX(al.created_at) as last_activity,
+                (SELECT COUNT(*) FROM audit_logs WHERE resource_type = 'authentication' AND resource_id = c.client_id AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_requests
             FROM clients c
             LEFT JOIN audit_logs al ON (c.id = al.resource_id AND al.resource_type = 'client' 
                                        AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY))
             GROUP BY c.id, c.client_name, c.client_id, c.status
             ORDER BY total_activities DESC
         ");
-        $stmt->execute([$days]);
+        $stmt->execute([$days, $days]);
         return $stmt->fetchAll();
     }
 

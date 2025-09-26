@@ -52,8 +52,8 @@ function renderClientsTable(clients) {
         container.innerHTML = `
             <div class="text-center py-5">
                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                <h5>ไม่มีข้อมูล Client Applications</h5>
-                <p class="text-muted">คลิก "Add New Client" เพื่อเพิ่ม client แรก</p>
+                <h5>No Client Applications Data</h5>
+                <p class="text-muted">Click "Add New Client" to add the first client.</p>
                 <button class="btn btn-primary mt-2" onclick="showAddClientModal()">
                     <i class="fas fa-plus me-1"></i>Add New Client
                 </button>
@@ -97,7 +97,7 @@ function renderClientsTable(clients) {
             } else if (client.user_handler_endpoint.startsWith('/')) {
                 // Legacy Mode: File path starting with /
                 authMode = 'Legacy';
-                authModeBadge = '<span class="badge bg-secondary" title="Legacy Mode"><i class="fas fa-server me-1"></i>Legacy</span>';
+                authModeBadge = '<span class="badge bg-warning" title="Legacy Mode"><i class="fas fa-server me-1"></i>Legacy</span>';
             } else {
                 // Unknown mode
                 authModeBadge = '<span class="badge bg-dark" title="Unknown Mode">Unknown</span>';
@@ -152,7 +152,7 @@ function renderClientsTable(clients) {
                         <button class="btn btn-outline-primary" onclick="editClient(${client.id})" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-outline-${client.status === 'active' ? 'warning' : 'success'}" onclick="toggleClientStatus(${client.id}, '${client.status}')" title="${client.status === 'active' ? 'Deactivate' : 'Activate'}">
+                        <button class="btn btn-outline-${client.status === 'active' ? 'secondary' : 'success'}" onclick="toggleClientStatus(${client.id}, '${client.status}')" title="${client.status === 'active' ? 'Deactivate' : 'Activate'}">
                             <i class="fas fa-toggle-${client.status === 'active' ? 'on' : 'off'}"></i>
                         </button>
                         <button class="btn btn-outline-danger" onclick="deleteClient(${client.id}, '${escapeHtml(client.client_name)}')" title="Delete">
@@ -706,7 +706,7 @@ function displayClientDetails(client, jwtSecret) {
         } else if (client.user_handler_endpoint.startsWith('/')) {
             // Legacy Mode: File path starting with /
             authMode = 'Legacy';
-            authModeBadge = '<span class="badge bg-secondary">Legacy Mode</span><br><small class="text-warning">⚠️ Same domain required</small>';
+            authModeBadge = '<span class="badge bg-warning">Legacy Mode</span><br><small class="text-warning">⚠️ Same domain required</small>';
         } else {
             // Unknown mode
             authModeBadge = '<span class="badge bg-dark">Unknown Mode</span>';
@@ -715,6 +715,9 @@ function displayClientDetails(client, jwtSecret) {
         // No user handler endpoint
         authModeBadge = '<span class="badge bg-dark">No Handler</span>';
     }
+    
+    // Get total requests from client object or default to 0
+    const totalRequests = client.total_requests || 0;
     
     const content = `
         <div class="row">
@@ -725,6 +728,7 @@ function displayClientDetails(client, jwtSecret) {
                     <tr><td class="text-muted">Client Name:</td><td><strong>${escapeHtml(client.client_name)}</strong></td></tr>
                     <tr><td class="text-muted">Description:</td><td>${escapeHtml(client.client_description || 'No description')}</td></tr>
                     <tr><td class="text-muted">Status:</td><td>${getStatusBadge(client.status)}</td></tr>
+                    <!--<tr><td class="text-muted">Total Requests:</td><td><span class="badge bg-info">${totalRequests}</span></td></tr>-->
                     <tr><td class="text-muted">Created:</td><td>${createdDate.toLocaleString('th-TH')}<br><small class="text-muted">by ${client.created_by || 'N/A'}</small></td></tr>
                     <tr><td class="text-muted">Updated:</td><td>${updatedDate.toLocaleString('th-TH')}<br><small class="text-muted">by ${client.updated_by || 'N/A'}</small></td></tr>
                 </table>

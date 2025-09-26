@@ -16,7 +16,7 @@ try {
     $postLogoutRedirectUri = $_GET['post_logout_redirect_uri'] ?? null;
 
     if (!$postLogoutRedirectUri) {
-        throw new Exception('ไม่ได้ระบุ URL ปลายทางหลังจากการออกจากระบบ (post_logout_redirect_uri is required)');
+        throw new Exception('No destination URL specified after sign out. (post_logout_redirect_uri is required)');
     }
 
     // 2. ตรวจสอบความปลอดภัย: สร้าง Whitelist ของ URL ที่ได้รับอนุญาต
@@ -32,7 +32,7 @@ try {
 
     // ตรวจสอบว่า URL ที่ส่งมา อยู่ใน Whitelist หรือไม่
     if (!in_array($postLogoutRedirectUri, array_unique($allowedUris))) { // ใช้ array_unique กันซ้ำซ้อน
-        throw new Exception('URL ปลายทางที่ระบุมาไม่ได้รับอนุญาต');
+        throw new Exception('The specified destination URL is not authorized.');
     }
 
     // 3. เรียกใช้ Static Method เพื่อทำลาย Session ของ SSO กลาง
@@ -40,8 +40,8 @@ try {
 
     // 4. ส่งผู้ใช้กลับไปยัง URL ที่ตรวจสอบแล้วว่าปลอดภัย
     render_alert_and_redirect(
-        'ออกจากระบบสำเร็จ',
-        'คุณได้ออกจากระบบเรียบร้อยแล้ว',
+        'Sign out successful',
+        'You have successfully signed out.',
         'success',
         $postLogoutRedirectUri
     );

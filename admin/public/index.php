@@ -325,7 +325,7 @@ function handleAuthLogout()
     $basePath = $GLOBALS['admin_base_path'];
 
     // Show logout success message and redirect to standalone login
-    echo renderAlert('ออกจากระบบสำเร็จ', 'คุณได้ออกจากระบบเรียบร้อยแล้ว', 'success', $basePath . '/login.php');
+    echo renderAlert('Sign out successful', 'You have successfully signed out.', 'success', $basePath . '/login.php');
 }
 
 function handleClientsPage()
@@ -1173,7 +1173,7 @@ function renderClientsPage()
                     <i class="fas fa-user me-1"></i>' . $adminName . '
                 </span>
                 <a class="nav-link" href="' . $basePath . '/auth/logout">
-                    <i class="fas fa-sign-out-alt me-1"></i>ออกจากระบบ
+                    <i class="fas fa-sign-out-alt me-1"></i>Sign out
                 </a>
             </div>
         </div>
@@ -1377,6 +1377,11 @@ function renderStatisticsPage()
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .admin-content {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -1389,7 +1394,7 @@ function renderStatisticsPage()
                     <i class="fas fa-user me-1"></i>' . $adminName . '
                 </span>
                 <a class="nav-link" href="' . $basePath . '/auth/logout">
-                    <i class="fas fa-sign-out-alt me-1"></i>ออกจากระบบ
+                    <i class="fas fa-sign-out-alt me-1"></i>Sign out
                 </a>
             </div>
         </div>
@@ -1419,9 +1424,9 @@ function renderStatisticsPage()
                 </div>
             </nav>
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Usage Statistics <small class="text-muted fs-6" id="demo-indicator" style="display:none"><i class="fas fa-flask me-1"></i>Demo Data Active</small></h1>
+                    <h1 class="h2"><i class="fas fa-chart-bar me-2"></i>Usage Statistics <small class="text-muted fs-6" id="demo-indicator" style="display:none"><i class="fas fa-flask me-1"></i>Demo Data Active</small></h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
                             <select class="form-select" id="periodSelect" onchange="loadStatistics()">
@@ -1445,9 +1450,9 @@ function renderStatisticsPage()
                 </div>
 
                 <!-- System Statistics Overview -->
-                <div class="row mb-4" id="system-stats">
+                <div class="row mb-4" id="system-stats" style="display:none">
                     <div class="col-12">
-                        <div class="card">
+                        <div class="card shadow">
                             <div class="card-header">
                                 <h5><i class="fas fa-globe me-2"></i>System Overview</h5>
                             </div>
@@ -1466,9 +1471,9 @@ function renderStatisticsPage()
                 <!-- Client Statistics -->
                 <div class="row">
                     <div class="col-12">
-                        <div class="card">
+                        <div class="card shadow">
                             <div class="card-header">
-                                <h5><i class="fas fa-users me-2"></i>Client Activity Summary</h5>
+                                <h5 id="time-round"><i class="fas fa-users me-2"></i>Client Activity Summary</h5>
                             </div>
                             <div class="card-body" id="client-stats">
                                 <div class="text-center">
@@ -1515,11 +1520,13 @@ function renderStatisticsPage()
         function renderSystemStats(stats) {
             const systemStatsDiv = document.getElementById("system-stats");
             const clientStatsDiv = document.getElementById("client-stats");
+            timeRound = document.getElementById("time-round");
             
             // Render system overview
+            timeRound.innerHTML = `<i class="fas fa-users me-2"></i>Client Activity Summary (${stats.period_days} days)`;
             systemStatsDiv.innerHTML = `
                 <div class="col-12">
-                    <div class="card">
+                    <div class="card shadow">
                         <div class="card-header">
                             <h5><i class="fas fa-globe me-2"></i>System Overview (${stats.period_days} days)</h5>
                         </div>
@@ -1564,6 +1571,7 @@ function renderStatisticsPage()
                                 <th>Client Name</th>
                                 <th>Status</th>
                                 <th>Total Activities</th>
+                                <th>Total Requests</th>
                                 <th>Unique Actions</th>
                                 <th>Active Admins</th>
                                 <th>Last Activity</th>
@@ -1586,7 +1594,8 @@ function renderStatisticsPage()
                     <tr>
                         <td><strong>${client.client_name}</strong><br><small class="text-muted">${client.client_id}</small></td>
                         <td>${statusBadge}</td>
-                        <td><span class="badge bg-info">${client.total_activities}</span></td>
+                        <td><span class="badge" style="background:#9B59B6">${client.total_activities}</span></td>
+                        <td><span class="badge" style="background:#F1C40F">${client.total_requests || 0}</span></td>
                         <td>${client.unique_actions}</td>
                         <td>${client.unique_admins}</td>
                         <td><small>${lastActivity}</small></td>
@@ -1665,6 +1674,7 @@ function renderStatisticsPage()
                         <p><strong>Period:</strong> ${stats.period_days} days</p>
                         <p><strong>Client ID:</strong> <code>${stats.client.client_id}</code></p>
                         <p><strong>Status:</strong> <span class="badge bg-${stats.client.status === "active" ? "success" : "secondary"}">${stats.client.status}</span></p>
+                        <p><strong>Total Requests:</strong> <span class="badge bg-primary">${stats.client.total_requests || 0}</span></p>
                         <hr>
                         ${activityDetailsHtml}
                         ${jwtViewInfo}

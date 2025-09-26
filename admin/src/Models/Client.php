@@ -158,10 +158,8 @@ class Client
             }
 
             // Validate user handler endpoint URL if in JWT mode
-            if (!empty($userHandlerEndpoint) && !empty($apiSecretKey)) {
-                if (!self::isValidUrl($userHandlerEndpoint)) {
-                    throw new Exception('Invalid user handler endpoint format or unsupported scheme. Only http:// and https:// are allowed.');
-                }
+            if (!empty($userHandlerEndpoint) && !empty($apiSecretKey) && !self::isValidUrl($userHandlerEndpoint)) {
+                throw new Exception('Invalid user handler endpoint format or unsupported scheme. Only http:// and https:// are allowed.');
             }
 
             $sql = 'INSERT INTO clients (client_id, client_name, client_description, app_redirect_uri, post_logout_redirect_uri, user_handler_endpoint, api_secret_key, allowed_scopes, status, created_at, updated_at, created_by) 
