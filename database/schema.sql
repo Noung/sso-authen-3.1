@@ -65,6 +65,21 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Table: jwt_secret_history
+-- Tracks JWT secret key changes for security auditing
+CREATE TABLE IF NOT EXISTS jwt_secret_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    secret_key VARCHAR(255) NOT NULL,
+    created_by VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    notes TEXT NULL,
+    
+    INDEX idx_created_by (created_by),
+    INDEX idx_created_at (created_at),
+    INDEX idx_is_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Insert default admin user (modify email as needed)
 INSERT INTO admin_users (email, name, role, status) VALUES 
 ('admin@psu.ac.th', 'System Administrator', 'super_admin', 'active')

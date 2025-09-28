@@ -368,19 +368,7 @@ function renderSettingsPage()
     $basePath = $GLOBALS['admin_base_path'];
     
     // Get current JWT secret key from config
-    $currentSecret = '';
-    $configPath = __DIR__ . '/../../config/config.php';
-    if (file_exists($configPath)) {
-        // Read the config file content
-        $configContent = file_get_contents($configPath);
-        
-        // Use regex to extract the JWT_SECRET_KEY value
-        if (preg_match("/define\('JWT_SECRET_KEY',\s*'([^']*)'\);/", $configContent, $matches)) {
-            $currentSecret = $matches[1];
-        } elseif (preg_match('/define\("JWT_SECRET_KEY",\s*"([^"]*)"\);/', $configContent, $matches)) {
-            $currentSecret = $matches[1];
-        }
-    }
+    $currentSecret = defined('JWT_SECRET_KEY') ? JWT_SECRET_KEY : '';
     
     // Get secret key history
     require_once __DIR__ . '/../src/Models/JwtSecretHistory.php';
@@ -545,15 +533,6 @@ function renderSettingsPage()
                                                     <td class="secret-key-cell">
                                                         <div id="masked-' . $record['id'] . '">' . htmlspecialchars($maskedKey) . '</div>
                                                         <div id="full-' . $record['id'] . '" class="secret-key-full">' . htmlspecialchars($record['secret_key']) . '</div>
-                                                        <!--<div class="input-group mt-2" style="width: fit-content;">
-                                                            <input type="password" class="form-control" id="secret-' . $record['id'] . '" value="' . htmlspecialchars($record['secret_key']) . '" readonly>
-                                                            <button class="btn btn-outline-secondary" onclick="toggleHistorySecret(' . $record['id'] . ')" id="toggleHistoryBtn-' . $record['id'] . '" title="Show JWT Secret">
-                                                                <i class="fas fa-eye" id="toggleHistoryIcon-' . $record['id'] . '"></i> Show
-                                                            </button>
-                                                            <button class="btn btn-outline-secondary" onclick="copyToClipboardText(\'' . htmlspecialchars($record['secret_key']) . '\')" title="Copy JWT Secret">
-                                                                <i class="fas fa-copy"></i> Copy
-                                                            </button>
-                                                        </div>-->
                                                     </td>
                                                     <td>' . htmlspecialchars($record['created_by']) . '</td>
                                                     <td>' . htmlspecialchars($record['created_at']) . '</td>
@@ -562,6 +541,17 @@ function renderSettingsPage()
                                                         ' . ($record['is_active'] ? 
                                                             '<span class="badge bg-success">Active</span>' : 
                                                             '<span class="badge bg-secondary">Inactive</span>') . '
+                                                    </td>
+                                                </tr>';
+                                                        <div class="input-group mt-2" style="width: fit-content;">
+                                                            <input type="password" class="form-control" id="secret-' . $record['id'] . '" value="' . htmlspecialchars($record['secret_key']) . '" readonly>
+                                                            <button class="btn btn-outline-secondary" onclick="toggleHistorySecret(' . $record['id'] . ')" id="toggleHistoryBtn-' . $record['id'] . '" title="Show JWT Secret">
+                                                                <i class="fas fa-eye" id="toggleHistoryIcon-' . $record['id'] . '"></i> Show
+                                                            </button>
+                                                            <button class="btn btn-outline-secondary" onclick="copyToClipboardText(\'' . htmlspecialchars($record['secret_key']) . '\')" title="Copy JWT Secret">
+                                                                <i class="fas fa-copy"></i> Copy
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>';
     }
@@ -1136,8 +1126,6 @@ function handleApiJwtSecret()
         ]);
     }
 }
-
-
 
 /**
  * Handle JWT secret view logging

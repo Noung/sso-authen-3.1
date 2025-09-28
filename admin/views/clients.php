@@ -100,6 +100,11 @@
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?php echo $basePath; ?>/settings">
+                                <i class="fas fa-cog me-2"></i>System Configuration
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
