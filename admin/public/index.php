@@ -387,6 +387,9 @@ function renderSettingsPage()
     $historyResult = SsoAdmin\Models\JwtSecretHistory::getAll(1, 50);
     $historyData = $historyResult['data'] ?? [];
     
+    $basePath = $GLOBALS['admin_base_path'];
+    $adminName = $_SESSION['admin_name'] ?? 'Administrator';
+
     $html = '
     <!DOCTYPE html>
     <html lang="en">
@@ -437,6 +440,21 @@ function renderSettingsPage()
         </style>
     </head>
     <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="' . $basePath . '">
+                    <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-user me-1"></i>' . $adminName . '
+                    </span>
+                    <a class="nav-link" href="' . $basePath . '/auth/logout">
+                        <i class="fas fa-sign-out-alt me-1"></i>Sign out
+                    </a>
+                </div>
+            </div>
+        </nav>
         <div class="container-fluid">
             <div class="row">
                 <!-- Sidebar -->
@@ -444,7 +462,7 @@ function renderSettingsPage()
                     <div class="position-sticky pt-3">
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link" href="' . $basePath . '/dashboard">
+                                <a class="nav-link" href="' . $basePath . '/">
                                     <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                                 </a>
                             </li>
@@ -583,6 +601,7 @@ function renderSettingsPage()
         <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
         <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="' . $basePath . '/js/shared.js"></script>
         <script>
             // JWT Secret show/hide toggle function
             function toggleJwtSecret() {
@@ -661,15 +680,7 @@ function renderSettingsPage()
             }
             
             function showCopySuccess() {
-                Swal.fire({
-                    title: "Copied!",
-                    text: "Text copied to clipboard",
-                    icon: "success",
-                    timer: 1500,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: "top-end"
-                });
+                showCustomToast("Copied to clipboard successfully!", "success");
             }
             
             let newSecret = "";
@@ -1994,6 +2005,11 @@ function renderStatisticsPage()
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
+                        <li class="nav-item">
+                                <a class="nav-link active" href="' . $basePath . '/settings">
+                                    <i class="fas fa-cog me-2"></i>System Configuration
+                                </a>
+                            </li>
                     </ul>
                 </div>
             </nav>
