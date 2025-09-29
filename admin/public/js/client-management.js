@@ -502,7 +502,7 @@ function saveClient() {
                                     <div class="mb-0">
                                         <label class="form-label fw-bold">JWT Secret:</label>
                                         <div class="input-group">
-                                            <input type="password" class="form-control secret-field" value="System JWT Secret (Same for all clients)" readonly id="newJwtSecret">
+                                            <input type="password" class="form-control secret-field" value="Loading JWT secret..." readonly id="newJwtSecret">
                                             <button class="btn btn-outline-secondary toggle-btn" data-target="newJwtSecret" title="Show/Hide JWT Secret">
                                                 <i class="fas fa-eye" id="toggleJwtSecretIcon"></i>
                                             </button>
@@ -584,6 +584,29 @@ function saveClient() {
                             }
                         });
                     });
+                    
+                    // Fetch and display the actual JWT secret if this is JWT mode
+                    if (isJWTMode) {
+                        fetch(`${basePath}/api/jwt-secret`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const jwtSecretField = document.getElementById('newJwtSecret');
+                                if (jwtSecretField) {
+                                    if (data.success) {
+                                        jwtSecretField.value = data.jwt_secret;
+                                    } else {
+                                        jwtSecretField.value = 'Error loading JWT secret';
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching JWT secret:', error);
+                                const jwtSecretField = document.getElementById('newJwtSecret');
+                                if (jwtSecretField) {
+                                    jwtSecretField.value = 'Error loading JWT secret';
+                                }
+                            });
+                    }
                 }, 100);
             } else {
                 Swal.fire({

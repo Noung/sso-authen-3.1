@@ -495,7 +495,9 @@ function renderSettingsPage()
                         <div class="col-12">
                             <div class="card mb-4 shadow">
                                 <div class="card-header">
-                                    <i class="fas fa-key me-2"></i>JWT Secret Key Management
+                                    <h5 id="time-round">
+                                        <i class="fas fa-key me-2"></i>JWT Secret Key Management
+                                    </h5>
                                 </div>
                                 <div class="card-body">
                                     <p class="card-text">
@@ -538,7 +540,9 @@ function renderSettingsPage()
                             
                             <div class="card shadow">
                                 <div class="card-header">
-                                    <i class="fas fa-history me-2"></i>JWT Secret Key History
+                                    <h5 id="time-round">
+                                        <i class="fas fa-history me-2"></i>JWT Secret Key History
+                                    </h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
@@ -688,7 +692,7 @@ function renderSettingsPage()
             // Initialize DataTable
             $(document).ready(function() {
                 $("#historyTable").DataTable({
-                    "order": [[3, "desc"]],
+                    "order": [[0, "desc"]],
                     "pageLength": 10,
                     "responsive": true,
                     "columnDefs": [
@@ -1111,18 +1115,28 @@ function handleApiToggleStatus($id)
 /**
  * Handle JWT Secret API with enhanced security
  * Requires admin authentication and logs access
+ * Now retrieves the active JWT secret from the history table
  */
 function handleApiJwtSecret()
 {
     checkAdminAuth();
     header('Content-Type: application/json');
 
-    // Load JWT secret from config
-    $configPath = __DIR__ . '/../../config/config.php';
-    if (file_exists($configPath)) {
-        require_once $configPath;
+    try {
+        // Load JWT secret from history table (active secret)
+        require_once __DIR__ . '/../src/Models/JwtSecretHistory.php';
+        
+        $jwtSecretRecord = SsoAdmin\Models\JwtSecretHistory::getCurrentSecret();
+        
+        if (!$jwtSecretRecord) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No active JWT secret found in history'
+            ]);
+            return;
+        }
 
-        $jwtSecret = defined('JWT_SECRET_KEY') ? JWT_SECRET_KEY : null;
+        $jwtSecret = $jwtSecretRecord['secret_key'];
 
         // Debug logging
         error_log("JWT Secret Key Defined: " . ($jwtSecret ? 'Yes' : 'No'));
@@ -1140,15 +1154,15 @@ function handleApiJwtSecret()
             'success' => true,
             'jwt_secret' => $jwtSecret
         ]);
-    } else {
+    } catch (Exception $e) {
+        error_log("Error fetching JWT secret: " . $e->getMessage());
         echo json_encode([
             'success' => false,
-            'message' => 'Configuration file not found'
+            'message' => 'Error fetching JWT secret: ' . $e->getMessage()
         ]);
+        http_response_code(500);
     }
 }
-
-
 
 /**
  * Handle JWT secret view logging
@@ -1750,6 +1764,7 @@ function renderClientsPage()
     <title>SSO Admin Panel - Clients</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
@@ -1780,12 +1795,12 @@ function renderClientsPage()
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/clients">
+                            <a class="nav-link active" href="' . $basePath . '/clients">
                                 <i class="fas fa-users me-2"></i>Client Applications
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="' . $basePath . '/statistics">
+                            <a class="nav-link" href="' . $basePath . '/statistics">
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
@@ -1818,6 +1833,10 @@ function renderClientsPage()
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="' . $basePath . '/js/shared.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             loadClients();
@@ -1847,15 +1866,16 @@ function renderClientsPage()
                 return;
             }
 
-            let html = `<table class="table table-striped">
-                <thead>
+            let html = `<table class="table table-hover" id="clientsTable">
+                <thead class="table-dark">
                     <tr>
-                        <th>Client ID</th>
-                        <th>Name</th>
-                        <th>Redirect URI</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th style="width: 25%">Client Name</th>
+                        <th style="width: 20%">Client ID</th>
+                        <th style="width: 20%">Redirect URI</th>
+                        <th style="width: 15%">Authentication Mode</th>
+                        <th style="width: 10%">Status</th>
+                        <th style="width: 10%">Created</th>
+                        <th style="width: 5%">Actions</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -1863,33 +1883,141 @@ function renderClientsPage()
             clients.forEach(client => {
                 const createdDate = new Date(client.created_at).toLocaleDateString("th-TH");
                 const statusBadge = client.status === "active" ? 
-                    `<span class="badge bg-success">${client.status}</span>` :
-                    `<span class="badge bg-secondary">${client.status}</span>`;
+                    `<span class="badge bg-success status-badge">${client.status}</span>` :
+                    `<span class="badge bg-secondary status-badge">${client.status}</span>`;
                     
+                // Determine auth mode badge
+                let authModeBadge;
+                if (client.user_handler_endpoint === null || client.user_handler_endpoint === "") {
+                    authModeBadge = `<span class="badge bg-dark" title="No Handler">None</span>`;
+                } else if (client.user_handler_endpoint.startsWith("http")) {
+                    authModeBadge = `<span class="badge bg-primary" title="JWT Mode"><i class="fas fa-key me-1"></i>JWT</span>`;
+                } else {
+                    authModeBadge = `<span class="badge bg-secondary" title="Legacy Mode"><i class="fas fa-server me-1"></i>Legacy</span>`;
+                }
+                
+                // Truncate long redirect URI
+                let displayUri = client.app_redirect_uri;
+                if (displayUri.length > 30) {
+                    displayUri = displayUri.substring(0, 30) + "...";
+                }
+                
+                // Escape single quotes in client ID and name for JavaScript
+                const escapedClientId = client.client_id.replace(/\'/g, "\\\'");
+                const escapedClientName = client.client_name.replace(/\'/g, "\\\'");
+                
                 html += `<tr>
-                    <td><code>${client.client_id}</code></td>
-                    <td>${client.client_name}</td>
-                    <td><small>${client.app_redirect_uri}</small></td>
-                    <td>${statusBadge}</td>
-                    <td>${createdDate}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editClient(${client.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteClient(${client.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">
+                                ${authModeBadge.includes("JWT") ? `<i class="fas fa-key fa-lg text-primary"></i>` : authModeBadge.includes("Legacy") ? `<i class="fas fa-server fa-lg text-secondary"></i>` : `<i class="fas fa-question fa-lg text-muted"></i>`}
+                            </div>
+                            <div>
+                                <strong>${client.client_name}</strong>
+                                <br><small class="text-muted">${client.description || "No description"}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <code class="small me-1">${client.client_id}</code>
+                            <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copyToClipboardText(\'${escapedClientId}\')" title="Copy Client ID">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="small" title="${client.app_redirect_uri}">
+                            ${displayUri}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        ${authModeBadge}
+                    </td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-center">
+                        <span title="${new Date(client.created_at).toLocaleString("th-TH")}">
+                            ${createdDate}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-info" onclick="viewClient(${client.id})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="editClient(${client.id})" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="toggleClientStatus(${client.id}, \'${client.status}\')" title="${client.status === "active" ? "Deactivate" : "Activate"}">
+                                <i class="fas ${client.status === "active" ? "fa-toggle-on" : "fa-toggle-off"}"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteClient(${client.id}, \'${escapedClientName}\')" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>`;
             });
             
-            html += "</tbody></table>";
+            html += `</tbody></table>`;
             container.innerHTML = html;
+            
+            // Initialize DataTable
+            $("#clientsTable").DataTable({
+                "order": [[5, "desc"]],
+                "pageLength": 10,
+                "responsive": true,
+                "columnDefs": [
+                    { "orderable": false, "targets": [6] }
+                ]
+            });
+        }
+
+        // Helper function to copy text to clipboard
+        function copyToClipboardText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCustomToast("Copied to clipboard successfully!", "success");
+                }).catch(err => {
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+        
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand("copy");
+                showCustomToast("Copied to clipboard successfully!", "success");
+            } catch (err) {
+                console.error("Fallback: Oops, unable to copy", err);
+                Swal.fire("Copy Failed", "Unable to copy to clipboard", "error");
+            }
+            
+            document.body.removeChild(textArea);
         }
 
         function showAddClientModal() {
             Swal.fire({
                 title: "Add Client Application",
+                text: "ฟีเจอร์นี้จะพร้อมใช้งานในเร็วๆ นี้",
+                icon: "info"
+            });
+        }
+
+        function viewClient(id) {
+            Swal.fire({
+                title: "View Client",
                 text: "ฟีเจอร์นี้จะพร้อมใช้งานในเร็วๆ นี้",
                 icon: "info"
             });
@@ -1903,7 +2031,15 @@ function renderClientsPage()
             });
         }
 
-        function deleteClient(id) {
+        function toggleClientStatus(id, currentStatus) {
+            Swal.fire({
+                title: "Toggle Client Status",
+                text: "ฟีเจอร์นี้จะพร้อมใช้งานในเร็วๆ นี้",
+                icon: "info"
+            });
+        }
+
+        function deleteClient(id, clientName) {
             Swal.fire({
                 title: "Delete Client",
                 text: "ฟีเจอร์นี้จะพร้อมใช้งานในเร็วๆ นี้",
@@ -1960,6 +2096,7 @@ function renderStatisticsPage()
     <title>SSO Admin Panel - Usage Statistics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -2081,6 +2218,9 @@ function renderStatisticsPage()
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script>
         const basePath = "' . $basePath . '";
         
@@ -2155,7 +2295,7 @@ function renderStatisticsPage()
             // Render client activity summary
             let clientActivityHtml = `
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table class="table table-striped" id="clientStatsTable">
                         <thead>
                             <tr>
                                 <th>Client Name</th>
@@ -2205,6 +2345,16 @@ function renderStatisticsPage()
             `;
             
             clientStatsDiv.innerHTML = clientActivityHtml;
+            
+            // Initialize DataTable
+            $("#clientStatsTable").DataTable({
+                "order": [[2, "desc"]],
+                "pageLength": 10,
+                "responsive": true,
+                "columnDefs": [
+                    { "orderable": false, "targets": [7] }
+                ]
+            });
         }
         
         function viewClientStats(clientId) {
