@@ -101,6 +101,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="<?php echo $basePath; ?>/admin-users">
+                                <i class="fas fa-user-shield me-2"></i>Admin Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/settings">
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
@@ -229,7 +234,7 @@
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
-                                <p class="mt-2">กำลังโหลดข้อมูล...</p>
+                                <p class="mt-2">Loading clients data...</p>
                             </div>
                         </div>
 

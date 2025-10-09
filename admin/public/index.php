@@ -6,6 +6,11 @@
  * Compatible with PHP 7.4.33
  */
 
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+
 // Load autoloader when available
 if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require_once __DIR__ . '/../vendor/autoload.php';
@@ -18,9 +23,12 @@ if (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
     // For now, manually include required files
     require_once __DIR__ . '/../src/Database/Connection.php';
     require_once __DIR__ . '/../src/Models/Client.php';
+    require_once __DIR__ . '/../src/Models/AdminUser.php';
+    require_once __DIR__ . '/../src/Models/BackupManager.php'; // Add this line
     require_once __DIR__ . '/../src/Controllers/AuthController.php';
     require_once __DIR__ . '/../src/Controllers/ClientController.php';
     require_once __DIR__ . '/../src/Controllers/DashboardController.php';
+    require_once __DIR__ . '/../src/Controllers/AdminUserController.php';
 }
 
 // Use statements - moved to top of file
@@ -28,6 +36,7 @@ use SsoAdmin\Database\Connection;
 use SsoAdmin\Controllers\AuthController;
 use SsoAdmin\Controllers\ClientController;
 use SsoAdmin\Controllers\DashboardController;
+use SsoAdmin\Controllers\AdminUserController;
 
 // Load environment variables
 if (file_exists(__DIR__ . '/../.env')) {
@@ -142,6 +151,11 @@ try {
             handleSettingsPage();
             break;
 
+        case '/admin-users':
+        case '/admin-users.php':
+            handleAdminUsersPage();
+            break;
+
         // API routes
         case '/api/clients':
             handleApiClients();
@@ -180,6 +194,19 @@ try {
             handleApiGenerateMockData();
             break;
 
+        // Admin User APIs
+        case '/api/admin-users':
+            handleApiAdminUsers();
+            break;
+
+        case '/api/admin-user-roles':
+            handleApiAdminUserRoles();
+            break;
+
+        case '/api/admin-user-statuses':
+            handleApiAdminUserStatuses();
+            break;
+
         // Backup and Restore APIs
         case '/api/backup/create':
             handleApiCreateBackup();
@@ -210,6 +237,10 @@ try {
                 handleApiToggleStatus($matches[1]);
             } elseif (preg_match('/^\/api\/clients\/(\d+)\/statistics$/', $path, $matches)) {
                 handleApiIndividualClientStatistics($matches[1]);
+            } elseif (preg_match('/^\/api\/admin-users\/(\d+)$/', $path, $matches)) {
+                handleApiAdminUserById($matches[1]);
+            } elseif (preg_match('/^\/api\/admin-users\/(\d+)\/toggle-status$/', $path, $matches)) {
+                handleApiToggleAdminUserStatus($matches[1]);
             } else {
                 http_response_code(404);
                 echo '404 - Page Not Found';
@@ -362,6 +393,28 @@ function handleSettingsPage()
     echo renderSettingsPage();
 }
 
+function handleAdminUsersPage()
+{
+    checkAdminAuth();
+
+    // Include the admin users view
+    $viewPath = __DIR__ . '/../views/admin-users.php';
+    if (file_exists($viewPath)) {
+        try {
+            include $viewPath;
+        } catch (Exception $e) {
+            error_log('Error including admin-users.php: ' . $e->getMessage());
+            echo '<h1>Error</h1><p>An error occurred while loading the admin users page: ' . htmlspecialchars($e->getMessage()) . '</p>';
+        } catch (Error $e) {
+            error_log('Error including admin-users.php: ' . $e->getMessage());
+            echo '<h1>Error</h1><p>An error occurred while loading the admin users page: ' . htmlspecialchars($e->getMessage()) . '</p>';
+        }
+    } else {
+        // If view file doesn't exist, show a simple page
+        echo '<h1>Admin Users Management</h1><p>View file not found.</p>';
+    }
+}
+
 function renderSettingsPage()
 {
     // Get the base path from GLOBALS
@@ -474,6 +527,11 @@ function renderSettingsPage()
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/statistics">
                                     <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="' . $basePath . '/admin-users">
+                                    <i class="fas fa-user-shield me-2"></i>Admin Users
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -887,7 +945,314 @@ function handleApiClients()
                 http_response_code(405);
         }
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiClients: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    }
+}
+
+function handleApiAdminUsers()
+{
+    checkAdminAuth();
+    header('Content-Type: application/json');
+
+    $controller = new AdminUserController();
+
+    // Handle different methods
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    try {
+        switch ($method) {
+            case 'GET':
+                $mockRequest = new class {
+                    public function getQueryParams()
+                    {
+                        return $_GET;
+                    }
+                };
+                $mockResponse = new class {
+                    public $content = '';
+                    public function getBody()
+                    {
+                        return $this;
+                    }
+                    public function write($content)
+                    {
+                        $this->content = $content;
+                    }
+                    public function withHeader($name, $value)
+                    {
+                        header("$name: $value");
+                        return $this;
+                    }
+                    public function withStatus($code)
+                    {
+                        http_response_code($code);
+                        return $this;
+                    }
+                };
+
+                $controller->getAll($mockRequest, $mockResponse);
+                echo $mockResponse->content;
+                break;
+
+            case 'POST':
+                $mockRequest = new class {
+                    public function getBody()
+                    {
+                        return new class {
+                            public function getContents()
+                            {
+                                return file_get_contents('php://input');
+                            }
+                        };
+                    }
+                };
+                $mockResponse = new class {
+                    public $content = '';
+                    public function getBody()
+                    {
+                        return $this;
+                    }
+                    public function write($content)
+                    {
+                        $this->content = $content;
+                    }
+                    public function withHeader($name, $value)
+                    {
+                        header("$name: $value");
+                        return $this;
+                    }
+                    public function withStatus($code)
+                    {
+                        http_response_code($code);
+                        return $this;
+                    }
+                };
+
+                $controller->create($mockRequest, $mockResponse);
+                echo $mockResponse->content;
+                break;
+
+            default:
+                echo json_encode(['success' => false, 'message' => 'Method ' . $method . ' not allowed']);
+                http_response_code(405);
+        }
+    } catch (Exception $e) {
+        error_log('Exception in handleApiAdminUsers: ' . $e->getMessage());
+        error_log('Exception trace: ' . $e->getTraceAsString());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request: ' . $e->getMessage()]);
+    } catch (Error $e) {
+        error_log('Error in handleApiAdminUsers: ' . $e->getMessage());
+        error_log('Error trace: ' . $e->getTraceAsString());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request: ' . $e->getMessage()]);
+    }
+}
+
+function handleApiAdminUserById($id)
+{
+    checkAdminAuth();
+    header('Content-Type: application/json');
+
+    $controller = new AdminUserController();
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    $mockRequest = new class {
+        public function getBody()
+        {
+            return new class {
+                public function getContents()
+                {
+                    return file_get_contents('php://input');
+                }
+            };
+        }
+    };
+
+    $mockResponse = new class {
+        public $content = '';
+        public function getBody()
+        {
+            return $this;
+        }
+        public function write($content)
+        {
+            $this->content = $content;
+        }
+        public function withHeader($name, $value)
+        {
+            header("$name: $value");
+            return $this;
+        }
+        public function withStatus($code)
+        {
+            http_response_code($code);
+            return $this;
+        }
+    };
+
+    $args = ['id' => $id];
+
+    try {
+        switch ($method) {
+            case 'GET':
+                $controller->getById($mockRequest, $mockResponse, $args);
+                break;
+            case 'PUT':
+                $controller->update($mockRequest, $mockResponse, $args);
+                break;
+            case 'DELETE':
+                $controller->delete($mockRequest, $mockResponse, $args);
+                break;
+            default:
+                echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+                http_response_code(405);
+                return;
+        }
+        echo $mockResponse->content;
+    } catch (Exception $e) {
+        error_log('Exception in handleApiAdminUserById: ' . $e->getMessage());
+        error_log('Exception trace: ' . $e->getTraceAsString());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request: ' . $e->getMessage()]);
+    } catch (Error $e) {
+        error_log('Error in handleApiAdminUserById: ' . $e->getMessage());
+        error_log('Error trace: ' . $e->getTraceAsString());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request: ' . $e->getMessage()]);
+    }
+}
+
+function handleApiToggleAdminUserStatus($id)
+{
+    checkAdminAuth();
+    header('Content-Type: application/json');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'PATCH') {
+        echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+        http_response_code(405);
+        return;
+    }
+
+    $controller = new AdminUserController();
+
+    $mockRequest = new stdClass();
+    $mockResponse = new class {
+        public $content = '';
+        public function getBody()
+        {
+            return $this;
+        }
+        public function write($content)
+        {
+            $this->content = $content;
+        }
+        public function withHeader($name, $value)
+        {
+            header("$name: $value");
+            return $this;
+        }
+        public function withStatus($code)
+        {
+            http_response_code($code);
+            return $this;
+        }
+    };
+
+    $args = ['id' => $id];
+
+    try {
+        $controller->toggleStatus($mockRequest, $mockResponse, $args);
+        echo $mockResponse->content;
+    } catch (Exception $e) {
+        error_log('Exception in handleApiToggleAdminUserStatus: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiToggleAdminUserStatus: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    }
+}
+
+function handleApiAdminUserRoles()
+{
+    checkAdminAuth();
+    header('Content-Type: application/json');
+
+    $controller = new AdminUserController();
+
+    $mockRequest = new stdClass();
+    $mockResponse = new class {
+        public $content = '';
+        public function getBody()
+        {
+            return $this;
+        }
+        public function write($content)
+        {
+            $this->content = $content;
+        }
+        public function withHeader($name, $value)
+        {
+            header("$name: $value");
+            return $this;
+        }
+        public function withStatus($code)
+        {
+            http_response_code($code);
+            return $this;
+        }
+    };
+
+    try {
+        $controller->getAvailableRoles($mockRequest, $mockResponse);
+        echo $mockResponse->content;
+    } catch (Exception $e) {
+        error_log('Exception in handleApiAdminUserRoles: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiAdminUserRoles: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    }
+}
+
+function handleApiAdminUserStatuses()
+{
+    checkAdminAuth();
+    header('Content-Type: application/json');
+
+    $controller = new AdminUserController();
+
+    $mockRequest = new stdClass();
+    $mockResponse = new class {
+        public $content = '';
+        public function getBody()
+        {
+            return $this;
+        }
+        public function write($content)
+        {
+            $this->content = $content;
+        }
+        public function withHeader($name, $value)
+        {
+            header("$name: $value");
+            return $this;
+        }
+        public function withStatus($code)
+        {
+            http_response_code($code);
+            return $this;
+        }
+    };
+
+    try {
+        $controller->getAvailableStatuses($mockRequest, $mockResponse);
+        echo $mockResponse->content;
+    } catch (Exception $e) {
+        error_log('Exception in handleApiAdminUserStatuses: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiAdminUserStatuses: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
     }
 }
 
@@ -921,8 +1286,16 @@ function handleApiDashboardStats()
         }
     };
 
-    $controller->getStats($mockRequest, $mockResponse);
-    echo $mockResponse->content;
+    try {
+        $controller->getStats($mockRequest, $mockResponse);
+        echo $mockResponse->content;
+    } catch (Exception $e) {
+        error_log('Exception in handleApiDashboardStats: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiDashboardStats: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    }
 }
 
 function handleApiRecentActivities()
@@ -960,8 +1333,16 @@ function handleApiRecentActivities()
         }
     };
 
-    $controller->getRecentActivities($mockRequest, $mockResponse);
-    echo $mockResponse->content;
+    try {
+        $controller->getRecentActivities($mockRequest, $mockResponse);
+        echo $mockResponse->content;
+    } catch (Exception $e) {
+        error_log('Exception in handleApiRecentActivities: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiRecentActivities: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    }
 }
 
 function handleApiClientStatistics()
@@ -994,8 +1375,16 @@ function handleApiClientStatistics()
         }
     };
 
-    $controller->getStatistics($mockRequest, $mockResponse);
-    echo $mockResponse->content;
+    try {
+        $controller->getStatistics($mockRequest, $mockResponse);
+        echo $mockResponse->content;
+    } catch (Exception $e) {
+        error_log('Exception in handleApiClientStatistics: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiClientStatistics: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    }
 }
 
 function handleApiClientById($id)
@@ -1060,7 +1449,11 @@ function handleApiClientById($id)
         }
         echo $mockResponse->content;
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        error_log('Exception in handleApiClientById: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiClientById: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
     }
 }
 
@@ -1108,7 +1501,11 @@ function handleApiToggleStatus($id)
         $controller->toggleStatus($mockRequest, $mockResponse, $args);
         echo $mockResponse->content;
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        error_log('Exception in handleApiToggleStatus: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiToggleStatus: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
     }
 }
 
@@ -1209,6 +1606,13 @@ function handleApiLogJwtView()
         echo json_encode([
             'success' => false,
             'message' => 'Failed to log JWT view: ' . $e->getMessage()
+        ]);
+        http_response_code(500);
+    } catch (Error $e) {
+        error_log('Error in handleApiLogJwtView: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
         ]);
         http_response_code(500);
     }
@@ -1339,6 +1743,13 @@ function handleApiUpdateJwtSecret()
             'message' => 'Failed to update JWT secret key: ' . $e->getMessage()
         ]);
         http_response_code(500);
+    } catch (Error $e) {
+        error_log('Error in handleApiUpdateJwtSecret: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
+        ]);
+        http_response_code(500);
     }
 }
 
@@ -1410,6 +1821,13 @@ function handleApiUsageStatistics()
             'message' => 'Failed to get usage statistics: ' . $e->getMessage()
         ]);
         http_response_code(500);
+    } catch (Error $e) {
+        error_log('Error in handleApiUsageStatistics: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
+        ]);
+        http_response_code(500);
     }
 }
 
@@ -1453,6 +1871,13 @@ function handleApiIndividualClientStatistics($clientId)
         echo json_encode([
             'success' => false,
             'message' => 'Failed to get client statistics: ' . $e->getMessage()
+        ]);
+        http_response_code(500);
+    } catch (Error $e) {
+        error_log('Error in handleApiIndividualClientStatistics: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
         ]);
         http_response_code(500);
     }
@@ -1500,6 +1925,12 @@ function handleApiCreateBackup()
             'success' => false,
             'message' => 'Backup creation failed: ' . $e->getMessage()
         ]);
+    } catch (Error $e) {
+        error_log('Error in handleApiCreateBackup: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
+        ]);
     }
 }
 
@@ -1524,6 +1955,12 @@ function handleApiListBackups()
         echo json_encode([
             'success' => false,
             'message' => 'Failed to list backups: ' . $e->getMessage()
+        ]);
+    } catch (Error $e) {
+        error_log('Error in handleApiListBackups: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
         ]);
     }
 }
@@ -1568,6 +2005,12 @@ function handleApiDownloadBackup()
             'success' => false,
             'message' => 'Download failed: ' . $e->getMessage()
         ]);
+    } catch (Error $e) {
+        error_log('Error in handleApiDownloadBackup: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
+        ]);
     }
 }
 
@@ -1605,6 +2048,12 @@ function handleApiDeleteBackup()
         echo json_encode([
             'success' => false,
             'message' => 'Delete failed: ' . $e->getMessage()
+        ]);
+    } catch (Error $e) {
+        error_log('Error in handleApiDeleteBackup: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
         ]);
     }
 }
@@ -1655,6 +2104,12 @@ function handleApiRestoreBackup()
             'success' => false,
             'message' => 'Restore failed: ' . $e->getMessage()
         ]);
+    } catch (Error $e) {
+        error_log('Error in handleApiRestoreBackup: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
+        ]);
     }
 }
 function handleApiGenerateMockData()
@@ -1687,6 +2142,13 @@ function handleApiGenerateMockData()
         echo json_encode([
             'success' => false,
             'message' => 'Failed to generate mock data: ' . $e->getMessage()
+        ]);
+        http_response_code(500);
+    } catch (Error $e) {
+        error_log('Error in handleApiGenerateMockData: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'An error occurred while processing your request'
         ]);
         http_response_code(500);
     }
@@ -2143,7 +2605,12 @@ function renderStatisticsPage()
                             </a>
                         </li>
                         <li class="nav-item">
-                                <a class="nav-link active" href="' . $basePath . '/settings">
+                            <a class="nav-link" href="' . $basePath . '/admin-users">
+                                <i class="fas fa-user-shield me-2"></i>Admin Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                                <a class="nav-link" href="' . $basePath . '/settings">
                                     <i class="fas fa-cog me-2"></i>System Configuration
                                 </a>
                             </li>
@@ -2207,7 +2674,7 @@ function renderStatisticsPage()
                                     <div class="spinner-border" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
-                                    <p class="mt-2">Loading client statistics...</p>
+                                    <p class="mt-2">Loading clients statistics...</p>
                                 </div>
                             </div>
                         </div>
@@ -2370,7 +2837,7 @@ function renderStatisticsPage()
                     }
                 })
                 .catch(error => {
-                    console.error("Error loading client statistics:", error);
+                    console.error("Error loading clients statistics:", error);
                     Swal.fire("Error", "Failed to load client statistics", "error");
                 });
         }

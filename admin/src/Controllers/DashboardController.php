@@ -403,6 +403,11 @@ class DashboardController
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/admin-users">
+                                <i class="fas fa-user-shield me-2"></i>Admin Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/settings">
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
