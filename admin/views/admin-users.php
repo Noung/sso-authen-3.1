@@ -107,6 +107,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
+                                <i class="fas fa-database me-2"></i>Backup & Restore
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/settings">
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>

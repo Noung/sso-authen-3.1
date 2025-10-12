@@ -156,6 +156,11 @@ try {
             handleAdminUsersPage();
             break;
 
+        case '/backup-restore':
+        case '/backup-restore.php':
+            handleBackupRestorePage();
+            break;
+
         // API routes
         case '/api/clients':
             handleApiClients();
@@ -415,6 +420,33 @@ function handleAdminUsersPage()
     }
 }
 
+function handleBackupRestorePage()
+{
+    checkAdminAuth();
+    
+    // Include the backup restore view
+    $viewPath = __DIR__ . '/../views/backup-restore.php';
+    if (file_exists($viewPath)) {
+        try {
+            include $viewPath;
+        } catch (Exception $e) {
+            error_log('Error including backup-restore.php: ' . $e->getMessage());
+            echo '<h1>Error</h1><p>An error occurred while loading the backup restore page: ' . htmlspecialchars($e->getMessage()) . '</p>';
+        } catch (Error $e) {
+            error_log('Error including backup-restore.php: ' . $e->getMessage());
+            echo '<h1>Error</h1><p>An error occurred while loading the backup restore page: ' . htmlspecialchars($e->getMessage()) . '</p>';
+        }
+    } else {
+        // If view file doesn't exist, show the HTML version
+        $htmlPath = __DIR__ . '/backup-restore.html';
+        if (file_exists($htmlPath)) {
+            include $htmlPath;
+        } else {
+            echo '<h1>Backup & Restore</h1><p>View file not found.</p>';
+        }
+    }
+}
+
 function renderSettingsPage()
 {
     // Get the base path from GLOBALS
@@ -532,6 +564,11 @@ function renderSettingsPage()
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/admin-users">
                                     <i class="fas fa-user-shield me-2"></i>Admin Users
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="' . $basePath . '/backup-restore">
+                                    <i class="fas fa-database me-2"></i>Backup & Restore
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -2607,6 +2644,11 @@ function renderStatisticsPage()
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/admin-users">
                                 <i class="fas fa-user-shield me-2"></i>Admin Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/backup-restore">
+                                <i class="fas fa-database me-2"></i>Backup & Restore
                             </a>
                         </li>
                         <li class="nav-item">
