@@ -202,10 +202,9 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                       class="form-control"
                       id="backupName"
                       placeholder="e.g., weekly_backup_2024"
-                      required
                     />
                     <div class="form-text">
-                      Leave empty for auto-generated name
+                      Leave empty for auto-generated name (timestamp-based)
                     </div>
                   </div>
                 </div>
@@ -538,8 +537,9 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
 
       function createBackup() {
         const form = document.getElementById("createBackupForm");
+        const backupName = document.getElementById("backupName").value.trim();
         const formData = {
-          name: document.getElementById("backupName").value,
+          name: backupName || null, // Send null for auto-generation
           description: document.getElementById("backupDescription").value,
           type: document.getElementById("backupType").value,
           exclude_clients: !document.getElementById("includeClients").checked,
