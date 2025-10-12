@@ -656,16 +656,19 @@
         function toggleAdminUserStatus(id, currentStatus) {
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
             const action = currentStatus === 'active' ? 'deactivate' : 'activate';
+            const actionText = newStatus === 'active' ? 'Activate' : 'Deactivate';
+            const actionIcon = newStatus === 'active' ? 'fa-toggle-on' : 'fa-toggle-off';
+            const actionColor = newStatus === 'active' ? '#198754' : '#ffc107';
             
             Swal.fire({
-                title: `Are you sure?`,
-                text: `Do you want to ${action} this admin user?`,
-                icon: 'warning',
+                title: `${actionText} Admin User?`,
+                text: `Are you sure you want to ${action} this admin user?`,
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, proceed!',
-                cancelButtonText: 'Cancel'
+                confirmButtonColor: actionColor,
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: `<i class="fas ${actionIcon} me-1"></i>Yes, ${action}!`,
+                cancelButtonText: '<i class="fas fa-times me-1"></i>Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch(`${basePath}/api/admin-users/${id}/toggle-status`, {
@@ -678,7 +681,7 @@
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
-                                title: '<i class="fas fa-check-circle text-success me-2"></i>Success!',
+                                title: '<i class="fas fa-check-circle text-success me-2"></i>Update!',
                                 text: data.message,
                                 icon: 'success',
                                 confirmButtonColor: '#198754'

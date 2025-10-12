@@ -863,7 +863,7 @@ function toggleClientStatus(id, currentStatus) {
     Swal.fire({
         title: `${actionText} Client?`,
         html: `
-            <div class="text-start">
+            <div class="text-center">
                 <p>Are you sure you want to ${action} this client?</p>
             </div>
         `,
