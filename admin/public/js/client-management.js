@@ -66,12 +66,13 @@ function renderClientsTable(clients) {
         <table class="table table-hover">
             <thead class="table-dark">
                 <tr>
-                    <th style="width: 25%">Client Name</th>
-                    <th style="width: 20%">Client ID</th>
-                    <th style="width: 20%">Redirect URI</th>
-                    <th style="width: 15%">Authentication Mode</th>
+                    <th style="width: 20%">Client Name</th>
+                    <th style="width: 15%">Client ID</th>
+                    <th style="width: 15%">Redirect URI</th>
+                    <th style="width: 10%">Authentication Mode</th>
                     <th style="width: 10%">Status</th>
                     <th style="width: 10%">Created</th>
+                    <th style="width: 10%">Created By</th>
                     <th style="width: 5%">Actions</th>
                 </tr>
             </thead>
