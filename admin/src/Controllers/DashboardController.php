@@ -431,7 +431,7 @@ class DashboardController
                             <button type="button" class="btn btn-me btn-outline-secondary" id="refresh-btn" onclick="refreshStats()">
                                 <i class="fas fa-sync-alt me-1"></i>Refresh
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
+                            <button type="button" class="btn btn-me btn-outline-primary" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
                                 <i class="fas fa-pause-circle me-1"></i>Stop Auto Refresh
                             </button>
                         </div>
@@ -647,10 +647,10 @@ class DashboardController
             if (button) {
                 if (isActive) {
                     button.innerHTML = "<i class=\"fas fa-pause-circle me-1\"></i>Stop Auto Refresh";
-                    button.className = "btn btn-sm btn-outline-primary";
+                    button.className = "btn btn-me btn-outline-primary";
                 } else {
                     button.innerHTML = "<i class=\"fas fa-play-circle me-1\"></i>Start Auto Refresh";
-                    button.className = "btn btn-sm btn-outline-success";
+                    button.className = "btn btn-me btn-outline-success";
                 }
             }
         }

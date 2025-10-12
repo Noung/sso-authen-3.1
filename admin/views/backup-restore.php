@@ -8,7 +8,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Backup & Restore - SSO Admin</title>
+    <title>SSO Admin Panel - Backup & Restore</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -111,7 +111,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h1 class="h2">
-              <i class="fas fa-database text-primary me-2"></i>Backup & Restore
+              <i class="fas fa-database me-2"></i>Backup & Restore
             </h1>
             <div>
               <button class="btn btn-success" onclick="showCreateBackupModal()">
@@ -120,9 +120,9 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
               <button class="btn btn-outline-info" onclick="showScheduleInfo()">
                 <i class="fas fa-clock me-1"></i>Automation Setup
               </button>
-              <button class="btn btn-outline-secondary" onclick="loadBackups()">
+              <!-- <button class="btn btn-outline-secondary" onclick="loadBackups()">
                 <i class="fas fa-sync-alt me-1"></i>Refresh
-              </button>
+              </button> -->
             </div>
           </div>
 
@@ -202,6 +202,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                       class="form-control"
                       id="backupName"
                       placeholder="e.g., weekly_backup_2024"
+                      required
                     />
                     <div class="form-text">
                       Leave empty for auto-generated name
@@ -481,7 +482,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
         backups.forEach((backup) => {
           html += `
                     <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card backup-card h-100">
+                        <div class="card backup-card shadow h-100">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">
                                     <i class="fas fa-file-archive text-primary me-1"></i>
@@ -683,14 +684,23 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
 
       function deleteBackup(filename) {
         Swal.fire({
-          title: "Delete Backup?",
-          text: "This action cannot be undone. The backup file will be permanently deleted.",
+          title: '<i class="fas fa-exclamation-triangle text-danger me-2"></i>Delete Backup?',
+        //   text: "This action cannot be undone. The backup file will be permanently deleted.",
+        html: `
+            <div class="text-center">
+                <p>Are you sure you want to delete this backup?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone. The backup file will be permanently deleted.
+                </div>
+            </div>
+        `,
           icon: "warning",
           showCancelButton: true,
           confirmButtonColor: "#d33",
-          cancelButtonColor: "#3085d6",
-          confirmButtonText: "Yes, delete it!",
-          cancelButtonText: "Cancel",
+          cancelButtonColor: "#6c757d",
+          confirmButtonText: '<i class="fas fa-trash"></i> Yes, delete it!',
+          cancelButtonText: '<i class="fas fa-times me-1"></i>Cancel',
         }).then((result) => {
           if (result.isConfirmed) {
             showProgress("Deleting Backup", "Removing backup file...");
@@ -703,10 +713,11 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                 if (data.success) {
                   hideProgress();
                   Swal.fire({
-                    title: "Deleted!",
+                    title: '<i class="fas fa-check-circle text-success me-2"></i>Deleted!',
                     text: data.message,
                     icon: "success",
                     confirmButtonText: "OK",
+                    confirmButtonColor: '#198754'
                   }).then(() => {
                     loadBackups();
                   });

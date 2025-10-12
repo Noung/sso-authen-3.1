@@ -807,7 +807,7 @@ function deleteClient(id, clientName) {
     Swal.fire({
         title: '<i class="fas fa-exclamation-triangle text-danger me-2"></i>Delete Client?',
         html: `
-            <div class="text-start">
+            <div class="text-center">
                 <p>Are you sure you want to delete this client?</p>
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
