@@ -165,6 +165,9 @@ class Client
             $sql = 'INSERT INTO clients (client_id, client_name, client_description, app_redirect_uri, post_logout_redirect_uri, user_handler_endpoint, api_secret_key, allowed_scopes, status, created_at, updated_at, created_by) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)';
 
+            // Get admin email from session, fallback to 'admin' if not available
+            $adminEmail = isset($_SESSION['admin_email']) ? $_SESSION['admin_email'] : 'admin';
+
             $params = [
                 $clientId,
                 trim($data['client_name']),
@@ -175,7 +178,7 @@ class Client
                 $apiSecretKey,
                 $allowedScopes,
                 $status,
-                'admin'
+                $adminEmail
             ];
 
             Connection::query($sql, $params);
@@ -245,7 +248,11 @@ class Client
                 throw new Exception('No valid fields to update');
             }
 
+            // Add updated_by field
+            $adminEmail = isset($_SESSION['admin_email']) ? $_SESSION['admin_email'] : 'admin';
             $updateFields[] = 'updated_at = NOW()';
+            $updateFields[] = 'updated_by = ?';
+            $params[] = $adminEmail;
             $params[] = $id;
 
             $sql = 'UPDATE clients SET ' . implode(', ', $updateFields) . ' WHERE id = ?';
