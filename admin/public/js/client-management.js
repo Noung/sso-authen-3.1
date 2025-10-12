@@ -66,14 +66,14 @@ function renderClientsTable(clients) {
         <table class="table table-hover">
             <thead class="table-dark">
                 <tr>
-                    <th style="width: 20%">Client Name</th>
+                    <th style="width: 15%">Client Name</th>
                     <th style="width: 15%">Client ID</th>
                     <th style="width: 15%">Redirect URI</th>
-                    <th style="width: 10%">Authentication Mode</th>
+                    <th style="width: 10%">Authen Mode</th>
                     <th style="width: 10%">Status</th>
                     <th style="width: 10%">Created</th>
-                    <th style="width: 10%">Created By</th>
-                    <th style="width: 5%">Actions</th>
+                    <th style="width: 15%">Created By</th>
+                    <th style="width: 10%">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -143,6 +143,11 @@ function renderClientsTable(clients) {
                 <td class="text-center">
                     <span title="${new Date(client.created_at).toLocaleString('th-TH')}">
                         ${createdDate}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <span title="${escapeHtml(client.created_by || 'N/A')}">
+                        ${client.created_by ? escapeHtml(client.created_by.substring(0, 15) + (client.created_by.length > 15 ? '...' : '')) : 'N/A'}
                     </span>
                 </td>
                 <td class="text-center">
