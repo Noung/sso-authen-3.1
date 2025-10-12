@@ -514,7 +514,7 @@ class DashboardController
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
-                                        <h6 class="card-title">Total Requests</h6>
+                                        <h6 class="card-title">Authentication Requests</h6>
                                         <h3 id="total-requests">-</h3>
                                     </div>
                                     <i class="fas fa-chart-bar fa-2x opacity-75"></i>

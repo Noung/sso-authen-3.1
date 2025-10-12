@@ -2810,7 +2810,7 @@ function renderStatisticsPage()
                                 <th>Client Name</th>
                                 <th>Status</th>
                                 <th>Total Activities</th>
-                                <th>Total Requests</th>
+                                <th>Authentication Requests</th>
                                 <th>Unique Actions</th>
                                 <th>Active Admins</th>
                                 <th>Last Activity</th>
@@ -2923,7 +2923,7 @@ function renderStatisticsPage()
                         <p><strong>Period:</strong> ${stats.period_days} days</p>
                         <p><strong>Client ID:</strong> <code>${stats.client.client_id}</code></p>
                         <p><strong>Status:</strong> <span class="badge bg-${stats.client.status === "active" ? "success" : "secondary"}">${stats.client.status}</span></p>
-                        <p><strong>Total Requests:</strong> <span class="badge bg-primary">${stats.client.total_requests || 0}</span></p>
+                        <p><strong>Authentication Requests:</strong> <span class="badge bg-primary">${stats.client.total_requests || 0}</span></p>
                         <hr>
                         ${activityDetailsHtml}
                         ${jwtViewInfo}
