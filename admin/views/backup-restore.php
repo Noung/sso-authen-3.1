@@ -103,6 +103,11 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                   <i class="fas fa-cog me-2"></i>System Configuration
                 </a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<?php echo $basePath; ?>/api-docs.html" target="_blank">
+                  <i class="fas fa-book me-2"></i>Documentation
+                </a>
+              </li>
             </ul>
           </div>
         </nav>
@@ -127,9 +132,9 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
           </div>
 
           <!-- Quick Info -->
-          <div class="row mb-4">
+          <div class="row mb-4" style="margin-bottom: 0.5rem !important;">
             <div class="col-12">
-              <div class="alert alert-info">
+              <div class="alert alert-info shadow">
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Backup System:</strong> Create, download, and restore
                 complete system backups including client configurations, admin

@@ -572,8 +572,13 @@ function renderSettingsPage()
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link active" href="' . $basePath . '/settings">
+                                <a class="nav-link" href="' . $basePath . '/settings">
                                     <i class="fas fa-cog me-2"></i>System Configuration
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                                    <i class="fas fa-book me-2"></i>Documentation
                                 </a>
                             </li>
                         </ul>
@@ -2073,8 +2078,9 @@ function handleApiDeleteBackup()
     }
 
     try {
+        $adminEmail = $_SESSION['admin_email'] ?? 'unknown';
         $backup = new SsoAdmin\Models\BackupManager();
-        $backup->deleteBackup($filename);
+        $backup->deleteBackup($filename, $adminEmail);
 
         echo json_encode([
             'success' => true,
@@ -2656,6 +2662,11 @@ function renderStatisticsPage()
                                     <i class="fas fa-cog me-2"></i>System Configuration
                                 </a>
                             </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                                <i class="fas fa-book me-2"></i>Documentation
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>

@@ -89,6 +89,9 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
                         <a href="backup-restore" class="list-group-item list-group-item-action">
                             <i class="fas fa-database me-2"></i>Backup & Restore
                         </a>
+                        <a href="api-docs.html" class="list-group-item list-group-item-action" target="_blank">
+                            <i class="fas fa-book me-2"></i>Documentation
+                        </a>
                     </div>
                 </div>
                 

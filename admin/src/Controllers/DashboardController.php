@@ -417,6 +417,11 @@ class DashboardController
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                                <i class="fas fa-book me-2"></i>Documentation
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
@@ -439,9 +444,9 @@ class DashboardController
                 </div>
 
                 <!-- Client Statistics Cards -->
-                <div class="row mb-4" id="client-stats-cards">
+                <div class="row mb-4" id="client-stats-cards" style="margin-bottom: 0.5rem !important;">
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-vibrant-blue text-white">
+                        <div class="card bg-vibrant-blue text-white shadow">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -454,7 +459,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-vibrant-green text-white">
+                        <div class="card bg-vibrant-green text-white shadow">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -467,7 +472,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-vibrant-dark-gray text-white">
+                        <div class="card bg-vibrant-dark-gray text-white shadow">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -480,7 +485,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-vibrant-red text-white">
+                        <div class="card bg-vibrant-red text-white shadow">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -495,9 +500,9 @@ class DashboardController
                 </div>
 
                 <!-- System Statistics Cards -->
-                <div class="row mb-4" id="system-stats-cards">
+                <div class="row mb-4" id="system-stats-cards" style="margin-bottom: 0.5rem !important;">
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-vibrant-orange text-white">
+                        <div class="card bg-vibrant-orange text-white shadow">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -510,7 +515,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-vibrant-yellow text-white">
+                        <div class="card bg-vibrant-yellow text-white shadow">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -523,7 +528,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-vibrant-teal text-white">
+                        <div class="card bg-vibrant-teal text-white shadow">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -536,7 +541,7 @@ class DashboardController
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card bg-vibrant-purple text-white">
+                        <div class="card bg-vibrant-purple text-white shadow">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -551,7 +556,7 @@ class DashboardController
                 </div>
 
                 <!-- Charts and Additional Information -->
-                <div class="row mb-4">
+                <div class="row mb-4" style="margin-bottom: 0.5rem !important;">
                     <!-- Top Client Activities Chart -->
                     <div class="col-lg-6 mb-3">
                         <div class="card shadow">

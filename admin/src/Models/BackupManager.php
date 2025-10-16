@@ -425,7 +425,7 @@ class BackupManager
     /**
      * Delete a backup file
      */
-    public function deleteBackup($filename)
+    public function deleteBackup($filename, $adminEmail = 'unknown')
     {
         $backupPath = $this->backupDir . '/' . $filename;
 
@@ -437,7 +437,7 @@ class BackupManager
             throw new Exception('Failed to delete backup file');
         }
 
-        $this->logBackupActivity('backup_deleted', $filename, 'admin');
+        $this->logBackupActivity('backup_deleted', $filename, $adminEmail);
         return true;
     }
 

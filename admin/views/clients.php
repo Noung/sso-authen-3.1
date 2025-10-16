@@ -115,6 +115,11 @@
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?php echo $basePath; ?>/api-docs.html" target="_blank">
+                                <i class="fas fa-book me-2"></i>Documentation
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
