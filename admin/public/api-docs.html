@@ -18,6 +18,21 @@
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+      // Initialize Mermaid.js configuration
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
+          flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+          },
+        });
+      }
+    </script>
     <style>
       .sidebar {
         position: fixed;
@@ -163,16 +178,130 @@
       .feature-card:hover {
         transform: translateY(-2px);
       }
+
+      /* Enhanced responsive design */
+      @media (max-width: 1200px) {
+        .sidebar {
+          width: 240px;
+        }
+        .main-content {
+          margin-left: 240px;
+        }
+      }
+
+      @media (max-width: 992px) {
+        .sidebar {
+          width: 200px;
+        }
+        .main-content {
+          margin-left: 200px;
+        }
+        .endpoint-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+        .code-tabs {
+          flex-wrap: wrap;
+        }
+        .code-tab {
+          flex: 1 0 auto;
+          text-align: center;
+          min-width: 100px;
+        }
+      }
+
       @media (max-width: 768px) {
         .sidebar {
           transform: translateX(-100%);
           transition: transform 0.3s;
+          width: 280px;
         }
         .sidebar.show {
           transform: translateX(0);
         }
         .main-content {
           margin-left: 0;
+          padding: 1rem;
+        }
+        .hero-section {
+          padding: 2rem 1rem;
+          margin: -1rem -1rem 1rem -1rem;
+        }
+        .endpoint-header {
+          padding: 0.75rem;
+        }
+        .code-example {
+          margin: 0.75rem 0;
+        }
+        .code-content {
+          padding: 0.75rem;
+        }
+        .response-example {
+          padding: 0.75rem;
+        }
+        .nav-section h6 {
+          font-size: 0.75rem;
+        }
+        .nav-link {
+          font-size: 0.75rem;
+          padding: 0.25rem 0.75rem;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .sidebar {
+          width: 100%;
+          transform: translateX(-100%);
+        }
+        .main-content {
+          padding: 0.75rem;
+        }
+        .hero-section {
+          padding: 1.5rem 0.75rem;
+          margin: -0.75rem -0.75rem 0.75rem -0.75rem;
+        }
+        .endpoint-card {
+          margin: 0.75rem 0;
+        }
+        .endpoint-header {
+          padding: 0.5rem;
+        }
+        .http-method {
+          font-size: 0.65rem;
+          padding: 0.15rem 0.5rem;
+        }
+        .code-tabs {
+          flex-direction: column;
+        }
+        .code-tab {
+          border-bottom: 1px solid #dee2e6;
+          border-radius: 0;
+        }
+        .code-tab:last-child {
+          border-bottom: none;
+        }
+        .parameter-table {
+          font-size: 0.8rem;
+        }
+        .parameter-table th,
+        .parameter-table td {
+          padding: 0.25rem;
+        }
+        .badge-required,
+        .badge-optional {
+          font-size: 0.6rem;
+          padding: 0.1rem 0.25rem;
+        }
+      }
+
+      /* Accessibility improvements */
+      @media (prefers-reduced-motion: reduce) {
+        .feature-card:hover {
+          transform: none;
+        }
+        .sidebar {
+          transition: none;
         }
       }
     </style>
@@ -195,6 +324,22 @@
           SSO API Docs
         </h5>
         <small class="text-muted">Developer Portal v3.0</small>
+      </div>
+
+      <!-- Search Box -->
+      <div class="px-3 py-2">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control"
+            id="docsSearch"
+            placeholder="Search documentation..."
+            onkeyup="filterDocumentation()"
+          />
+        </div>
       </div>
 
       <div class="nav-section">
@@ -287,6 +432,13 @@
           onclick="showSection('sdk-libraries')"
         >
           <i class="fas fa-cube me-2"></i>SDK Libraries
+        </a>
+        <a
+          href="#integration-guides"
+          class="nav-link"
+          onclick="showSection('integration-guides')"
+        >
+          <i class="fas fa-book me-2"></i>Integration Guides
         </a>
         <a
           href="#testing-tools"
@@ -772,6 +924,38 @@ if (isset($_GET['token'])) {
                   </li>
                 </ol>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">SSO Authentication Flow Diagram</h3>
+        <p>
+          Complete sequence diagram of the OpenID Connect flow with JWT token
+          generation:
+        </p>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="mermaid">
+              sequenceDiagram participant User as ผู้ใช้ (Browser) participant
+              ClientApp as เว็บแอป (React, PHP, etc.) participant SsoAuthen as
+              sso-authen (บริการกลาง) participant OidcProvider as OIDC Provider
+              (PSU SSO) User->>ClientApp: 1. เข้าเว็บแอป ClientApp->>User: 2.
+              แสดงปุ่ม Login ที่มี client_id และ redirect_uri User->>SsoAuthen:
+              3. กด Login (ไปยัง /login.php) SsoAuthen->>SsoAuthen: 4. ตรวจสอบ
+              client_id, บันทึกข้อมูลลง Session SsoAuthen->>User: 5. Redirect
+              ไปยัง OIDC Provider User->>OidcProvider: 6. ทำการยืนยันตัวตน
+              OidcProvider->>User: 7. ส่งกลับมาที่ SsoAuthen พร้อม Authorization
+              Code User->>SsoAuthen: 8. /callback.php SsoAuthen->>OidcProvider:
+              9. แลก Code เป็น ID Token (Back-Channel)
+              OidcProvider-->>SsoAuthen: 10. ส่ง ID Token กลับมา
+              SsoAuthen->>ClientApp: 11. (API Call) เรียก User Handler Endpoint
+              ของ ClientApp ClientApp-->>SsoAuthen: 12. (API Response)
+              ส่งข้อมูลผู้ใช้ในระบบกลับมา SsoAuthen->>SsoAuthen: 13. สร้าง JWT
+              พร้อมข้อมูลผู้ใช้ SsoAuthen->>User: 14. Redirect กลับไปที่
+              ClientApp พร้อมแนบ JWT User->>ClientApp: 15. /callback (รับ Token)
+              ClientApp->>ClientApp: 16. ตรวจสอบ JWT, สร้าง Session/State
+              ของตัวเอง User->>ClientApp: 17. เข้าใช้งานแอปในสถานะ Login
             </div>
           </div>
         </div>
@@ -1292,6 +1476,65 @@ if (isset($_GET['token'])) {
                   </li>
                 </ol>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Token Refresh</h3>
+        <p>Refresh access tokens using the refresh token:</p>
+
+        <h3 class="mt-4">Authorization Endpoint</h3>
+        <p>Initiate the authentication process:</p>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <div>
+              <span class="http-method method-get">GET</span>
+              <strong>/authorize</strong>
+            </div>
+            <span class="badge bg-primary">Public Endpoint</span>
+          </div>
+          <div class="card-body">
+            <h5>Example Request</h5>
+            <div class="code-example">
+              <div class="code-content">
+                <pre><code class="language-bash">curl -X GET "https://sso.yourorg.com/authorize?response_type=code&client_id=your-client-id&redirect_uri=https://yourapp.com/callback&scope=openid%20profile%20email&state=your-state"</code></pre>
+              </div>
+            </div>
+
+            <h5>Response</h5>
+            <p>Redirects to the SSO login page.</p>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Token Endpoint</h3>
+        <p>Exchange the authorization code for an access token:</p>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <div>
+              <span class="http-method method-post">POST</span>
+              <strong>/token</strong>
+            </div>
+            <span class="badge bg-primary">Public Endpoint</span>
+          </div>
+          <div class="card-body">
+            <h5>Example Request</h5>
+            <div class="code-example">
+              <div class="code-content">
+                <pre><code class="language-bash">curl -X POST "https://sso.yourorg.com/token" -d "grant_type=authorization_code&code=your-authorization-code&redirect_uri=https://yourapp.com/callback&client_id=your-client-id&client_secret=your-client-secret"</code></pre>
+              </div>
+            </div>
+
+            <h5>Response</h5>
+            <div class="response-example">
+              <pre><code class="language-json">{
+  "access_token": "your-access-token",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "your-refresh-token",
+  "id_token": "your-id-token"
+}</code></pre>
             </div>
           </div>
         </div>
@@ -2632,6 +2875,23 @@ curl -X POST "https://sso.yourorg.com/admin/logout.php" \
         document
           .querySelector(`a[href="#${sectionId}"]`)
           .classList.add("active");
+
+        // Render Mermaid charts when section becomes visible
+        if (typeof mermaid !== "undefined") {
+          console.log("Rendering Mermaid charts for section:", sectionId);
+          mermaid
+            .run({
+              querySelector: `#${sectionId} .mermaid`,
+            })
+            .then(() => {
+              console.log("Mermaid charts rendered successfully");
+            })
+            .catch((error) => {
+              console.error("Error rendering Mermaid charts:", error);
+            });
+        } else {
+          console.log("Mermaid not available");
+        }
       }
 
       function showCodeTab(tabId) {
@@ -2645,6 +2905,52 @@ curl -X POST "https://sso.yourorg.com/admin/logout.php" \
         });
         document.querySelector(`#${tabId}`).classList.add("active");
       }
+
+      function filterDocumentation() {
+        const searchTerm = document
+          .getElementById("docsSearch")
+          .value.toLowerCase();
+        const navSections = document.querySelectorAll(".nav-section");
+
+        navSections.forEach((section) => {
+          const navLinks = section.querySelectorAll(".nav-link");
+          let sectionHasVisibleItems = false;
+
+          navLinks.forEach((link) => {
+            const linkText = link.textContent.toLowerCase();
+            if (searchTerm === "" || linkText.includes(searchTerm)) {
+              link.style.display = "block";
+              sectionHasVisibleItems = true;
+            } else {
+              link.style.display = "none";
+            }
+          });
+
+          // Show/hide entire section based on whether it has visible items
+          const sectionHeader = section.querySelector("h6");
+          if (sectionHasVisibleItems || searchTerm === "") {
+            section.style.display = "block";
+            if (sectionHeader) {
+              sectionHeader.style.display = "block";
+            }
+          } else {
+            section.style.display = "none";
+          }
+        });
+
+        // If search is cleared, make sure the active section is visible
+        if (searchTerm === "") {
+          document.querySelectorAll(".nav-section").forEach((section) => {
+            section.style.display = "block";
+            const sectionHeader = section.querySelector("h6");
+            if (sectionHeader) {
+              sectionHeader.style.display = "block";
+            }
+          });
+        }
+      }
+
+      // Mermaid.js is initialized at the top of the document
     </script>
   </body>
 </html>
