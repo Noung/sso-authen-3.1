@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSO-Authen V.3 - Developer Documentation</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+      // Initialize Mermaid.js configuration
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({
+          startOnLoad: true,
+          theme: "default",
+          securityLevel: "loose",
+          flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+          },
+          sequence: {
+            useMaxWidth: false,
+            wrap: true,
+            width: 200,
+            height: 60,
+            messageAlign: 'left',
+            mirrorActors: true
+          }
+        });
+      }
+    </script>
+    <style>
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 280px;
+        background: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+        overflow-y: auto;
+        z-index: 1000;
+      }
+      .main-content {
+        margin-left: 280px;
+        padding: 2rem;
+        margin-bottom: 20px;
+      }
+      .nav-section {
+        padding: 1rem 0;
+        border-bottom: 1px solid #dee2e6;
+      }
+      .nav-section h6 {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+      }
+      .nav-link {
+        color: #495057;
+        padding: 0.375rem 1rem;
+        border-radius: 0.375rem;
+        margin: 0.125rem 0;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+      .nav-link:hover {
+        background-color: #e9ecef;
+        color: #495057;
+      }
+      .nav-link.active {
+        background-color: #0d6efd;
+        color: white;
+      }
+      .endpoint-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+      }
+      .endpoint-header {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .http-method {
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+      }
+      .method-get {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+      .method-post {
+        background: #d4edda;
+        color: #155724;
+      }
+      .method-put {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .method-delete {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .code-example {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        margin: 1rem 0;
+      }
+      .code-tabs {
+        display: flex;
+        border-bottom: 1px solid #dee2e6;
+      }
+      .code-tab {
+        padding: 0.5rem 1rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+      }
+      .code-tab.active {
+        background: #e9ecef;
+        border-bottom: 2px solid #0d6efd;
+      }
+      .code-content {
+        padding: 1rem;
+      }
+      .code-block {
+        display: none;
+      }
+      .code-block.active {
+        display: block;
+      }
+      .response-example {
+        background: #f8f9fa;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        margin: 0.5rem 0;
+      }
+      .parameter-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+      }
+      .badge-required {
+        background: #dc3545;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+      }
+      .badge-optional {
+        background: #6c757d;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+      }
+      .section-content {
+        display: none;
+      }
+      .section-content.active {
+        display: block;
+      }
+      .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+        margin: -2rem -2rem 2rem -2rem;
+      }
+      .feature-card {
+        transition: transform 0.2s;
+      }
+      .feature-card:hover {
+        transform: translateY(-2px);
+      }
+
+      /* Mermaid diagram specific styles */
+      .mermaid-container {
+        overflow-x: auto;
+        width: 100%;
+      }
+      
+      .mermaid {
+        font-size: 14px !important;
+      }
+
+      .mermaid .actor {
+        stroke-width: 2px;
+      }
+
+      .mermaid .messageText {
+        font-size: 13px !important;
+        stroke: none !important;
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+          transition: transform 0.3s;
+          width: 280px;
+        }
+        .sidebar.show {
+          transform: translateX(0);
+        }
+        .main-content {
+          margin-left: 0;
+          padding: 1rem;
+        }
+        .hero-section {
+          padding: 2rem 1rem;
+          margin: -1rem -1rem 1rem -1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Mobile Menu Toggle -->
+    <button
+      class="btn btn-primary d-md-none position-fixed"
+      style="top: 1rem; left: 1rem; z-index: 1100"
+      onclick="toggleSidebar()"
+    >
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+      <div class="p-3">
+        <h5 class="mb-0">
+          <i class="fas fa-shield-alt text-primary me-2"></i>
+          SSO-Authen V.3
+        </h5>
+        <small class="text-muted">Developer Documentation</small>
+      </div>
+
+      <!-- Search Box -->
+      <div class="px-3 py-2">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control"
+            id="docsSearch"
+            placeholder="Search documentation..."
+            onkeyup="filterDocumentation()"
+          />
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <h6 class="px-3">Getting Started</h6>
+        <a
+          href="#overview"
+          class="nav-link active"
+          onclick="showSection('overview')"
+        >
+          <i class="fas fa-home me-2"></i>Overview
+        </a>
+        <a
+          href="#architecture"
+          class="nav-link"
+          onclick="showSection('architecture')"
+        >
+          <i class="fas fa-sitemap me-2"></i>Architecture
+        </a>
+        <a
+          href="#quickstart"
+          class="nav-link"
+          onclick="showSection('quickstart')"
+        >
+          <i class="fas fa-rocket me-2"></i>Quick Start
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <h6 class="px-3">Client Integration</h6>
+        <a
+          href="#authentication-flow"
+          class="nav-link"
+          onclick="showSection('authentication-flow')"
+        >
+          <i class="fas fa-exchange-alt me-2"></i>Authentication Flow
+        </a>
+        <a
+          href="#login-endpoint"
+          class="nav-link"
+          onclick="showSection('login-endpoint')"
+        >
+          <i class="fas fa-sign-in-alt me-2"></i>Login Endpoint
+        </a>
+        <a
+          href="#callback-handling"
+          class="nav-link"
+          onclick="showSection('callback-handling')"
+        >
+          <i class="fas fa-reply me-2"></i>Callback Handling
+        </a>
+        <a
+          href="#jwt-tokens"
+          class="nav-link"
+          onclick="showSection('jwt-tokens')"
+        >
+          <i class="fas fa-certificate me-2"></i>JWT Tokens
+        </a>
+        <a
+          href="#user-handler-api"
+          class="nav-link"
+          onclick="showSection('user-handler-api')"
+        >
+          <i class="fas fa-user-cog me-2"></i>User Handler API
+        </a>
+        <a
+          href="#logout-endpoint"
+          class="nav-link"
+          onclick="showSection('logout-endpoint')"
+        >
+          <i class="fas fa-sign-out-alt me-2"></i>Logout Endpoint
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <h6 class="px-3">Admin Panel</h6>
+        <a
+          href="#admin-overview"
+          class="nav-link"
+          onclick="showSection('admin-overview')"
+        >
+          <i class="fas fa-user-shield me-2"></i>Overview
+        </a>
+        <a
+          href="#client-management"
+          class="nav-link"
+          onclick="showSection('client-management')"
+        >
+          <i class="fas fa-users me-2"></i>Client Management
+        </a>
+        <a
+          href="#dashboard-api"
+          class="nav-link"
+          onclick="showSection('dashboard-api')"
+        >
+          <i class="fas fa-chart-line me-2"></i>Dashboard API
+        </a>
+        <a
+          href="#backup-restore"
+          class="nav-link"
+          onclick="showSection('backup-restore')"
+        >
+          <i class="fas fa-database me-2"></i>Backup & Restore
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <h6 class="px-3">Code Examples</h6>
+        <a
+          href="#php-example"
+          class="nav-link"
+          onclick="showSection('php-example')"
+        >
+          <i class="fab fa-php me-2"></i>PHP Client
+        </a>
+        <a
+          href="#javascript-example"
+          class="nav-link"
+          onclick="showSection('javascript-example')"
+        >
+          <i class="fab fa-js me-2"></i>JavaScript Client
+        </a>
+        <a
+          href="#react-example"
+          class="nav-link"
+          onclick="showSection('react-example')"
+        >
+          <i class="fab fa-react me-2"></i>React Client
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <h6 class="px-3">Resources</h6>
+        <a
+          href="#troubleshooting"
+          class="nav-link"
+          onclick="showSection('troubleshooting')"
+        >
+          <i class="fas fa-question-circle me-2"></i>Troubleshooting
+        </a>
+        <a href="#faq" class="nav-link" onclick="showSection('faq')">
+          <i class="fas fa-lightbulb me-2"></i>FAQ
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Overview Section -->
+      <div id="overview" class="section-content active">
+        <div class="hero-section text-center">
+          <div class="container">
+            <h1 class="display-4 fw-bold">SSO-Authen V.3</h1>
+            <p class="lead">Centralized OpenID Connect Gateway</p>
+            <p class="mb-4">
+              Deploy once, authenticate everywhere - A stateless SSO service for all your applications
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+              <button
+                class="btn btn-light btn-lg"
+                onclick="showSection('quickstart')"
+              >
+                <i class="fas fa-rocket me-2"></i>Get Started
+              </button>
+              <button
+                class="btn btn-outline-light btn-lg"
+                onclick="showSection('authentication-flow')"
+              >
+                <i class="fas fa-exchange-alt me-2"></i>See How It Works
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-5">
+          <div class="col-md-4">
+            <div class="card feature-card h-100">
+              <div class="card-body text-center">
+                <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                <h5>OIDC Gateway</h5>
+                <p class="text-muted">
+                  Acts as a bridge between your applications and OIDC providers (PSU SSO, Google, Microsoft, etc.)
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card feature-card h-100">
+              <div class="card-body text-center">
+                <i class="fas fa-code fa-3x text-success mb-3"></i>
+                <h5>Technology Agnostic</h5>
+                <p class="text-muted">
+                  Works with any tech stack - PHP, Node.js, React, Vue, or any language that can handle HTTP redirects and JWT
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card feature-card h-100">
+              <div class="card-body text-center">
+                <i class="fas fa-certificate fa-3x text-info mb-3"></i>
+                <h5>Stateless JWT</h5>
+                <p class="text-muted">
+                  Issues signed JWT tokens with user data, enabling modern stateless authentication architecture
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-12">
+            <h3>What is SSO-Authen V.3?</h3>
+            <p>
+              SSO-Authen V.3 is a <strong>centralized authentication gateway</strong> that implements the OpenID Connect (OIDC) standard.
+              Instead of each application implementing its own authentication with various providers, you deploy SSO-Authen once
+              and all your applications authenticate through it.
+            </p>
+
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Key Concept:</strong> SSO-Authen is <strong>NOT an OIDC Provider</strong> itself. It's an <strong>OIDC Client/Gateway</strong>
+              that connects to external providers (like PSU SSO, Google, Microsoft) and provides a unified authentication interface to your applications.
+            </div>
+
+            <h4 class="mt-4">Core Features</h4>
+            <ul>
+              <li><strong>Centralized Service:</strong> One deployment serves all applications</li>
+              <li><strong>Multi-Client Support:</strong> Manage multiple applications from one admin panel</li>
+              <li><strong>JWT-Based:</strong> Returns signed JWT tokens for stateless authentication</li>
+              <li><strong>Legacy Mode:</strong> Supports traditional PHP session-based authentication for backward compatibility</li>
+              <li><strong>Multi-Provider:</strong> Connect to any OIDC provider through flexible configuration</li>
+              <li><strong>Data Normalization:</strong> Standardizes user claims across different providers</li>
+              <li><strong>Decoupled Authorization:</strong> Separates authentication from application-specific authorization</li>
+            </ul>
+
+            <h4 class="mt-4">How It Works (Simple Version)</h4>
+            <ol>
+              <li>User clicks "Login" in your application → redirects to SSO-Authen</li>
+              <li>SSO-Authen handles authentication with the OIDC provider (e.g., PSU SSO)</li>
+              <li>After successful authentication, SSO-Authen calls your app's API to create/update user in your database</li>
+              <li>SSO-Authen generates a JWT token with user data and redirects back to your app</li>
+              <li>Your app validates the JWT and creates its own session/state</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Architecture Section -->
+      <div id="architecture" class="section-content">
+        <h1>System Architecture</h1>
+        <p class="lead">Understanding how SSO-Authen V.3 works</p>
+
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Important:</strong> SSO-Authen is an <strong>OIDC Client</strong>, not an OIDC Provider.
+          It connects to external providers and provides a unified gateway to your applications.
+        </div>
+
+        <h3>Complete Authentication Flow</h3>
+        <p>
+          This diagram shows the complete flow from user login to receiving JWT token:
+        </p>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="mermaid-container">
+              <div class="mermaid" style="width: 100%; min-width: 1400px; margin: 0 auto;">
+sequenceDiagram
+    participant User as User (Browser)
+    participant ClientApp as Client App (React, PHP, etc.)
+    participant SsoAuthen as sso-authen (Central Service)
+    participant OidcProvider as OIDC Provider (PSU SSO)
+
+    User->>ClientApp: 1. Access web app
+    ClientApp->>User: 2. Show Login button with client_id and redirect_uri
+    User->>SsoAuthen: 3. Click Login (to /login.php)
+    SsoAuthen->>SsoAuthen: 4. Verify client_id, save data to Session
+    SsoAuthen->>User: 5. Redirect to OIDC Provider
+    User->>OidcProvider: 6. Authenticate
+    OidcProvider->>User: 7. Return to SsoAuthen with Authorization Code
+    User->>SsoAuthen: 8. /callback.php
+    SsoAuthen->>OidcProvider: 9. Exchange Code for ID Token (Back-Channel)
+    OidcProvider-->>SsoAuthen: 10. Return ID Token
+    SsoAuthen->>ClientApp: 11. (API Call) Call User Handler Endpoint of ClientApp
+    ClientApp-->>SsoAuthen: 12. (API Response) Return user data
+    SsoAuthen->>SsoAuthen: 13. Generate JWT with user data
+    SsoAuthen->>User: 14. Redirect to ClientApp with JWT
+    User->>ClientApp: 15. /callback (receive Token)
+    ClientApp->>ClientApp: 16. Verify JWT, create Session/State
+    User->>ClientApp: 17. Access app in logged-in state
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Step-by-Step Explanation</h3>
+        <div class="accordion" id="flowAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#step1">
+                Steps 1-3: Login Initiation
+              </button>
+            </h2>
+            <div id="step1" class="accordion-collapse collapse show" data-bs-parent="#flowAccordion">
+              <div class="accordion-body">
+                <p>User accesses your application and clicks the login link that points to:</p>
+                <code>https://sso.oas.psu.ac.th/public/login.php?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_CALLBACK_URL</code>
+                <p class="mt-2">SSO-Authen validates the client_id and redirect_uri against registered clients in the database.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step2">
+                Steps 4-7: OIDC Provider Authentication
+              </button>
+            </h2>
+            <div id="step2" class="accordion-collapse collapse" data-bs-parent="#flowAccordion">
+              <div class="accordion-body">
+                <p>SSO-Authen stores client information in session and redirects user to the configured OIDC provider (e.g., PSU SSO).</p>
+                <p>User authenticates with the provider and is redirected back to SSO-Authen's callback with an authorization code.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step3">
+                Steps 8-10: Token Exchange
+              </button>
+            </h2>
+            <div id="step3" class="accordion-collapse collapse" data-bs-parent="#flowAccordion">
+              <div class="accordion-body">
+                <p>SSO-Authen exchanges the authorization code for an ID token through a back-channel call to the OIDC provider.</p>
+                <p>This step happens server-to-server and includes user information from the provider.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step4">
+                Steps 11-12: User Handler API Call
+              </button>
+            </h2>
+            <div id="step4" class="accordion-collapse collapse" data-bs-parent="#flowAccordion">
+              <div class="accordion-body">
+                <p><strong>This is unique to SSO-Authen V.3!</strong></p>
+                <p>SSO-Authen makes a POST request to your application's <code>user_handler_endpoint</code> with:</p>
+                <ul>
+                  <li><strong>normalizedUser:</strong> Standardized user data from provider</li>
+                  <li><strong>ssoUserInfo:</strong> Raw user data from provider</li>
+                </ul>
+                <p>Your application should:</p>
+                <ol>
+                  <li>Find or create the user in your database</li>
+                  <li>Assign roles/permissions as needed</li>
+                  <li>Return the user data with your internal ID and role</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step5">
+                Steps 13-17: JWT Generation and Redirect
+              </button>
+            </h2>
+            <div id="step5" class="accordion-collapse collapse" data-bs-parent="#flowAccordion">
+              <div class="accordion-body">
+                <p>SSO-Authen generates a signed JWT containing the user data from your application and redirects to your callback URL with the token.</p>
+                <p>Your application validates the JWT signature and creates its own session/state management.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Key Components</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-folder me-2"></i>SSO-Authen Endpoints</h5>
+              </div>
+              <div class="card-body">
+                <ul class="list-unstyled">
+                  <li><i class="fas fa-check text-success me-2"></i><code>/public/login.php</code> - Login initiation</li>
+                  <li><i class="fas fa-check text-success me-2"></i><code>/public/callback.php</code> - OIDC callback handler</li>
+                  <li><i class="fas fa-check text-success me-2"></i><code>/public/logout.php</code> - Logout endpoint</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-cog me-2"></i>Configuration</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Clients are stored in database and managed via Admin Panel</strong></p>
+                <p>Each client has:</p>
+                <ul class="mb-0">
+                  <li><code>client_id</code> - Unique identifier</li>
+                  <li><code>app_redirect_uri</code> - Callback URL after authentication</li>
+                  <li><code>post_logout_redirect_uri</code> - Redirect URL after logout</li>
+                  <li><code>user_handler_endpoint</code> - Your API endpoint</li>
+                  <li><code>api_secret_key</code> - For API authentication</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Start Section -->
+      <div id="quickstart" class="section-content">
+        <h1>Quick Start Guide</h1>
+        <p class="lead">Integrate your application in 5 steps</p>
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Prerequisites:</strong> You need a registered client_id and your app must have a callback endpoint and user handler API.
+        </div>
+
+        <h3>Step 1: Register Your Application</h3>
+        <p>Contact your SSO administrator to register your application. You'll receive:</p>
+        <ul>
+          <li><code>client_id</code> - Your unique application identifier</li>
+          <li><code>app_redirect_uri</code> - Your callback URL (must be registered)</li>
+          <li><code>api_secret_key</code> - Secret for API authentication</li>
+        </ul>
+
+        <h3>Step 2: Create Login Link</h3>
+        <p>Add a login button/link in your application that redirects to:</p>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('login-html')">
+              HTML
+            </button>
+            <button class="code-tab" onclick="showCodeTab('login-js')">
+              JavaScript
+            </button>
+            <button class="code-tab" onclick="showCodeTab('login-php')">
+              PHP
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="login-html" class="code-block active">
+              <pre><code class="language-html">&lt;!-- Simple HTML Link --&gt;
+&lt;a href="https://sso.oas.psu.ac.th/public/login.php?client_id=YOUR_CLIENT_ID&redirect_uri=https://yourapp.com/callback" 
+   class="btn btn-primary"&gt;
+  Login with SSO
+&lt;/a&gt;</code></pre>
+            </div>
+            <div id="login-js" class="code-block">
+              <pre><code class="language-javascript">// JavaScript redirect
+function loginWithSSO() {
+  const params = new URLSearchParams({
+    client_id: 'YOUR_CLIENT_ID',
+    redirect_uri: window.location.origin + '/callback'
+  });
+  
+  window.location.href = `https://sso.oas.psu.ac.th/public/login.php?${params}`;
+}</code></pre>
+            </div>
+            <div id="login-php" class="code-block">
+              <pre><code class="language-php">&lt;?php
+// PHP redirect
+$loginUrl = 'https://sso.oas.psu.ac.th/public/login.php?' . http_build_query([
+    'client_id' => 'YOUR_CLIENT_ID',
+    'redirect_uri' => 'https://yourapp.com/callback.php'
+]);
+
+header("Location: $loginUrl");
+exit;
+?&gt;</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3>Step 3: Implement User Handler API</h3>
+        <p>Create an API endpoint in your application that SSO-Authen will call to create/update users:</p>
+
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Important:</strong> This endpoint must verify the X-API-SECRET header for security.
+        </div>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('handler-php')">
+              PHP
+            </button>
+            <button class="code-tab" onclick="showCodeTab('handler-node')">
+              Node.js
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="handler-php" class="code-block active">
+              <pre><code class="language-php">&lt;?php
+// user-handler.php
+header('Content-Type: application/json');
+
+// 1. Verify API Secret
+$receivedSecret = $_SERVER['HTTP_X_API_SECRET'] ?? '';
+if ($receivedSecret !== 'YOUR_API_SECRET_KEY') {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
+
+// 2. Get user data from request
+$input = json_decode(file_get_contents('php://input'), true);
+$normalizedUser = $input['normalizedUser'];
+
+// 3. Find or create user in database
+$pdo = new PDO('mysql:host=localhost;dbname=yourdb', 'user', 'pass');
+$stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+$stmt->execute([$normalizedUser['email']]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user) {
+    // Create new user
+    $stmt = $pdo->prepare(
+        "INSERT INTO users (email, name) VALUES (?, ?)"
+    );
+    $stmt->execute([$normalizedUser['email'], $normalizedUser['name']]);
+    $user = [
+        'id' => $pdo->lastInsertId(),
+        'email' => $normalizedUser['email'],
+        'name' => $normalizedUser['name'],
+        'role' => 'user'
+    ];
+}
+
+// 4. Return user data
+echo json_encode($user);
+?&gt;</code></pre>
+            </div>
+            <div id="handler-node" class="code-block">
+              <pre><code class="language-javascript">// Express.js example
+app.post('/api/sso-user-handler', async (req, res) => {
+  // 1. Verify API Secret
+  if (req.headers['x-api-secret'] !== process.env.API_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // 2. Get user data
+  const { normalizedUser } = req.body;
+
+  // 3. Find or create user
+  let user = await User.findOne({ email: normalizedUser.email });
+  if (!user) {
+    user = await User.create({
+      email: normalizedUser.email,
+      name: normalizedUser.name,
+      role: 'user'
+    });
+  }
+
+  // 4. Return user data
+  res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
+});</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3>Step 4: Create Callback Handler</h3>
+        <p>Handle the redirect from SSO-Authen with JWT token:</p>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('callback-php')">
+              PHP
+            </button>
+            <button class="code-tab" onclick="showCodeTab('callback-js')">
+              JavaScript
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="callback-php" class="code-block active">
+              <pre><code class="language-php">&lt;?php
+// callback.php
+require 'vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
+session_start();
+$jwt = $_GET['token'] ?? null;
+
+if (!$jwt) {
+    die('No token received');
+}
+
+try {
+    $decoded = JWT::decode($jwt, new Key('JWT_SECRET_KEY', 'HS256'));
+    $_SESSION['logged_in'] = true;
+    $_SESSION['user'] = (array) $decoded->data;
+    header('Location: /dashboard.php');
+} catch (Exception $e) {
+    die('Invalid token');
+}
+?&gt;</code></pre>
+            </div>
+            <div id="callback-js" class="code-block">
+              <pre><code class="language-javascript">// Get token from URL
+const token = new URLSearchParams(window.location.search).get('token');
+
+if (token) {
+  localStorage.setItem('jwt_token', token);
+  window.location.href = '/dashboard';
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-success mt-4">
+          <i class="fas fa-check-circle me-2"></i>
+          <strong>Done!</strong> Your application is now integrated with SSO-Authen V.3.
+        </div>
+      </div>
+
+      <!-- More sections (Under Construction) -->
+      <div id="authentication-flow" class="section-content">
+        <h1>Authentication Flow Details</h1>
+        <p class="lead">Deep dive into the SSO authentication process</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction. Please refer to the Architecture section for complete flow details.
+        </div>
+      </div>
+
+      <div id="login-endpoint" class="section-content">
+        <h1>Login Endpoint</h1>
+        <p class="lead">Initiating authentication - /public/login.php</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="callback-handling" class="section-content">
+        <h1>Callback Handling</h1>
+        <p class="lead">Processing authentication response</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="jwt-tokens" class="section-content">
+        <h1>JWT Tokens</h1>
+        <p class="lead">Understanding JWT structure and validation</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="user-handler-api" class="section-content">
+        <h1>User Handler API</h1>
+        <p class="lead">Implementing the User Handler endpoint</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="logout-endpoint" class="section-content">
+        <h1>Logout Endpoint</h1>
+        <p class="lead">Ending user sessions - /public/logout.php</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="admin-overview" class="section-content">
+        <h1>Admin Panel Overview</h1>
+        <p class="lead">Managing the SSO system</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="client-management" class="section-content">
+        <h1>Client Management</h1>
+        <p class="lead">Managing registered clients via Admin Panel</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="dashboard-api" class="section-content">
+        <h1>Dashboard API</h1>
+        <p class="lead">Statistics and monitoring</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="backup-restore" class="section-content">
+        <h1>Backup & Restore</h1>
+        <p class="lead">Data backup and recovery</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="php-example" class="section-content">
+        <h1>PHP Client Example</h1>
+        <p class="lead">Complete PHP integration example</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="javascript-example" class="section-content">
+        <h1>JavaScript Client Example</h1>
+        <p class="lead">Complete JavaScript integration example</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="react-example" class="section-content">
+        <h1>React Client Example</h1>
+        <p class="lead">Complete React integration example</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="troubleshooting" class="section-content">
+        <h1>Troubleshooting</h1>
+        <p class="lead">Common issues and solutions</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+
+      <div id="faq" class="section-content">
+        <h1>FAQ</h1>
+        <p class="lead">Frequently Asked Questions</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          This section is under construction.
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("show");
+      }
+
+      function showSection(sectionId) {
+        document.querySelectorAll(".section-content").forEach((section) => {
+          section.classList.remove("active");
+        });
+        document.getElementById(sectionId).classList.add("active");
+
+        document.querySelectorAll(".nav-link").forEach((link) => {
+          link.classList.remove("active");
+        });
+        document
+          .querySelector(`a[href="#${sectionId}"]`)
+          .classList.add("active");
+
+        // Render Mermaid charts when section becomes visible
+        if (typeof mermaid !== "undefined") {
+          console.log("Rendering Mermaid charts for section:", sectionId);
+          setTimeout(() => {
+            try {
+              mermaid.init(undefined, `#${sectionId} .mermaid`);
+              console.log("Mermaid charts rendered successfully");
+            } catch (error) {
+              console.error("Error rendering Mermaid charts:", error);
+            }
+          }, 100);
+        }
+
+        // Close mobile sidebar
+        if (window.innerWidth < 768) {
+          document.getElementById("sidebar").classList.remove("show");
+        }
+      }
+
+      function showCodeTab(tabId) {
+        // Find parent code-example
+        const button = event.target;
+        const codeExample = button.closest('.code-example');
+        
+        // Update tabs
+        codeExample.querySelectorAll(".code-tab").forEach((tab) => {
+          tab.classList.remove("active");
+        });
+        button.classList.add("active");
+
+        // Update code blocks
+        codeExample.querySelectorAll(".code-block").forEach((block) => {
+          block.classList.remove("active");
+        });
+        codeExample.querySelector(`#${tabId}`).classList.add("active");
+      }
+
+      function filterDocumentation() {
+        const searchTerm = document
+          .getElementById("docsSearch")
+          .value.toLowerCase();
+        const navSections = document.querySelectorAll(".nav-section");
+
+        navSections.forEach((section) => {
+          const navLinks = section.querySelectorAll(".nav-link");
+          let sectionHasVisibleItems = false;
+
+          navLinks.forEach((link) => {
+            const linkText = link.textContent.toLowerCase();
+            if (searchTerm === "" || linkText.includes(searchTerm)) {
+              link.style.display = "block";
+              sectionHasVisibleItems = true;
+            } else {
+              link.style.display = "none";
+            }
+          });
+
+          if (sectionHasVisibleItems || searchTerm === "") {
+            section.style.display = "block";
+          } else {
+            section.style.display = "none";
+          }
+        });
+      }
+
+      // Initialize Mermaid on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof mermaid !== "undefined") {
+          console.log('Initializing Mermaid on page load');
+          mermaid.initialize({
+            startOnLoad: true,
+            theme: "default",
+            securityLevel: "loose",
+            flowchart: {
+              useMaxWidth: true,
+              htmlLabels: true,
+            },
+            sequence: {
+              useMaxWidth: false,
+              wrap: true,
+              width: 200,
+              height: 60,
+              messageAlign: 'left',
+              mirrorActors: true
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
