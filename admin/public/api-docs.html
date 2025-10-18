@@ -23,13 +23,17 @@
       // Initialize Mermaid.js configuration
       if (typeof mermaid !== "undefined") {
         mermaid.initialize({
-          startOnLoad: false,
+          startOnLoad: true,
           theme: "default",
           securityLevel: "loose",
           flowchart: {
             useMaxWidth: true,
             htmlLabels: true,
           },
+          sequence: {
+            useMaxWidth: true,
+            wrap: true
+          }
         });
       }
     </script>
@@ -928,7 +932,7 @@ if (isset($_GET['token'])) {
           </div>
         </div>
 
-        <h3 class="mt-4">SSO Authentication Flow Diagram</h3>
+        <h3 class="mt-4">Authentication Flow Diagram</h3>
         <p>
           Complete sequence diagram of the OpenID Connect flow with JWT token
           generation:
@@ -936,26 +940,30 @@ if (isset($_GET['token'])) {
 
         <div class="card">
           <div class="card-body">
-            <div class="mermaid">
-              sequenceDiagram participant User as ผู้ใช้ (Browser) participant
-              ClientApp as เว็บแอป (React, PHP, etc.) participant SsoAuthen as
-              sso-authen (บริการกลาง) participant OidcProvider as OIDC Provider
-              (PSU SSO) User->>ClientApp: 1. เข้าเว็บแอป ClientApp->>User: 2.
-              แสดงปุ่ม Login ที่มี client_id และ redirect_uri User->>SsoAuthen:
-              3. กด Login (ไปยัง /login.php) SsoAuthen->>SsoAuthen: 4. ตรวจสอบ
-              client_id, บันทึกข้อมูลลง Session SsoAuthen->>User: 5. Redirect
-              ไปยัง OIDC Provider User->>OidcProvider: 6. ทำการยืนยันตัวตน
-              OidcProvider->>User: 7. ส่งกลับมาที่ SsoAuthen พร้อม Authorization
-              Code User->>SsoAuthen: 8. /callback.php SsoAuthen->>OidcProvider:
-              9. แลก Code เป็น ID Token (Back-Channel)
-              OidcProvider-->>SsoAuthen: 10. ส่ง ID Token กลับมา
-              SsoAuthen->>ClientApp: 11. (API Call) เรียก User Handler Endpoint
-              ของ ClientApp ClientApp-->>SsoAuthen: 12. (API Response)
-              ส่งข้อมูลผู้ใช้ในระบบกลับมา SsoAuthen->>SsoAuthen: 13. สร้าง JWT
-              พร้อมข้อมูลผู้ใช้ SsoAuthen->>User: 14. Redirect กลับไปที่
-              ClientApp พร้อมแนบ JWT User->>ClientApp: 15. /callback (รับ Token)
-              ClientApp->>ClientApp: 16. ตรวจสอบ JWT, สร้าง Session/State
-              ของตัวเอง User->>ClientApp: 17. เข้าใช้งานแอปในสถานะ Login
+            <div class="mermaid" style="width: 100%; max-width: 1200px; margin: 0 auto;">
+sequenceDiagram
+    participant User as User Browser
+    participant ClientApp as Client App
+    participant SsoAuthen as SSO Service
+    participant OidcProvider as OIDC Provider
+    
+    User->>ClientApp: 1. Access Application
+    ClientApp->>User: 2. Show Login Button
+    User->>SsoAuthen: 3. Click Login (to /login.php)
+    SsoAuthen->>SsoAuthen: 4. Verify client_id, Store in Session
+    SsoAuthen->>User: 5. Redirect to OIDC Provider
+    User->>OidcProvider: 6. Authenticate User
+    OidcProvider->>User: 7. Return with Authorization Code
+    User->>SsoAuthen: 8. /callback.php
+    SsoAuthen->>OidcProvider: 9. Exchange Code for ID Token
+    OidcProvider-->>SsoAuthen: 10. Return ID Token
+    SsoAuthen->>ClientApp: 11. Call User Handler Endpoint
+    ClientApp-->>SsoAuthen: 12. Return User Data
+    SsoAuthen->>SsoAuthen: 13. Generate JWT with User Data
+    SsoAuthen->>User: 14. Redirect to Client with JWT
+    User->>ClientApp: 15. /callback (with Token)
+    ClientApp->>ClientApp: 16. Verify JWT, Create Session
+    User->>ClientApp: 17. Access App as Logged In
             </div>
           </div>
         </div>
@@ -2879,16 +2887,14 @@ curl -X POST "https://sso.yourorg.com/admin/logout.php" \
         // Render Mermaid charts when section becomes visible
         if (typeof mermaid !== "undefined") {
           console.log("Rendering Mermaid charts for section:", sectionId);
-          mermaid
-            .run({
-              querySelector: `#${sectionId} .mermaid`,
-            })
-            .then(() => {
+          setTimeout(() => {
+            try {
+              mermaid.init(undefined, `#${sectionId} .mermaid`);
               console.log("Mermaid charts rendered successfully");
-            })
-            .catch((error) => {
+            } catch (error) {
               console.error("Error rendering Mermaid charts:", error);
-            });
+            }
+          }, 100);
         } else {
           console.log("Mermaid not available");
         }
@@ -2950,7 +2956,26 @@ curl -X POST "https://sso.yourorg.com/admin/logout.php" \
         }
       }
 
-      // Mermaid.js is initialized at the top of the document
+      // Mermaid.js initialization on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof mermaid !== "undefined") {
+          console.log('Initializing Mermaid on page load');
+          // Re-initialize to ensure proper rendering
+          mermaid.initialize({
+            startOnLoad: true,
+            theme: "default",
+            securityLevel: "loose",
+            flowchart: {
+              useMaxWidth: true,
+              htmlLabels: true,
+            },
+            sequence: {
+              useMaxWidth: true,
+              wrap: true
+            }
+          });
+        }
+      });
     </script>
   </body>
 </html>
