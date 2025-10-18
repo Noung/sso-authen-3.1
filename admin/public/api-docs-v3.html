@@ -537,12 +537,12 @@
               <div class="mermaid" style="width: 100%; min-width: 1400px; margin: 0 auto;">
 sequenceDiagram
     participant User as User (Browser)
-    participant ClientApp as Client App (React, PHP, etc.)
-    participant SsoAuthen as sso-authen (Central Service)
+    participant ClientApp as Client App
+    participant SsoAuthen as sso-authen
     participant OidcProvider as OIDC Provider (PSU SSO)
 
     User->>ClientApp: 1. Access web app
-    ClientApp->>User: 2. Show Login button with client_id and redirect_uri
+    ClientApp->>User: 2. Show Login button
     User->>SsoAuthen: 3. Click Login (to /login.php)
     SsoAuthen->>SsoAuthen: 4. Verify client_id, save data to Session
     SsoAuthen->>User: 5. Redirect to OIDC Provider
@@ -551,7 +551,7 @@ sequenceDiagram
     User->>SsoAuthen: 8. /callback.php
     SsoAuthen->>OidcProvider: 9. Exchange Code for ID Token (Back-Channel)
     OidcProvider-->>SsoAuthen: 10. Return ID Token
-    SsoAuthen->>ClientApp: 11. (API Call) Call User Handler Endpoint of ClientApp
+    SsoAuthen->>ClientApp: 11. (API Call) Call User Handler Endpoint
     ClientApp-->>SsoAuthen: 12. (API Response) Return user data
     SsoAuthen->>SsoAuthen: 13. Generate JWT with user data
     SsoAuthen->>User: 14. Redirect to ClientApp with JWT
@@ -893,58 +893,2232 @@ if (token) {
         </div>
       </div>
 
-      <!-- More sections (Under Construction) -->
+      <!-- Authentication Flow Details Section -->
       <div id="authentication-flow" class="section-content">
         <h1>Authentication Flow Details</h1>
-        <p class="lead">Deep dive into the SSO authentication process</p>
+        <p class="lead">Complete guide to the authentication process</p>
+
         <div class="alert alert-info">
           <i class="fas fa-info-circle me-2"></i>
-          This section is under construction. Please refer to the Architecture section for complete flow details.
+          <strong>Prerequisites:</strong> Before integrating, ensure you have a registered client_id and understand the basic flow from the Architecture section.
         </div>
+
+        <h3>Authentication Modes</h3>
+        <p>SSO-Authen V.3 supports two authentication modes based on your application's architecture:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-certificate me-2"></i>JWT Mode (Recommended)</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>For modern applications</strong></p>
+                <p>SSO-Authen generates a signed JWT token and redirects back to your application. Your app validates the JWT and manages its own session.</p>
+                
+                <h6 class="mt-3">When to use:</h6>
+                <ul>
+                  <li>React, Vue, Angular applications</li>
+                  <li>Node.js, Python, Java backends</li>
+                  <li>API-first architectures</li>
+                  <li>Microservices</li>
+                  <li>Mobile applications</li>
+                </ul>
+
+                <h6 class="mt-3">Requirements:</h6>
+                <ul>
+                  <li>Implement <code>user_handler_endpoint</code> API</li>
+                  <li>JWT validation library</li>
+                  <li>Ability to manage sessions/state</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-warning text-dark">
+                <h5><i class="fas fa-server me-2"></i>Legacy Mode</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>For traditional PHP applications</strong></p>
+                <p>SSO-Authen creates a PHP session directly and redirects back to your application on the same domain.</p>
+                
+                <h6 class="mt-3">When to use:</h6>
+                <ul>
+                  <li>Legacy PHP applications</li>
+                  <li>Applications on same domain as SSO-Authen</li>
+                  <li>Backward compatibility requirements</li>
+                </ul>
+
+                <h6 class="mt-3">Requirements:</h6>
+                <ul>
+                  <li>Must be on same domain as SSO-Authen</li>
+                  <li>Set <code>user_handler_endpoint</code> to null</li>
+                  <li>Implement <code>findOrCreateUser()</code> function</li>
+                </ul>
+
+                <div class="alert alert-warning mt-3 mb-0">
+                  <small><strong>Note:</strong> Legacy Mode is for backward compatibility only. New applications should use JWT Mode.</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Detailed Flow Breakdown</h3>
+        
+        <h4>Phase 1: Login Initiation</h4>
+        <p>When a user clicks login in your application:</p>
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-javascript">// Redirect to SSO login endpoint
+const loginUrl = `https://sso.oas.psu.ac.th/public/login.php?` +
+  `client_id=YOUR_CLIENT_ID&` +
+  `redirect_uri=${encodeURIComponent('https://yourapp.com/callback')}`;
+
+window.location.href = loginUrl;</code></pre>
+          </div>
+        </div>
+
+        <p>SSO-Authen will:</p>
+        <ol>
+          <li>Validate the <code>client_id</code> exists in database</li>
+          <li>Verify <code>redirect_uri</code> matches registered URI</li>
+          <li>Store client information in session</li>
+          <li>Redirect user to configured OIDC provider</li>
+        </ol>
+
+        <h4 class="mt-3">Phase 2: Provider Authentication</h4>
+        <p>The OIDC provider (e.g., PSU SSO) handles user authentication:</p>
+        <ul>
+          <li>User enters credentials on provider's login page</li>
+          <li>Provider validates credentials</li>
+          <li>Provider generates authorization code</li>
+          <li>Provider redirects back to SSO-Authen's callback URL</li>
+        </ul>
+
+        <h4 class="mt-3">Phase 3: Token Exchange & User Handler</h4>
+        <p>SSO-Authen processes the callback:</p>
+        <ol>
+          <li>Exchanges authorization code for ID token (back-channel to provider)</li>
+          <li>Extracts and normalizes user data from ID token</li>
+          <li><strong>Calls your app's User Handler API</strong> with normalized data</li>
+          <li>Receives user data with internal ID and role from your app</li>
+        </ol>
+
+        <div class="alert alert-success">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Key Insight:</strong> This is what makes SSO-Authen unique! It delegates user creation and role assignment to YOUR application, keeping authentication and authorization separate.
+        </div>
+
+        <h4 class="mt-3">Phase 4: JWT Generation & Redirect</h4>
+        <p>SSO-Authen completes the process:</p>
+        <ol>
+          <li>Creates a signed JWT containing user data from your app</li>
+          <li>Redirects to your <code>redirect_uri</code> with token as query parameter</li>
+        </ol>
+
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-text">https://yourapp.com/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+          </div>
+        </div>
+
+        <h4 class="mt-3">Phase 5: Your App's Callback</h4>
+        <p>Your application receives and processes the JWT:</p>
+        <ol>
+          <li>Extracts token from URL query parameter</li>
+          <li>Validates JWT signature using shared secret</li>
+          <li>Checks token expiration</li>
+          <li>Creates application-specific session/state</li>
+          <li>Redirects user to dashboard or requested page</li>
+        </ol>
       </div>
 
       <div id="login-endpoint" class="section-content">
         <h1>Login Endpoint</h1>
         <p class="lead">Initiating authentication - /public/login.php</p>
-        <div class="alert alert-info">
-          <i class="fas fa-info-circle me-2"></i>
-          This section is under construction.
+
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <div>
+              <span class="http-method method-get">GET</span>
+              <strong>/public/login.php</strong>
+            </div>
+            <span class="badge bg-primary">Public Endpoint</span>
+          </div>
+          <div class="card-body">
+            <h5>Description</h5>
+            <p>This endpoint initiates the OIDC authentication flow. Users are redirected here from your application to begin the login process.</p>
+
+            <h5>Query Parameters</h5>
+            <table class="table table-bordered parameter-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Type</th>
+                  <th>Required</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>client_id</code></td>
+                  <td>string</td>
+                  <td><span class="badge-required">Required</span></td>
+                  <td>Your registered client application ID</td>
+                </tr>
+                <tr>
+                  <td><code>redirect_uri</code></td>
+                  <td>string</td>
+                  <td><span class="badge-required">Required</span></td>
+                  <td>The callback URL where user will be redirected after authentication. Must exactly match the registered URI.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h5>Example Request</h5>
+            <div class="code-example">
+              <div class="code-tabs">
+                <button class="code-tab active" onclick="showCodeTab('login-url')">
+                  URL
+                </button>
+                <button class="code-tab" onclick="showCodeTab('login-js-ex')">
+                  JavaScript
+                </button>
+                <button class="code-tab" onclick="showCodeTab('login-php-ex')">
+                  PHP
+                </button>
+              </div>
+              <div class="code-content">
+                <div id="login-url" class="code-block active">
+                  <pre><code class="language-text">GET https://sso.oas.psu.ac.th/public/login.php?client_id=my_app_123&redirect_uri=https%3A%2F%2Fmyapp.com%2Fcallback</code></pre>
+                </div>
+                <div id="login-js-ex" class="code-block">
+                  <pre><code class="language-javascript">function loginWithSSO() {
+  const params = new URLSearchParams({
+    client_id: 'my_app_123',
+    redirect_uri: 'https://myapp.com/callback'
+  });
+  
+  window.location.href = `https://sso.oas.psu.ac.th/public/login.php?${params}`;
+}</code></pre>
+                </div>
+                <div id="login-php-ex" class="code-block">
+                  <pre><code class="language-php">&lt;?php
+$loginUrl = 'https://sso.oas.psu.ac.th/public/login.php?' . http_build_query([
+    'client_id' => 'my_app_123',
+    'redirect_uri' => 'https://myapp.com/callback.php'
+]);
+
+header("Location: $loginUrl");
+exit;
+?&gt;</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <h5>Response</h5>
+            <p>This endpoint does not return JSON. Instead, it:</p>
+            <ol>
+              <li>Validates the <code>client_id</code> and <code>redirect_uri</code></li>
+              <li>Stores client information in PHP session</li>
+              <li>Redirects (HTTP 302) the user to the configured OIDC provider's login page</li>
+            </ol>
+
+            <h5>Error Responses</h5>
+            <p>If validation fails, an error message is displayed using SweetAlert2:</p>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="response-example">
+                  <h6>Missing Parameters</h6>
+                  <pre><code class="language-json">{
+  "title": "Configuration Error",
+  "message": "client_id and redirect_uri are required",
+  "icon": "error"
+}</code></pre>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="response-example">
+                  <h6>Unauthorized Client</h6>
+                  <pre><code class="language-json">{
+  "title": "Configuration Error",
+  "message": "Unauthorized client ID: xxx",
+  "icon": "error"
+}</code></pre>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="response-example">
+                  <h6>Invalid Redirect URI</h6>
+                  <pre><code class="language-json">{
+  "title": "Configuration Error",
+  "message": "Redirect URI does not match registered URI",
+  "icon": "error"
+}</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <h5 class="mt-3">Security Notes</h5>
+            <div class="alert alert-warning">
+              <ul class="mb-0">
+                <li><strong>URI Validation:</strong> The redirect_uri must exactly match the registered URI (including protocol, domain, port, and path)</li>
+                <li><strong>Client Registration:</strong> Only registered clients in the database can use this endpoint</li>
+                <li><strong>No Client Secret:</strong> This endpoint does not require client_secret (PKCE flow)</li>
+                <li><strong>Session Security:</strong> Client data is stored in secure PHP session with httpOnly cookies</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 
       <div id="callback-handling" class="section-content">
         <h1>Callback Handling</h1>
-        <p class="lead">Processing authentication response</p>
+        <p class="lead">Processing authentication response in your application</p>
+
         <div class="alert alert-info">
           <i class="fas fa-info-circle me-2"></i>
-          This section is under construction.
+          <strong>Overview:</strong> After successful authentication, SSO-Authen redirects the user back to your <code>redirect_uri</code> with a JWT token. Your application must validate this token and create a session.
+        </div>
+
+        <h3>Callback URL Format</h3>
+        <p>The user will be redirected to your callback URL with the JWT token as a query parameter:</p>
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-text">https://yourapp.com/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjo...</code></pre>
+          </div>
+        </div>
+
+        <h3>Step 1: Extract Token from URL</h3>
+        <p>First, extract the token from the query parameters:</p>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('extract-js')">
+              JavaScript
+            </button>
+            <button class="code-tab" onclick="showCodeTab('extract-php')">
+              PHP
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="extract-js" class="code-block active">
+              <pre><code class="language-javascript">// Modern JavaScript (React, Vue, etc.)
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get('token');
+
+if (!token) {
+  console.error('No token received');
+  window.location.href = '/login';
+}</code></pre>
+            </div>
+            <div id="extract-php" class="code-block">
+              <pre><code class="language-php">&lt;?php
+// PHP application
+$token = $_GET['token'] ?? null;
+
+if (!$token) {
+    die('No token received');
+}
+?&gt;</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3>Step 2: Validate JWT Token</h3>
+        <p>Validate the token signature and expiration using a JWT library:</p>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('validate-php')">
+              PHP (Firebase JWT)
+            </button>
+            <button class="code-tab" onclick="showCodeTab('validate-node')">
+              Node.js (jsonwebtoken)
+            </button>
+            <button class="code-tab" onclick="showCodeTab('validate-python')">
+              Python (PyJWT)
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="validate-php" class="code-block active">
+              <pre><code class="language-php">&lt;?php
+require 'vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
+$jwtSecret = 'your_jwt_secret_key'; // Same as configured in SSO-Authen
+
+try {
+    // Decode and validate token
+    $decoded = JWT::decode($token, new Key($jwtSecret, 'HS256'));
+    
+    // Token is valid, extract user data
+    $userData = (array) $decoded->data;
+    
+    echo "User authenticated: " . $userData['email'];
+    
+} catch (\Firebase\JWT\ExpiredException $e) {
+    die('Token has expired');
+} catch (\Firebase\JWT\SignatureInvalidException $e) {
+    die('Invalid token signature');
+} catch (Exception $e) {
+    die('Token validation failed: ' . $e->getMessage());
+}
+?&gt;</code></pre>
+            </div>
+            <div id="validate-node" class="code-block">
+              <pre><code class="language-javascript">const jwt = require('jsonwebtoken');
+
+const jwtSecret = process.env.JWT_SECRET; // Same as configured in SSO-Authen
+
+try {
+  // Decode and validate token
+  const decoded = jwt.verify(token, jwtSecret);
+  
+  // Token is valid, extract user data
+  const userData = decoded.data;
+  
+  console.log('User authenticated:', userData.email);
+  
+} catch (err) {
+  if (err.name === 'TokenExpiredError') {
+    console.error('Token has expired');
+  } else if (err.name === 'JsonWebTokenError') {
+    console.error('Invalid token');
+  } else {
+    console.error('Token validation failed:', err.message);
+  }
+}</code></pre>
+            </div>
+            <div id="validate-python" class="code-block">
+              <pre><code class="language-python">import jwt
+import os
+
+jwt_secret = os.getenv('JWT_SECRET')  # Same as configured in SSO-Authen
+
+try:
+    # Decode and validate token
+    decoded = jwt.decode(token, jwt_secret, algorithms=['HS256'])
+    
+    # Token is valid, extract user data
+    user_data = decoded['data']
+    
+    print(f"User authenticated: {user_data['email']}")
+    
+except jwt.ExpiredSignatureError:
+    print('Token has expired')
+except jwt.InvalidTokenError:
+    print('Invalid token')
+except Exception as e:
+    print(f'Token validation failed: {str(e)}')</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-danger mt-3">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Critical:</strong> Always validate the JWT signature! Never trust the token content without verification. The <code>JWT_SECRET</code> must match exactly with the one configured in SSO-Authen.
+        </div>
+
+        <h3>Step 3: Extract User Data</h3>
+        <p>After successful validation, the decoded token contains user information in the <code>data</code> property:</p>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('extract-data-php')">
+              PHP
+            </button>
+            <button class="code-tab" onclick="showCodeTab('extract-data-js')">
+              JavaScript
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="extract-data-php" class="code-block active">
+              <pre><code class="language-php">&lt;?php
+// After successful JWT validation
+$userData = (array) $decoded->data;
+
+// Available fields (from your User Handler API response)
+$userId = $userData['id'];           // Your internal user ID
+$userEmail = $userData['email'];     // User's email
+$userName = $userData['name'];       // User's display name
+$userRole = $userData['role'];       // User's role in your system
+
+// Any additional fields you returned from User Handler
+if (isset($userData['department'])) {
+    $department = $userData['department'];
+}
+?&gt;</code></pre>
+            </div>
+            <div id="extract-data-js" class="code-block">
+              <pre><code class="language-javascript">// After successful JWT validation
+const userData = decoded.data;
+
+// Available fields (from your User Handler API response)
+const userId = userData.id;        // Your internal user ID
+const userEmail = userData.email;  // User's email
+const userName = userData.name;    // User's display name
+const userRole = userData.role;    // User's role in your system
+
+// Any additional fields you returned from User Handler
+if (userData.department) {
+  const department = userData.department;
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3>Step 4: Create Application Session</h3>
+        <p>Store the user information in your application's session or state management:</p>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('session-php')">
+              PHP Session
+            </button>
+            <button class="code-tab" onclick="showCodeTab('session-express')">
+              Express.js
+            </button>
+            <button class="code-tab" onclick="showCodeTab('session-react')">
+              React Context
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="session-php" class="code-block active">
+              <pre><code class="language-php">&lt;?php
+session_start();
+
+// Store user data in session
+$_SESSION['logged_in'] = true;
+$_SESSION['user'] = [
+    'id' => $userData['id'],
+    'email' => $userData['email'],
+    'name' => $userData['name'],
+    'role' => $userData['role']
+];
+
+// Store token for API calls
+$_SESSION['jwt_token'] = $token;
+
+// Redirect to dashboard
+header('Location: /dashboard.php');
+exit;
+?&gt;</code></pre>
+            </div>
+            <div id="session-express" class="code-block">
+              <pre><code class="language-javascript">// Express.js with express-session
+app.get('/callback', (req, res) => {
+  const token = req.query.token;
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Store in session
+    req.session.loggedIn = true;
+    req.session.user = decoded.data;
+    req.session.jwtToken = token;
+    
+    res.redirect('/dashboard');
+  } catch (err) {
+    res.status(401).send('Authentication failed');
+  }
+});</code></pre>
+            </div>
+            <div id="session-react" class="code-block">
+              <pre><code class="language-javascript">// React - Store in localStorage and Context
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
+
+function CallbackPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('token');
+    
+    if (token) {
+      // Validate token (you can use jwt-decode for decoding)
+      // In production, validate on backend
+      const decoded = jwtDecode(token);
+      
+      // Store token
+      localStorage.setItem('jwt_token', token);
+      localStorage.setItem('user', JSON.stringify(decoded.data));
+      
+      // Update auth context
+      login(decoded.data, token);
+      
+      // Redirect to dashboard
+      navigate('/dashboard');
+    }
+  }, []);
+  
+  return <div>Processing authentication...</div>;
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3>Complete Callback Example</h3>
+        <p>Here's a complete, production-ready callback handler:</p>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('complete-php')">
+              PHP
+            </button>
+            <button class="code-tab" onclick="showCodeTab('complete-node')">
+              Node.js
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="complete-php" class="code-block active">
+              <pre><code class="language-php">&lt;?php
+// callback.php - Complete production-ready example
+require 'vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
+session_start();
+
+// Configuration
+$jwtSecret = getenv('JWT_SECRET'); // Load from environment
+$dashboardUrl = '/dashboard.php';
+$loginUrl = '/login.php';
+
+try {
+    // 1. Extract token
+    $token = $_GET['token'] ?? null;
+    if (!$token) {
+        throw new Exception('No authentication token received');
+    }
+    
+    // 2. Validate JWT
+    $decoded = JWT::decode($token, new Key($jwtSecret, 'HS256'));
+    $userData = (array) $decoded->data;
+    
+    // 3. Additional validation (optional)
+    if (empty($userData['id']) || empty($userData['email'])) {
+        throw new Exception('Invalid user data in token');
+    }
+    
+    // 4. Create session
+    session_regenerate_id(true); // Prevent session fixation
+    $_SESSION['logged_in'] = true;
+    $_SESSION['user'] = $userData;
+    $_SESSION['jwt_token'] = $token;
+    $_SESSION['login_time'] = time();
+    
+    // 5. Log successful login (optional)
+    error_log("User logged in: {$userData['email']} (ID: {$userData['id']})");
+    
+    // 6. Redirect to dashboard
+    header("Location: $dashboardUrl");
+    exit;
+    
+} catch (\Firebase\JWT\ExpiredException $e) {
+    // Token expired
+    $_SESSION['error'] = 'Your session has expired. Please login again.';
+    header("Location: $loginUrl");
+    exit;
+    
+} catch (\Firebase\JWT\SignatureInvalidException $e) {
+    // Invalid signature - possible security issue
+    error_log('JWT signature validation failed: ' . $e->getMessage());
+    $_SESSION['error'] = 'Authentication failed. Please try again.';
+    header("Location: $loginUrl");
+    exit;
+    
+} catch (Exception $e) {
+    // Other errors
+    error_log('Callback error: ' . $e->getMessage());
+    $_SESSION['error'] = 'Authentication error: ' . $e->getMessage();
+    header("Location: $loginUrl");
+    exit;
+}
+?&gt;</code></pre>
+            </div>
+            <div id="complete-node" class="code-block">
+              <pre><code class="language-javascript">// callback.js - Complete production-ready example (Express.js)
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const router = express.Router();
+
+router.get('/callback', async (req, res) => {
+  try {
+    // 1. Extract token
+    const token = req.query.token;
+    if (!token) {
+      throw new Error('No authentication token received');
+    }
+    
+    // 2. Validate JWT
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userData = decoded.data;
+    
+    // 3. Additional validation (optional)
+    if (!userData.id || !userData.email) {
+      throw new Error('Invalid user data in token');
+    }
+    
+    // 4. Create session
+    req.session.regenerate((err) => {
+      if (err) throw err;
+      
+      req.session.loggedIn = true;
+      req.session.user = userData;
+      req.session.jwtToken = token;
+      req.session.loginTime = Date.now();
+      
+      // 5. Log successful login (optional)
+      console.log(`User logged in: ${userData.email} (ID: ${userData.id})`);
+      
+      // 6. Redirect to dashboard
+      res.redirect('/dashboard');
+    });
+    
+  } catch (err) {
+    console.error('Callback error:', err.message);
+    
+    if (err.name === 'TokenExpiredError') {
+      req.session.error = 'Your session has expired. Please login again.';
+    } else if (err.name === 'JsonWebTokenError') {
+      req.session.error = 'Authentication failed. Please try again.';
+    } else {
+      req.session.error = `Authentication error: ${err.message}`;
+    }
+    
+    res.redirect('/login');
+  }
+});
+
+module.exports = router;</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3>Security Best Practices</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>DO</h5>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Always validate JWT signature</li>
+                  <li>Check token expiration</li>
+                  <li>Use HTTPS for all communication</li>
+                  <li>Store JWT_SECRET in environment variables</li>
+                  <li>Regenerate session ID after login</li>
+                  <li>Set httpOnly cookies for sessions</li>
+                  <li>Implement rate limiting</li>
+                  <li>Log authentication events</li>
+                  <li>Handle errors gracefully</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-times-circle me-2"></i>DON'T</h5>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Never trust token without validation</li>
+                  <li>Don't hardcode JWT_SECRET in code</li>
+                  <li>Don't expose secret in client-side code</li>
+                  <li>Don't store sensitive data in JWT</li>
+                  <li>Don't ignore token expiration</li>
+                  <li>Don't use HTTP (use HTTPS only)</li>
+                  <li>Don't log sensitive information</li>
+                  <li>Don't reuse session IDs</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-success mt-4">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Pro Tip:</strong> For React/Vue/Angular applications, consider validating the JWT on your backend API instead of the frontend, then create a secure httpOnly cookie for subsequent requests.
         </div>
       </div>
 
       <div id="jwt-tokens" class="section-content">
         <h1>JWT Tokens</h1>
-        <p class="lead">Understanding JWT structure and validation</p>
+        <p class="lead">Understanding JWT structure, claims, and validation</p>
+
         <div class="alert alert-info">
           <i class="fas fa-info-circle me-2"></i>
-          This section is under construction.
+          <strong>What is JWT?</strong> JSON Web Token (JWT) is an open standard (RFC 7519) for securely transmitting information between parties as a JSON object. SSO-Authen uses JWT to encode user information after successful authentication.
+        </div>
+
+        <h3>JWT Structure</h3>
+        <p>A JWT consists of three parts separated by dots (.): <strong>Header.Payload.Signature</strong></p>
+
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-text">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxMjMsImVtYWlsIjoidXNlckBleGFtcGxlLmNvbSIsIm5hbWUiOiJKb2huIERvZSIsInJvbGUiOiJ1c2VyIn0sImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoxNzAwMDA3MjAwfQ.3YwVXz9xKlP2J5kGJnE8M6qR4WfT1cN7LbS9UeHgZqI
+
+<span style="color: #fb015b;">█████████ Header</span>
+<span style="color: #d63aff;">██████████████████ Payload</span>
+<span style="color: #00b9f1;">██████ Signature</span></code></pre>
+          </div>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header" style="background-color: #fb015b; color: white;">
+                <h5 class="mb-0">Header</h5>
+              </div>
+              <div class="card-body">
+                <p>Contains metadata about the token:</p>
+                <pre><code class="language-json">{
+  "alg": "HS256",
+  "typ": "JWT"
+}</code></pre>
+                <ul class="small mb-0">
+                  <li><code>alg</code>: Signing algorithm (HMAC SHA256)</li>
+                  <li><code>typ</code>: Token type (JWT)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header" style="background-color: #d63aff; color: white;">
+                <h5 class="mb-0">Payload</h5>
+              </div>
+              <div class="card-body">
+                <p>Contains the claims (user data):</p>
+                <pre><code class="language-json">{
+  "data": {
+    "id": 123,
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "user"
+  },
+  "iat": 1700000000,
+  "exp": 1700007200
+}</code></pre>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header" style="background-color: #00b9f1; color: white;">
+                <h5 class="mb-0">Signature</h5>
+              </div>
+              <div class="card-body">
+                <p>Verifies the token hasn't been tampered with:</p>
+                <pre><code class="language-javascript">HMACSHA256(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  JWT_SECRET_KEY
+)</code></pre>
+                <p class="small mb-0">Only someone with the secret key can create valid signatures.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Token Claims</h3>
+        <p>SSO-Authen generates JWT tokens with the following structure:</p>
+
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-json">{
+  "data": {
+    "id": 123,                    // Your internal user ID (from User Handler)
+    "email": "user@psu.ac.th",   // User's email
+    "name": "นายสมชาย ใจดี",      // User's display name
+    "role": "user",              // User's role (from User Handler)
+    "department": "IT"           // Additional fields from User Handler
+  },
+  "iat": 1700000000,             // Issued At (timestamp)
+  "exp": 1700007200              // Expiration Time (timestamp)
+}</code></pre>
+          </div>
+        </div>
+
+        <h4>Standard Claims</h4>
+        <table class="table table-bordered parameter-table">
+          <thead>
+            <tr>
+              <th>Claim</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>iat</code></td>
+              <td>number</td>
+              <td><strong>Issued At:</strong> Timestamp when token was created (Unix timestamp)</td>
+            </tr>
+            <tr>
+              <td><code>exp</code></td>
+              <td>number</td>
+              <td><strong>Expiration Time:</strong> Timestamp when token expires (Unix timestamp). Default: 2 hours from issue time</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Custom Claims (data object)</h4>
+        <p>The <code>data</code> object contains user information returned from your User Handler API:</p>
+        <table class="table table-bordered parameter-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Type</th>
+              <th>Required</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>id</code></td>
+              <td>string/number</td>
+              <td><span class="badge-required">Required</span></td>
+              <td>Your application's internal user ID</td>
+            </tr>
+            <tr>
+              <td><code>email</code></td>
+              <td>string</td>
+              <td><span class="badge-required">Required</span></td>
+              <td>User's email address</td>
+            </tr>
+            <tr>
+              <td><code>name</code></td>
+              <td>string</td>
+              <td><span class="badge-required">Required</span></td>
+              <td>User's display name</td>
+            </tr>
+            <tr>
+              <td><code>role</code></td>
+              <td>string</td>
+              <td><span class="badge-optional">Optional</span></td>
+              <td>User's role in your application (e.g., "admin", "user", "editor")</td>
+            </tr>
+            <tr>
+              <td colspan="4" class="text-muted"><em>...any additional fields returned by your User Handler API</em></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alert alert-success">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Flexibility:</strong> You can include any additional fields in the <code>data</code> object by returning them from your User Handler API. SSO-Authen will include all fields in the JWT.
+        </div>
+
+        <h3>Token Expiration</h3>
+        <p>JWT tokens have a configurable expiration time to balance security and user convenience:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Default Configuration</h5>
+              </div>
+              <div class="card-body">
+                <table class="table table-sm mb-0">
+                  <tr>
+                    <td><strong>Expiration Time:</strong></td>
+                    <td>2 hours (7200 seconds)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Configuration:</strong></td>
+                    <td><code>JWT_EXPIRATION</code> in config.php</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Calculation:</strong></td>
+                    <td><code>exp = iat + JWT_EXPIRATION</code></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Expired Token Handling</h5>
+              </div>
+              <div class="card-body">
+                <p>When a token expires:</p>
+                <ol class="mb-0">
+                  <li>JWT validation will throw <code>TokenExpiredError</code></li>
+                  <li>User must re-authenticate</li>
+                  <li>Redirect to login endpoint</li>
+                  <li>User may have active SSO session (auto-login)</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">JWT Validation</h3>
+        <p>Always validate JWT tokens before trusting their contents. Validation checks:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Validation Steps</h5>
+              </div>
+              <div class="card-body">
+                <ol>
+                  <li><strong>Signature Verification</strong>
+                    <ul><li>Verify token was signed with correct secret</li></ul>
+                  </li>
+                  <li><strong>Expiration Check</strong>
+                    <ul><li>Ensure token hasn't expired (exp > current time)</li></ul>
+                  </li>
+                  <li><strong>Format Validation</strong>
+                    <ul><li>Verify token has valid JWT structure</li></ul>
+                  </li>
+                  <li><strong>Claims Validation</strong>
+                    <ul><li>Check required fields exist (id, email, name)</li></ul>
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Validation Libraries</h5>
+              </div>
+              <div class="card-body">
+                <table class="table table-sm mb-0">
+                  <tr>
+                    <td><strong>PHP:</strong></td>
+                    <td><code>firebase/php-jwt</code></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Node.js:</strong></td>
+                    <td><code>jsonwebtoken</code></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Python:</strong></td>
+                    <td><code>PyJWT</code></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Java:</strong></td>
+                    <td><code>java-jwt</code></td>
+                  </tr>
+                  <tr>
+                    <td><strong>.NET:</strong></td>
+                    <td><code>System.IdentityModel.Tokens.Jwt</code></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Validation Examples</h3>
+        
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('jwt-val-php')">
+              PHP
+            </button>
+            <button class="code-tab" onclick="showCodeTab('jwt-val-node')">
+              Node.js
+            </button>
+            <button class="code-tab" onclick="showCodeTab('jwt-val-python')">
+              Python
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="jwt-val-php" class="code-block active">
+              <pre><code class="language-php">&lt;?php
+require 'vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
+function validateJWT($token) {
+    $jwtSecret = getenv('JWT_SECRET');
+    
+    try {
+        // Decode and validate
+        $decoded = JWT::decode($token, new Key($jwtSecret, 'HS256'));
+        
+        // Verify required fields
+        if (!isset($decoded->data->id) || !isset($decoded->data->email)) {
+            throw new Exception('Missing required claims');
+        }
+        
+        return [
+            'valid' => true,
+            'data' => $decoded->data
+        ];
+        
+    } catch (\Firebase\JWT\ExpiredException $e) {
+        return ['valid' => false, 'error' => 'Token expired'];
+    } catch (\Firebase\JWT\SignatureInvalidException $e) {
+        return ['valid' => false, 'error' => 'Invalid signature'];
+    } catch (Exception $e) {
+        return ['valid' => false, 'error' => $e->getMessage()];
+    }
+}
+
+// Usage
+$result = validateJWT($token);
+if ($result['valid']) {
+    echo "User: " . $result['data']->name;
+} else {
+    echo "Error: " . $result['error'];
+}
+?&gt;</code></pre>
+            </div>
+            <div id="jwt-val-node" class="code-block">
+              <pre><code class="language-javascript">const jwt = require('jsonwebtoken');
+
+function validateJWT(token) {
+  try {
+    // Decode and validate
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Verify required fields
+    if (!decoded.data.id || !decoded.data.email) {
+      throw new Error('Missing required claims');
+    }
+    
+    return {
+      valid: true,
+      data: decoded.data
+    };
+    
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return { valid: false, error: 'Token expired' };
+    } else if (err.name === 'JsonWebTokenError') {
+      return { valid: false, error: 'Invalid signature' };
+    } else {
+      return { valid: false, error: err.message };
+    }
+  }
+}
+
+// Usage
+const result = validateJWT(token);
+if (result.valid) {
+  console.log('User:', result.data.name);
+} else {
+  console.log('Error:', result.error);
+}</code></pre>
+            </div>
+            <div id="jwt-val-python" class="code-block">
+              <pre><code class="language-python">import jwt
+import os
+
+def validate_jwt(token):
+    try:
+        # Decode and validate
+        decoded = jwt.decode(token, os.getenv('JWT_SECRET'), algorithms=['HS256'])
+        
+        # Verify required fields
+        if 'id' not in decoded['data'] or 'email' not in decoded['data']:
+            raise Exception('Missing required claims')
+        
+        return {
+            'valid': True,
+            'data': decoded['data']
+        }
+        
+    except jwt.ExpiredSignatureError:
+        return {'valid': False, 'error': 'Token expired'}
+    except jwt.InvalidTokenError:
+        return {'valid': False, 'error': 'Invalid signature'}
+    except Exception as e:
+        return {'valid': False, 'error': str(e)}
+
+# Usage
+result = validate_jwt(token)
+if result['valid']:
+    print(f"User: {result['data']['name']}")
+else:
+    print(f"Error: {result['error']}")</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Decoding vs Validating</h3>
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Important Security Note:</strong> There's a critical difference between decoding and validating:
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-danger">
+              <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-times-circle me-2"></i>Decode Only (INSECURE)</h5>
+              </div>
+              <div class="card-body">
+                <pre><code class="language-javascript">// ❌ NEVER DO THIS - No verification!
+const decoded = jwtDecode(token);
+const userId = decoded.data.id;
+
+// Attacker can forge tokens!</code></pre>
+                <p class="mb-0 small text-danger"><strong>Risk:</strong> Anyone can create fake tokens with any user data. Never trust decoded data without verification!</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Validate (SECURE)</h5>
+              </div>
+              <div class="card-body">
+                <pre><code class="language-javascript">// ✅ ALWAYS DO THIS - Verifies signature!
+const decoded = jwt.verify(token, JWT_SECRET);
+const userId = decoded.data.id;
+
+// Only valid tokens work!</code></pre>
+                <p class="mb-0 small text-success"><strong>Safe:</strong> Only tokens signed with the correct secret will be accepted. Forgery impossible without the secret.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Token Security Best Practices</h3>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Storage</h6>
+              </div>
+              <div class="card-body">
+                <ul class="small mb-0">
+                  <li>Use httpOnly cookies (server-side)</li>
+                  <li>Avoid localStorage for sensitive apps</li>
+                  <li>Consider sessionStorage as alternative</li>
+                  <li>Never expose tokens in URLs</li>
+                  <li>Clear tokens on logout</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">Transmission</h6>
+              </div>
+              <div class="card-body">
+                <ul class="small mb-0">
+                  <li>Always use HTTPS</li>
+                  <li>Don't send tokens in GET parameters</li>
+                  <li>Use Authorization header for APIs</li>
+                  <li>Implement CORS properly</li>
+                  <li>Validate origin in callbacks</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">Secret Management</h6>
+              </div>
+              <div class="card-body">
+                <ul class="small mb-0">
+                  <li>Use strong, random secrets (32+ chars)</li>
+                  <li>Store in environment variables</li>
+                  <li>Never commit secrets to git</li>
+                  <li>Rotate secrets periodically</li>
+                  <li>Use different secrets per environment</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-4">
+          <i class="fas fa-tools me-2"></i>
+          <strong>Testing Tool:</strong> Visit <a href="https://jwt.io" target="_blank" class="alert-link">jwt.io</a> to decode and inspect JWT tokens (don't paste production tokens!). You can verify signatures by pasting your JWT_SECRET in the "Verify Signature" section.
         </div>
       </div>
 
       <div id="user-handler-api" class="section-content">
         <h1>User Handler API</h1>
-        <p class="lead">Implementing the User Handler endpoint</p>
+        <p class="lead">The unique V.3 feature - Decoupled authorization architecture</p>
+
+        <div class="alert alert-success">
+          <i class="fas fa-star me-2"></i>
+          <strong>What makes SSO-Authen V.3 unique:</strong> Instead of managing users centrally, SSO-Authen delegates user creation and role assignment to YOUR application. This keeps authentication and authorization completely separate.
+        </div>
+
+        <h3>Why User Handler API?</h3>
+        <p>Traditional SSO systems create a central user database, forcing you to synchronize users, manage roles in multiple places, and deal with complex permission systems. SSO-Authen V.3 takes a different approach:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-danger">
+              <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-times-circle me-2"></i>Traditional SSO</h5>
+              </div>
+              <div class="card-body">
+                <ul>
+                  <li>SSO manages all user data</li>
+                  <li>Applications query SSO for user info</li>
+                  <li>Roles managed in SSO admin panel</li>
+                  <li>User synchronization headaches</li>
+                  <li>Tight coupling with SSO system</li>
+                  <li>Complex permission mapping</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>SSO-Authen V.3</h5>
+              </div>
+              <div class="card-body">
+                <ul>
+                  <li>Your app manages its own users</li>
+                  <li>SSO only handles authentication</li>
+                  <li>You control roles and permissions</li>
+                  <li>No synchronization needed</li>
+                  <li>Loose coupling, high flexibility</li>
+                  <li>Each app has its own user model</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">How It Works</h3>
+        <p>After authenticating with the OIDC provider, SSO-Authen calls YOUR application's User Handler API:</p>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <ol class="mb-0">
+              <li><strong>User authenticates</strong> with OIDC provider (e.g., PSU SSO)</li>
+              <li><strong>SSO-Authen receives</strong> user data from OIDC provider (email, name, etc.)</li>
+              <li><strong>SSO-Authen normalizes</strong> the data to a standard format</li>
+              <li><strong>SSO-Authen calls YOUR</strong> User Handler endpoint with normalized data</li>
+              <li><strong>Your application</strong> finds or creates the user in YOUR database</li>
+              <li><strong>Your application</strong> assigns roles based on YOUR business logic</li>
+              <li><strong>Your application returns</strong> user data with internal ID and role</li>
+              <li><strong>SSO-Authen generates</strong> JWT with YOUR user data</li>
+            </ol>
+          </div>
+        </div>
+
         <div class="alert alert-info">
-          <i class="fas fa-info-circle me-2"></i>
-          This section is under construction.
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Key Insight:</strong> SSO-Authen never stores user data. It only facilitates the authentication flow and packages YOUR user data into a JWT.
+        </div>
+
+        <h3>API Contract</h3>
+        <p>You must implement an HTTP POST endpoint that accepts normalized user data and returns your application's user data:</p>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <div>
+              <span class="http-method method-post">POST</span>
+              <strong>{your_user_handler_endpoint}</strong>
+            </div>
+            <span class="badge bg-warning text-dark">Your Implementation</span>
+          </div>
+          <div class="card-body">
+            <h5>Request Headers</h5>
+            <table class="table table-bordered parameter-table">
+              <thead>
+                <tr>
+                  <th>Header</th>
+                  <th>Value</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>Content-Type</code></td>
+                  <td><code>application/json</code></td>
+                  <td>Request body is JSON</td>
+                </tr>
+                <tr>
+                  <td><code>X-API-Secret</code></td>
+                  <td><code>{your_api_secret_key}</code></td>
+                  <td>For authenticating the request from SSO-Authen</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h5>Request Body</h5>
+            <p>SSO-Authen sends normalized user data:</p>
+            <div class="code-example">
+              <div class="code-content">
+                <pre><code class="language-json">{
+  "normalizedUser": {
+    "email": "somchai.jaidee@psu.ac.th",
+    "name": "สมชาย ใจดี",
+    "given_name": "สมชาย",
+    "family_name": "ใจดี",
+    "oid": "12345-67890-abcde",        // OIDC provider's user ID
+    "preferred_username": "somchai.j",
+    "sub": "12345-67890-abcde"         // OIDC subject identifier
+  }
+}</code></pre>
+              </div>
+            </div>
+
+            <h6>normalizedUser Fields</h6>
+            <table class="table table-bordered table-sm parameter-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Type</th>
+                  <th>Guaranteed</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>email</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-success">Yes</span></td>
+                  <td>User's email address (always present)</td>
+                </tr>
+                <tr>
+                  <td><code>name</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-success">Yes</span></td>
+                  <td>Full name (always present)</td>
+                </tr>
+                <tr>
+                  <td><code>given_name</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-warning text-dark">Maybe</span></td>
+                  <td>First name (if available from provider)</td>
+                </tr>
+                <tr>
+                  <td><code>family_name</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-warning text-dark">Maybe</span></td>
+                  <td>Last name (if available from provider)</td>
+                </tr>
+                <tr>
+                  <td><code>oid</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-warning text-dark">Maybe</span></td>
+                  <td>Object ID from OIDC provider</td>
+                </tr>
+                <tr>
+                  <td><code>sub</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-warning text-dark">Maybe</span></td>
+                  <td>Subject identifier from OIDC provider</td>
+                </tr>
+                <tr>
+                  <td><code>preferred_username</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-warning text-dark">Maybe</span></td>
+                  <td>Preferred username from provider</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="alert alert-info mt-3">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Note:</strong> Only <code>email</code> and <code>name</code> are guaranteed. Other fields depend on what the OIDC provider returns. Always check field existence before using.
+            </div>
+
+            <h5>Response (Your Implementation)</h5>
+            <p>Your endpoint MUST return JSON with user data from YOUR database:</p>
+            <div class="code-example">
+              <div class="code-content">
+                <pre><code class="language-json">{
+  "id": 123,                          // Required: Your internal user ID
+  "email": "somchai.jaidee@psu.ac.th", // Required: User's email
+  "name": "สมชาย ใจดี",              // Required: User's name
+  "role": "admin",                     // Optional: User's role in YOUR app
+  "department": "IT",                  // Optional: Any additional fields
+  "permissions": ["read", "write"]     // Optional: Custom data
+}</code></pre>
+              </div>
+            </div>
+
+            <h6>Required Response Fields</h6>
+            <table class="table table-bordered table-sm parameter-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Type</th>
+                  <th>Required</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>id</code></td>
+                  <td>string/number</td>
+                  <td><span class="badge-required">Required</span></td>
+                  <td>Your application's internal user ID (primary key)</td>
+                </tr>
+                <tr>
+                  <td><code>email</code></td>
+                  <td>string</td>
+                  <td><span class="badge-required">Required</span></td>
+                  <td>User's email address</td>
+                </tr>
+                <tr>
+                  <td><code>name</code></td>
+                  <td>string</td>
+                  <td><span class="badge-required">Required</span></td>
+                  <td>User's display name</td>
+                </tr>
+                <tr>
+                  <td><code>role</code></td>
+                  <td>string</td>
+                  <td><span class="badge-optional">Optional</span></td>
+                  <td>User's role (e.g., "admin", "user", "editor")</td>
+                </tr>
+                <tr>
+                  <td colspan="4" class="text-muted"><em>...any other fields you want in the JWT token</em></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="alert alert-warning mt-3">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>Important:</strong> All fields you return will be included in the JWT token. Don't include sensitive data like passwords or tokens!
+            </div>
+
+            <h5>Error Responses</h5>
+            <p>If your endpoint encounters an error, return appropriate HTTP status codes:</p>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="response-example">
+                  <h6>401 Unauthorized</h6>
+                  <pre><code class="language-json">{
+  "error": "Invalid API secret"
+}</code></pre>
+                  <p class="small">When <code>X-API-Secret</code> header doesn't match</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="response-example">
+                  <h6>500 Internal Server Error</h6>
+                  <pre><code class="language-json">{
+  "error": "Database connection failed"
+}</code></pre>
+                  <p class="small">When your application encounters an error</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Implementation Examples</h3>
+        
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('handler-impl-php')">
+              PHP (Laravel)
+            </button>
+            <button class="code-tab" onclick="showCodeTab('handler-impl-node')">
+              Node.js (Express)
+            </button>
+            <button class="code-tab" onclick="showCodeTab('handler-impl-python')">
+              Python (Flask)
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="handler-impl-php" class="code-block active">
+              <pre><code class="language-php">&lt;?php
+// routes/api.php (Laravel)
+Route::post('/sso-user-handler', function (Request $request) {
+    // 1. Verify API Secret
+    if ($request->header('X-API-Secret') !== config('app.api_secret')) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+    
+    // 2. Get normalized user data
+    $normalizedUser = $request->input('normalizedUser');
+    $email = $normalizedUser['email'];
+    $name = $normalizedUser['name'];
+    
+    // 3. Find or create user
+    $user = User::firstOrCreate(
+        ['email' => $email],
+        [
+            'name' => $name,
+            'email_verified_at' => now(),
+        ]
+    );
+    
+    // 4. Assign role based on business logic
+    if (str_ends_with($email, '@admin.psu.ac.th')) {
+        $user->role = 'admin';
+    } else if (str_ends_with($email, '@psu.ac.th')) {
+        $user->role = 'staff';
+    } else {
+        $user->role = 'user';
+    }
+    $user->save();
+    
+    // 5. Return user data (will be included in JWT)
+    return response()->json([
+        'id' => $user->id,
+        'email' => $user->email,
+        'name' => $user->name,
+        'role' => $user->role,
+        'department' => $user->department,
+    ]);
+});</code></pre>
+            </div>
+            <div id="handler-impl-node" class="code-block">
+              <pre><code class="language-javascript">// Express.js implementation
+const express = require('express');
+const User = require('./models/User');
+const app = express();
+
+app.post('/api/sso-user-handler', async (req, res) => {
+  try {
+    // 1. Verify API Secret
+    if (req.headers['x-api-secret'] !== process.env.API_SECRET) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // 2. Get normalized user data
+    const { normalizedUser } = req.body;
+    const email = normalizedUser.email;
+    const name = normalizedUser.name;
+    
+    // 3. Find or create user
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        email,
+        name,
+        emailVerified: true
+      });
+    }
+    
+    // 4. Assign role based on business logic
+    if (email.endsWith('@admin.psu.ac.th')) {
+      user.role = 'admin';
+    } else if (email.endsWith('@psu.ac.th')) {
+      user.role = 'staff';
+    } else {
+      user.role = 'user';
+    }
+    await user.save();
+    
+    // 5. Return user data (will be included in JWT)
+    res.json({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      department: user.department
+    });
+    
+  } catch (error) {
+    console.error('User handler error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});</code></pre>
+            </div>
+            <div id="handler-impl-python" class="code-block">
+              <pre><code class="language-python"># Flask implementation
+from flask import Flask, request, jsonify
+from models import User, db
+import os
+
+app = Flask(__name__)
+
+@app.route('/api/sso-user-handler', methods=['POST'])
+def sso_user_handler():
+    try:
+        # 1. Verify API Secret
+        if request.headers.get('X-API-Secret') != os.getenv('API_SECRET'):
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        # 2. Get normalized user data
+        normalized_user = request.json.get('normalizedUser')
+        email = normalized_user['email']
+        name = normalized_user['name']
+        
+        # 3. Find or create user
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(email=email, name=name, email_verified=True)
+            db.session.add(user)
+        
+        # 4. Assign role based on business logic
+        if email.endswith('@admin.psu.ac.th'):
+            user.role = 'admin'
+        elif email.endswith('@psu.ac.th'):
+            user.role = 'staff'
+        else:
+            user.role = 'user'
+        
+        db.session.commit()
+        
+        # 5. Return user data (will be included in JWT)
+        return jsonify({
+            'id': user.id,
+            'email': user.email,
+            'name': user.name,
+            'role': user.role,
+            'department': user.department
+        })
+        
+    except Exception as e:
+        print(f'User handler error: {str(e)}')
+        return jsonify({'error': 'Internal server error'}), 500</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Advanced: Role Assignment Logic</h3>
+        <p>You have complete freedom to implement any role assignment logic in your User Handler:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Email-based Rules</h6>
+              </div>
+              <div class="card-body">
+                <pre><code class="language-php">// Assign role by email domain
+if (str_ends_with($email, '@admin.psu.ac.th')) {
+    $role = 'admin';
+} else if (str_ends_with($email, '@psu.ac.th')) {
+    $role = 'staff';
+} else {
+    $role = 'guest';
+}</code></pre>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0">Database Lookup</h6>
+              </div>
+              <div class="card-body">
+                <pre><code class="language-php">// Check against pre-defined admin list
+$admin = Admin::where('email', $email)->first();
+if ($admin) {
+    $role = $admin->role; // 'super_admin', 'admin', etc.
+} else {
+    $role = 'user';
+}</code></pre>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0">External API</h6>
+              </div>
+              <div class="card-body">
+                <pre><code class="language-php">// Query HR system for department/role
+$hrData = Http::get("https://hr.psu.ac.th/api/user/$email");
+if ($hrData->ok()) {
+    $role = $hrData->json()['position'];
+    $dept = $hrData->json()['department'];
+}</code></pre>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">First-Login Default</h6>
+              </div>
+              <div class="card-body">
+                <pre><code class="language-php">// New users get default role
+if (!$user->exists) {
+    $role = 'pending_approval';
+    // Send notification to admin
+    Mail::to('admin@app.com')->send(
+        new NewUserNotification($user)
+    );
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Testing Your User Handler</h3>
+        <p>You can test your User Handler endpoint independently before integrating with SSO-Authen:</p>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('test-curl')">
+              cURL
+            </button>
+            <button class="code-tab" onclick="showCodeTab('test-postman')">
+              JavaScript (Fetch)
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="test-curl" class="code-block active">
+              <pre><code class="language-bash">curl -X POST https://yourapp.com/api/sso-user-handler \
+  -H "Content-Type: application/json" \
+  -H "X-API-Secret: your_api_secret_key" \
+  -d '{
+    "normalizedUser": {
+      "email": "test@psu.ac.th",
+      "name": "Test User",
+      "given_name": "Test",
+      "family_name": "User"
+    }
+  }'
+
+# Expected response:
+# {"id":1,"email":"test@psu.ac.th","name":"Test User","role":"user"}</code></pre>
+            </div>
+            <div id="test-postman" class="code-block">
+              <pre><code class="language-javascript">fetch('https://yourapp.com/api/sso-user-handler', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Secret': 'your_api_secret_key'
+  },
+  body: JSON.stringify({
+    normalizedUser: {
+      email: 'test@psu.ac.th',
+      name: 'Test User',
+      given_name: 'Test',
+      family_name: 'User'
+    }
+  })
+})
+.then(res => res.json())
+.then(data => console.log('User data:', data))
+.catch(err => console.error('Error:', err));</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Security Considerations</h3>
+        <div class="alert alert-danger">
+          <h5><i class="fas fa-shield-alt me-2"></i>Critical Security Points</h5>
+          <ul class="mb-0">
+            <li><strong>Always verify X-API-Secret:</strong> Reject requests with invalid/missing secret</li>
+            <li><strong>Use HTTPS only:</strong> Never expose this endpoint over HTTP</li>
+            <li><strong>Rate limiting:</strong> Implement rate limiting to prevent abuse</li>
+            <li><strong>Validate email format:</strong> Ensure email is properly formatted</li>
+            <li><strong>Don't return sensitive data:</strong> Don't include passwords, tokens, or sensitive info in response</li>
+            <li><strong>Log all requests:</strong> Keep audit logs for security monitoring</li>
+            <li><strong>Handle errors gracefully:</strong> Don't expose internal error details</li>
+          </ul>
+        </div>
+
+        <h3>Configuration in Admin Panel</h3>
+        <p>After implementing your User Handler, configure it in the SSO-Authen admin panel:</p>
+        <ol>
+          <li>Go to <strong>Client Management</strong></li>
+          <li>Edit your client application</li>
+          <li>Set <code>user_handler_endpoint</code> to your API URL (e.g., https://yourapp.com/api/sso-user-handler)</li>
+          <li>Set <code>api_secret_key</code> to a strong random string (will be sent in X-API-Secret header)</li>
+          <li>Save configuration</li>
+        </ol>
+
+        <div class="alert alert-success mt-4">
+          <i class="fas fa-rocket me-2"></i>
+          <strong>You're in control!</strong> The User Handler API gives you complete flexibility to manage users, roles, and permissions according to YOUR application's business logic. SSO-Authen simply facilitates the authentication and packages your data into a JWT.
         </div>
       </div>
 
       <div id="logout-endpoint" class="section-content">
         <h1>Logout Endpoint</h1>
-        <p class="lead">Ending user sessions - /public/logout.php</p>
+        <p class="lead">Signing out users - /public/logout.php</p>
+
         <div class="alert alert-info">
           <i class="fas fa-info-circle me-2"></i>
-          This section is under construction.
+          <strong>Important:</strong> The logout endpoint destroys the SSO-Authen session and redirects back to your application. Your application is responsible for clearing its own session/state.
+        </div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <div>
+              <span class="http-method method-get">GET</span>
+              <strong>/public/logout.php</strong>
+            </div>
+            <span class="badge bg-primary">Public Endpoint</span>
+          </div>
+          <div class="card-body">
+            <h5>Description</h5>
+            <p>This endpoint destroys the SSO-Authen session and redirects the user back to your application. It does NOT log the user out from the OIDC provider - if the provider has an active session, the user may be automatically logged back in on next login attempt.</p>
+
+            <h5>Query Parameters</h5>
+            <table class="table table-bordered parameter-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Type</th>
+                  <th>Required</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>post_logout_redirect_uri</code></td>
+                  <td>string</td>
+                  <td><span class="badge-required">Required</span></td>
+                  <td>The URL where the user should be redirected after logout. Must match the registered <code>post_logout_redirect_uri</code> or <code>app_redirect_uri</code> in your client configuration.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h5>Example Request</h5>
+            <div class="code-example">
+              <div class="code-tabs">
+                <button class="code-tab active" onclick="showCodeTab('logout-url')">
+                  URL
+                </button>
+                <button class="code-tab" onclick="showCodeTab('logout-js')">
+                  JavaScript
+                </button>
+                <button class="code-tab" onclick="showCodeTab('logout-php-ex')">
+                  PHP
+                </button>
+              </div>
+              <div class="code-content">
+                <div id="logout-url" class="code-block active">
+                  <pre><code class="language-text">GET https://sso.oas.psu.ac.th/public/logout.php?post_logout_redirect_uri=https%3A%2F%2Fyourapp.com%2F</code></pre>
+                </div>
+                <div id="logout-js" class="code-block">
+                  <pre><code class="language-javascript">function logout() {
+  // Clear local session/state first
+  localStorage.removeItem('jwt_token');
+  localStorage.removeItem('user');
+  
+  // Redirect to SSO logout
+  const params = new URLSearchParams({
+    post_logout_redirect_uri: 'https://yourapp.com/'
+  });
+  
+  window.location.href = `https://sso.oas.psu.ac.th/public/logout.php?${params}`;
+}</code></pre>
+                </div>
+                <div id="logout-php-ex" class="code-block">
+                  <pre><code class="language-php">&lt;?php
+// logout.php in your application
+session_start();
+
+// Clear local session
+session_destroy();
+
+// Redirect to SSO logout
+$logoutUrl = 'https://sso.oas.psu.ac.th/public/logout.php?' . http_build_query([
+    'post_logout_redirect_uri' => 'https://yourapp.com/'
+]);
+
+header("Location: $logoutUrl");
+exit;
+?&gt;</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <h5>Response</h5>
+            <p>This endpoint does not return JSON. Instead, it:</p>
+            <ol>
+              <li>Validates the <code>post_logout_redirect_uri</code> is in the allowed list</li>
+              <li>Destroys the SSO-Authen PHP session</li>
+              <li>Displays a success message using SweetAlert2</li>
+              <li>Redirects (HTTP 302) the user to the specified <code>post_logout_redirect_uri</code></li>
+            </ol>
+
+            <h5>Success Flow</h5>
+            <div class="alert alert-success">
+              <strong>On successful logout:</strong>
+              <ol class="mb-0">
+                <li>User sees "Sign out successful" message</li>
+                <li>After 1.5 seconds, redirected to your <code>post_logout_redirect_uri</code></li>
+                <li>Your application should clear its own session/state</li>
+              </ol>
+            </div>
+
+            <h5>Error Responses</h5>
+            <p>If validation fails, an error message is displayed:</p>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="response-example">
+                  <h6>Missing Parameter</h6>
+                  <pre><code class="language-json">{
+  "title": "เกิดข้อผิดพลาด",
+  "message": "No destination URL specified after sign out. (post_logout_redirect_uri is required)",
+  "icon": "error"
+}</code></pre>
+                  <p class="small">User is redirected to SSO-Authen home page</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="response-example">
+                  <h6>Unauthorized URI</h6>
+                  <pre><code class="language-json">{
+  "title": "เกิดข้อผิดพลาด",
+  "message": "The specified destination URL is not authorized.",
+  "icon": "error"
+}</code></pre>
+                  <p class="small">User is redirected to SSO-Authen home page</p>
+                </div>
+              </div>
+            </div>
+
+            <h5 class="mt-3">Security Notes</h5>
+            <div class="alert alert-warning">
+              <ul class="mb-0">
+                <li><strong>URI Validation:</strong> The redirect URI must match either <code>post_logout_redirect_uri</code> or <code>app_redirect_uri</code> from your client configuration</li>
+                <li><strong>No Open Redirect:</strong> Arbitrary redirect URIs are rejected to prevent phishing attacks</li>
+                <li><strong>SSO Session Only:</strong> This only destroys the SSO-Authen session, not the OIDC provider session</li>
+                <li><strong>Application Responsibility:</strong> Your application must clear its own session/tokens</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Complete Logout Flow</h3>
+        <p>A proper logout implementation involves clearing sessions at multiple levels:</p>
+
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">1. Application Session</h6>
+              </div>
+              <div class="card-body">
+                <p><strong>Your Responsibility</strong></p>
+                <ul class="small">
+                  <li>Clear PHP session</li>
+                  <li>Remove JWT from localStorage</li>
+                  <li>Clear cookies</li>
+                  <li>Reset application state</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0">2. SSO-Authen Session</h6>
+              </div>
+              <div class="card-body">
+                <p><strong>Handled by /public/logout.php</strong></p>
+                <ul class="small">
+                  <li>Destroy SSO-Authen session</li>
+                  <li>Clear session cookies</li>
+                  <li>Validate redirect URI</li>
+                  <li>Redirect back to your app</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">3. OIDC Provider Session</h6>
+              </div>
+              <div class="card-body">
+                <p><strong>Not Handled (Optional)</strong></p>
+                <ul class="small">
+                  <li>Provider session persists</li>
+                  <li>Auto-login on next attempt</li>
+                  <li>User must logout from provider separately</li>
+                  <li>Contact provider for end_session_endpoint</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Implementation Examples</h3>
+        
+        <h4>Client-Side Logout (React/Vue/Angular)</h4>
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('logout-react')">
+              React
+            </button>
+            <button class="code-tab" onclick="showCodeTab('logout-vue')">
+              Vue.js
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="logout-react" class="code-block active">
+              <pre><code class="language-javascript">// React logout function
+import { useAuth } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+function LogoutButton() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    // 1. Clear application state
+    logout(); // Clears context state
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user');
+    
+    // 2. Redirect to SSO logout
+    const ssoLogoutUrl = 'https://sso.oas.psu.ac.th/public/logout.php';
+    const returnUrl = window.location.origin; // Back to app homepage
+    
+    window.location.href = `${ssoLogoutUrl}?post_logout_redirect_uri=${encodeURIComponent(returnUrl)}`;
+  };
+  
+  return (
+    <button onClick={handleLogout} className="btn btn-danger">
+      <i className="fas fa-sign-out-alt me-2"></i>
+      Logout
+    </button>
+  );
+}</code></pre>
+            </div>
+            <div id="logout-vue" class="code-block">
+              <pre><code class="language-javascript">// Vue.js logout method
+export default {
+  methods: {
+    logout() {
+      // 1. Clear application state
+      this.$store.dispatch('auth/logout'); // Clear Vuex state
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user');
+      
+      // 2. Redirect to SSO logout
+      const ssoLogoutUrl = 'https://sso.oas.psu.ac.th/public/logout.php';
+      const returnUrl = window.location.origin;
+      
+      window.location.href = `${ssoLogoutUrl}?post_logout_redirect_uri=${encodeURIComponent(returnUrl)}`;
+    }
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h4 class="mt-3">Server-Side Logout (PHP/Node.js)</h4>
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('logout-php-full')">
+              PHP
+            </button>
+            <button class="code-tab" onclick="showCodeTab('logout-node-full')">
+              Node.js (Express)
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="logout-php-full" class="code-block active">
+              <pre><code class="language-php">&lt;?php
+// logout.php - Complete logout implementation
+session_start();
+
+// 1. Clear application session
+session_unset();
+session_destroy();
+
+// 2. Clear session cookie
+if (isset($_COOKIE[session_name()])) {
+    setcookie(session_name(), '', time() - 3600, '/');
+}
+
+// 3. Build SSO logout URL
+$ssoLogoutUrl = 'https://sso.oas.psu.ac.th/public/logout.php';
+$returnUrl = 'https://yourapp.com/'; // Your app homepage
+
+$logoutUrl = $ssoLogoutUrl . '?' . http_build_query([
+    'post_logout_redirect_uri' => $returnUrl
+]);
+
+// 4. Redirect to SSO logout
+header("Location: $logoutUrl");
+exit;
+?&gt;</code></pre>
+            </div>
+            <div id="logout-node-full" class="code-block">
+              <pre><code class="language-javascript">// Express.js logout route
+const express = require('express');
+const router = express.Router();
+
+router.get('/logout', (req, res) => {
+  // 1. Clear application session
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Session destruction error:', err);
+    }
+    
+    // 2. Clear session cookie
+    res.clearCookie('connect.sid');
+    
+    // 3. Build SSO logout URL
+    const ssoLogoutUrl = 'https://sso.oas.psu.ac.th/public/logout.php';
+    const returnUrl = 'https://yourapp.com/';
+    
+    const logoutUrl = `${ssoLogoutUrl}?post_logout_redirect_uri=${encodeURIComponent(returnUrl)}`;
+    
+    // 4. Redirect to SSO logout
+    res.redirect(logoutUrl);
+  });
+});
+
+module.exports = router;</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Best Practices</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Recommended</h6>
+              </div>
+              <div class="card-body">
+                <ul class="small mb-0">
+                  <li>Always clear local session first</li>
+                  <li>Use registered post_logout_redirect_uri</li>
+                  <li>Provide clear logout button in UI</li>
+                  <li>Show confirmation before logout (optional)</li>
+                  <li>Log logout events for auditing</li>
+                  <li>Handle logout errors gracefully</li>
+                  <li>Clear all client-side storage</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="fas fa-times-circle me-2"></i>Avoid</h6>
+              </div>
+              <div class="card-body">
+                <ul class="small mb-0">
+                  <li>Don't use arbitrary redirect URIs</li>
+                  <li>Don't forget to clear local session</li>
+                  <li>Don't expose logout endpoint to CSRF</li>
+                  <li>Don't rely only on JavaScript logout</li>
+                  <li>Don't leave sensitive data in storage</li>
+                  <li>Don't skip URI validation</li>
+                  <li>Don't assume provider logout happens</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-success mt-4">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Pro Tip:</strong> Create a dedicated logout page in your application that handles cleanup, then redirects to SSO logout. This gives you more control over the logout process and allows you to show a "logging out..." message.
         </div>
       </div>
 
@@ -1118,25 +3292,9 @@ if (token) {
 
       // Initialize Mermaid on page load
       document.addEventListener('DOMContentLoaded', function() {
+        // Mermaid already initialized in <head>, just render when sections change
         if (typeof mermaid !== "undefined") {
-          console.log('Initializing Mermaid on page load');
-          mermaid.initialize({
-            startOnLoad: true,
-            theme: "default",
-            securityLevel: "loose",
-            flowchart: {
-              useMaxWidth: true,
-              htmlLabels: true,
-            },
-            sequence: {
-              useMaxWidth: false,
-              wrap: true,
-              width: 200,
-              height: 60,
-              messageAlign: 'left',
-              mirrorActors: true
-            }
-          });
+          console.log('Mermaid ready for rendering');
         }
       });
     </script>
