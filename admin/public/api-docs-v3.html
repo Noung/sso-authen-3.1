@@ -212,6 +212,29 @@
         font-size: 13px !important;
         stroke: none !important;
       }
+      
+      /* Force actor boxes at both top and bottom with purple background */
+      .mermaid rect.actor {
+        fill: #ECECFF !important;
+        stroke: #9370DB !important;
+        stroke-width: 2px !important;
+      }
+      
+      .mermaid .actor-box {
+        fill: #ECECFF !important;
+        stroke: #9370DB !important;
+        stroke-width: 2px !important;
+      }
+      
+      .mermaid line.actor-line {
+        stroke: #999 !important;
+        stroke-width: 0.5px !important;
+      }
+      
+      .mermaid .actor-line {
+        stroke: #999 !important;
+        stroke-width: 0.5px !important;
+      }
 
       .mermaid .messageText {
         font-size: 13px !important;
@@ -545,7 +568,7 @@
         <div class="card">
           <div class="card-body">
             <div class="mermaid-container">
-              <div class="mermaid" style="width: 100%; min-width: 1400px; margin: 0 auto;">
+              <div class="mermaid" style="width: 100%; min-width: 1500px; margin: 0 auto;">
 sequenceDiagram
     participant User as User (Browser)
     participant ClientApp as Client App
@@ -554,21 +577,21 @@ sequenceDiagram
 
     User->>ClientApp: 1. Access web app
     ClientApp->>User: 2. Show Login button
-    User->>SsoAuthen: 3. Click Login (to /login.php)
-    SsoAuthen->>SsoAuthen: 4. Verify client_id, save data to Session
-    SsoAuthen->>User: 5. Redirect to OIDC Provider
+    User->>SsoAuthen: 3. Click Login
+    SsoAuthen->>SsoAuthen: 4. Verify client_id
+    SsoAuthen->>User: 5. Redirect to Provider
     User->>OidcProvider: 6. Authenticate
-    OidcProvider->>User: 7. Return to SsoAuthen with Authorization Code
+    OidcProvider->>User: 7. Return Auth Code
     User->>SsoAuthen: 8. /callback.php
-    SsoAuthen->>OidcProvider: 9. Exchange Code for ID Token (Back-Channel)
+    SsoAuthen->>OidcProvider: 9. Exchange Code for Token
     OidcProvider-->>SsoAuthen: 10. Return ID Token
-    SsoAuthen->>ClientApp: 11. (API Call) Call User Handler Endpoint
-    ClientApp-->>SsoAuthen: 12. (API Response) Return user data
-    SsoAuthen->>SsoAuthen: 13. Generate JWT with user data
-    SsoAuthen->>User: 14. Redirect to ClientApp with JWT
-    User->>ClientApp: 15. /callback (receive Token)
-    ClientApp->>ClientApp: 16. Verify JWT, create Session/State
-    User->>ClientApp: 17. Access app in logged-in state
+    SsoAuthen->>ClientApp: 11. Call User Handler API
+    ClientApp-->>SsoAuthen: 12. Return user data
+    SsoAuthen->>SsoAuthen: 13. Generate JWT
+    SsoAuthen->>User: 14. Redirect with JWT
+    User->>ClientApp: 15. /callback
+    ClientApp->>ClientApp: 16. Verify JWT
+    User->>ClientApp: 17. Access app
               </div>
             </div>
           </div>
