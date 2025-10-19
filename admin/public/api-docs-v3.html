@@ -207,10 +207,21 @@
       .mermaid .actor {
         stroke-width: 2px;
       }
+      
+      .mermaid .messageText {
+        font-size: 13px !important;
+        stroke: none !important;
+      }
 
       .mermaid .messageText {
         font-size: 13px !important;
         stroke: none !important;
+      }
+      
+      /* Fix actor text positioning */
+      .mermaid .actor text {
+        fill: #333 !important;
+        font-weight: 400 !important;
       }
 
       /* Responsive design */
@@ -3124,37 +3135,1394 @@ module.exports = router;</code></pre>
 
       <div id="admin-overview" class="section-content">
         <h1>Admin Panel Overview</h1>
-        <p class="lead">Managing the SSO system</p>
+        <p class="lead">Managing SSO-Authen V.3 system through the web interface</p>
+
         <div class="alert alert-info">
           <i class="fas fa-info-circle me-2"></i>
-          This section is under construction.
+          <strong>Access:</strong> The Admin Panel is located at <code>https://sso.oas.psu.ac.th/admin/public/</code> and requires administrator authentication.
+        </div>
+
+        <h3>Admin Panel Features</h3>
+        <p>The Admin Panel provides a comprehensive web interface for managing all aspects of the SSO-Authen system:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Real-time System Overview</strong></p>
+                <ul class="mb-0">
+                  <li>Total registered clients</li>
+                  <li>Active client count</li>
+                  <li>Authentication requests today</li>
+                  <li>Inactive/suspended clients</li>
+                  <li>Recent activity log</li>
+                  <li>System health status</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Client Management</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Manage Client Applications</strong></p>
+                <ul class="mb-0">
+                  <li>Add new client applications</li>
+                  <li>Edit client configurations</li>
+                  <li>View client details</li>
+                  <li>Activate/deactivate clients</li>
+                  <li>Delete clients</li>
+                  <li>Search and filter</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-key me-2"></i>JWT Secret Management</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Security Configuration</strong></p>
+                <ul class="mb-0">
+                  <li>Update JWT secret key</li>
+                  <li>View secret history</li>
+                  <li>Automatic config.php backup</li>
+                  <li>Email notifications</li>
+                  <li>Audit trail logging</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Backup & Restore</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Data Management</strong></p>
+                <ul class="mb-0">
+                  <li>Backup client database</li>
+                  <li>Export configuration</li>
+                  <li>Restore from backup</li>
+                  <li>Download backup files</li>
+                  <li>Scheduled backups (planned)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Accessing the Admin Panel</h3>
+        
+        <h4>Step 1: Navigate to Admin URL</h4>
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-text">https://sso.oas.psu.ac.th/admin/public/</code></pre>
+          </div>
+        </div>
+
+        <h4>Step 2: Login</h4>
+        <p>Enter your administrator credentials:</p>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-body">
+                <p><strong>Default Credentials:</strong></p>
+                <ul>
+                  <li><strong>Username:</strong> <code>admin</code></li>
+                  <li><strong>Password:</strong> <code>admin123</code></li>
+                </ul>
+                <div class="alert alert-danger mb-0">
+                  <small><i class="fas fa-exclamation-triangle me-2"></i><strong>Security Warning:</strong> Change default password immediately after first login!</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-body">
+                <p><strong>Credentials Location:</strong></p>
+                <p>Admin credentials are stored in:</p>
+                <code>config/config.php</code>
+                <pre class="mt-2"><code class="language-php">define('ADMIN_USERNAME', 'admin');
+define('ADMIN_PASSWORD', password_hash('admin123', PASSWORD_DEFAULT));</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Admin Panel Navigation</h3>
+        <p>The Admin Panel features a sidebar navigation with the following sections:</p>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6><i class="fas fa-bars me-2"></i>Main Menu</h6>
+                <ul>
+                  <li><strong>Dashboard</strong> - System overview and statistics</li>
+                  <li><strong>Client Management</strong> - Manage client applications</li>
+                  <li><strong>Settings</strong> - System configuration</li>
+                  <li><strong>JWT Secret Key</strong> - Security management</li>
+                  <li><strong>Backup & Restore</strong> - Data backup</li>
+                  <li><strong>Logout</strong> - Sign out from admin panel</li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6><i class="fas fa-info-circle me-2"></i>Additional Features</h6>
+                <ul>
+                  <li><strong>Search Bar</strong> - Quick search functionality</li>
+                  <li><strong>Refresh Button</strong> - Reload data</li>
+                  <li><strong>User Info</strong> - Shows logged-in admin</li>
+                  <li><strong>Responsive Design</strong> - Works on mobile/tablet</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Dashboard Overview</h3>
+        <p>The main dashboard displays real-time statistics in card format:</p>
+
+        <div class="row">
+          <div class="col-md-3">
+            <div class="card text-center" style="border-left: 4px solid #3498DB;">
+              <div class="card-body">
+                <h6 class="text-muted">Total Clients</h6>
+                <h2 class="mb-0" style="color: #3498DB;">15</h2>
+                <small>All registered clients</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center" style="border-left: 4px solid #2ECC71;">
+              <div class="card-body">
+                <h6 class="text-muted">Active Clients</h6>
+                <h2 class="mb-0" style="color: #2ECC71;">12</h2>
+                <small>Currently active</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center" style="border-left: 4px solid #E67E22;">
+              <div class="card-body">
+                <h6 class="text-muted">Requests Today</h6>
+                <h2 class="mb-0" style="color: #E67E22;">247</h2>
+                <small>Authentication requests</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center" style="border-left: 4px solid #34495E;">
+              <div class="card-body">
+                <h6 class="text-muted">Inactive Clients</h6>
+                <h2 class="mb-0" style="color: #34495E;">3</h2>
+                <small>Disabled clients</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Security Best Practices</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Recommended</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Change default admin password</li>
+                  <li>Use strong passwords (12+ characters)</li>
+                  <li>Enable HTTPS for admin access</li>
+                  <li>Regularly backup client database</li>
+                  <li>Monitor authentication logs</li>
+                  <li>Update JWT secret periodically</li>
+                  <li>Limit admin access by IP (optional)</li>
+                  <li>Use 2FA authentication (planned)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-danger">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="fas fa-times-circle me-2"></i>Avoid</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Don't use default credentials in production</li>
+                  <li>Don't share admin credentials</li>
+                  <li>Don't access admin over HTTP</li>
+                  <li>Don't ignore backup schedules</li>
+                  <li>Don't delete clients without backup</li>
+                  <li>Don't expose admin panel publicly</li>
+                  <li>Don't disable security features</li>
+                  <li>Don't forget to logout</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-warning mt-4">
+          <i class="fas fa-shield-alt me-2"></i>
+          <strong>Production Deployment:</strong> Before deploying to production, ensure you've changed the default admin password, configured HTTPS, and set up regular database backups.
         </div>
       </div>
 
       <div id="client-management" class="section-content">
         <h1>Client Management</h1>
-        <p class="lead">Managing registered clients via Admin Panel</p>
+        <p class="lead">Managing registered client applications via Admin Panel</p>
+
         <div class="alert alert-info">
           <i class="fas fa-info-circle me-2"></i>
-          This section is under construction.
+          <strong>Location:</strong> Admin Panel → Client Management or direct URL: <code>https://sso.oas.psu.ac.th/admin/public/client-management.php</code>
+        </div>
+
+        <h3>Overview</h3>
+        <p>The Client Management page allows administrators to manage all registered client applications in the SSO system. Each client represents an application that uses SSO-Authen for authentication.</p>
+
+        <h3>Client Table Columns</h3>
+        <table class="table table-bordered parameter-table">
+          <thead>
+            <tr>
+              <th>Column</th>
+              <th>Description</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>client_id</code></td>
+              <td>Unique identifier for the client application</td>
+              <td><code>myapp_web_2024</code></td>
+            </tr>
+            <tr>
+              <td><code>client_name</code></td>
+              <td>Human-readable name of the application</td>
+              <td><code>My Web Application</code></td>
+            </tr>
+            <tr>
+              <td><code>app_redirect_uri</code></td>
+              <td>Callback URL after authentication</td>
+              <td><code>https://myapp.com/callback</code></td>
+            </tr>
+            <tr>
+              <td><code>post_logout_redirect_uri</code></td>
+              <td>Redirect URL after logout</td>
+              <td><code>https://myapp.com/</code></td>
+            </tr>
+            <tr>
+              <td><code>user_handler_endpoint</code></td>
+              <td>API endpoint for User Handler (JWT Mode only)</td>
+              <td><code>https://myapp.com/api/sso-handler</code></td>
+            </tr>
+            <tr>
+              <td><code>api_secret_key</code></td>
+              <td>Secret key for API authentication</td>
+              <td><code>sk_live_xxxxxxx...</code></td>
+            </tr>
+            <tr>
+              <td><code>status</code></td>
+              <td>Client status: active, inactive, or suspended</td>
+              <td><code>active</code></td>
+            </tr>
+            <tr>
+              <td><code>authentication_mode</code></td>
+              <td>JWT Mode or Legacy Mode (auto-determined)</td>
+              <td><code>JWT Mode</code></td>
+            </tr>
+            <tr>
+              <td><code>created_at</code></td>
+              <td>Client registration timestamp</td>
+              <td><code>2024-01-15 10:30:00</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alert alert-success">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Auto-Detection:</strong> Authentication Mode is automatically determined based on <code>user_handler_endpoint</code>:
+          <ul class="mb-0">
+            <li><strong>JWT Mode:</strong> When user_handler_endpoint has a value</li>
+            <li><strong>Legacy Mode:</strong> When user_handler_endpoint is empty/null</li>
+          </ul>
+        </div>
+
+        <h3 class="mt-4">Adding a New Client</h3>
+        <p>To register a new client application:</p>
+
+        <div class="card">
+          <div class="card-body">
+            <h5>Step-by-Step Guide</h5>
+            <ol>
+              <li><strong>Click "Add New Client" button</strong> at the top of the page</li>
+              <li><strong>Fill in the form fields:</strong>
+                <ul>
+                  <li><strong>Client ID:</strong> Unique identifier (alphanumeric, hyphens, underscores)</li>
+                  <li><strong>Client Name:</strong> Display name for the application</li>
+                  <li><strong>Redirect URI:</strong> Your application's callback URL</li>
+                  <li><strong>Post-Logout URI:</strong> Where to redirect after logout</li>
+                  <li><strong>User Handler Endpoint:</strong> Your API endpoint (for JWT Mode) or leave empty (for Legacy Mode)</li>
+                  <li><strong>API Secret Key:</strong> Auto-generated or custom</li>
+                  <li><strong>Status:</strong> Active, Inactive, or Suspended</li>
+                </ul>
+              </li>
+              <li><strong>Click "Save Client"</strong></li>
+              <li><strong>Note down the client_id and api_secret_key</strong> for your application</li>
+            </ol>
+          </div>
+        </div>
+
+        <h4 class="mt-3">Form Validation</h4>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-danger">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">Required Fields</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Client ID (must be unique)</li>
+                  <li>Client Name</li>
+                  <li>Redirect URI (must be valid URL)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-warning">
+              <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">Optional Fields</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Post-Logout Redirect URI</li>
+                  <li>User Handler Endpoint</li>
+                  <li>API Secret Key (auto-generated if empty)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Editing a Client</h3>
+        <p>To modify an existing client configuration:</p>
+        <ol>
+          <li>Click the <span class="badge bg-warning"><i class="fas fa-edit"></i> Edit</span> button in the Actions column</li>
+          <li>Update the desired fields in the modal form</li>
+          <li>Click "Save Changes"</li>
+        </ol>
+
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Important:</strong> Changing the <code>app_redirect_uri</code> or <code>api_secret_key</code> will require updating your client application's configuration. Users won't be able to authenticate until you update your app.
+        </div>
+
+        <h3 class="mt-4">Viewing Client Details</h3>
+        <p>Click the <span class="badge bg-info"><i class="fas fa-eye"></i> View</span> button to see full client information:</p>
+
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-json">{
+  "client_id": "myapp_web_2024",
+  "client_name": "My Web Application",
+  "app_redirect_uri": "https://myapp.com/callback",
+  "post_logout_redirect_uri": "https://myapp.com/",
+  "user_handler_endpoint": "https://myapp.com/api/sso-handler",
+  "api_secret_key": "sk_live_xxxxxxxxxxxxxxxx",
+  "status": "active",
+  "authentication_mode": "JWT Mode",
+  "created_at": "2024-01-15 10:30:00",
+  "updated_at": "2024-01-20 15:45:00",
+  "created_by": "admin"
+}</code></pre>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Deleting a Client</h3>
+        <p>To remove a client application:</p>
+        <ol>
+          <li>Click the <span class="badge bg-danger"><i class="fas fa-trash"></i> Delete</span> button</li>
+          <li>Confirm the deletion in the popup dialog</li>
+          <li>Client will be permanently removed from the database</li>
+        </ol>
+
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Warning:</strong> Deleting a client is permanent and cannot be undone. Users of that application will no longer be able to authenticate. Always create a backup before deleting clients.
+        </div>
+
+        <h3 class="mt-4">Client Status Management</h3>
+        <p>You can control client access by changing their status:</p>
+
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Description</th>
+              <th>Authentication</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge bg-success">Active</span></td>
+              <td>Client is fully operational</td>
+              <td><i class="fas fa-check text-success"></i> Allowed</td>
+            </tr>
+            <tr>
+              <td><span class="badge bg-secondary">Inactive</span></td>
+              <td>Client is temporarily disabled</td>
+              <td><i class="fas fa-times text-danger"></i> Blocked</td>
+            </tr>
+            <tr>
+              <td><span class="badge bg-danger">Suspended</span></td>
+              <td>Client is suspended (security/policy violation)</td>
+              <td><i class="fas fa-times text-danger"></i> Blocked</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 class="mt-4">Search and Filter</h3>
+        <p>The Client Management page includes powerful search functionality:</p>
+
+        <div class="card">
+          <div class="card-body">
+            <h6><i class="fas fa-search me-2"></i>Search Capabilities</h6>
+            <ul>
+              <li><strong>Real-time search:</strong> Results update as you type (with debouncing)</li>
+              <li><strong>Search by:</strong> Client ID, Client Name, Redirect URI</li>
+              <li><strong>Filter by status:</strong> All, Active, Inactive, Suspended</li>
+              <li><strong>Filter by mode:</strong> All, JWT Mode, Legacy Mode</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Database Schema</h3>
+        <p>Clients are stored in the <code>clients</code> table with the following structure:</p>
+
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-sql">CREATE TABLE clients (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  client_id VARCHAR(255) UNIQUE NOT NULL,
+  client_name VARCHAR(255) NOT NULL,
+  client_secret VARCHAR(255),
+  app_redirect_uri TEXT NOT NULL,
+  post_logout_redirect_uri TEXT,
+  user_handler_endpoint TEXT,
+  api_secret_key VARCHAR(255),
+  allowed_scopes TEXT,
+  status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_by VARCHAR(100)
+);</code></pre>
+          </div>
+        </div>
+
+        <h3 class="mt-4">API Endpoints (Internal)</h3>
+        <p>The Client Management page uses these internal API endpoints:</p>
+
+        <table class="table table-bordered parameter-table">
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Method</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/admin/api/clients</code></td>
+              <td><span class="badge bg-info">GET</span></td>
+              <td>Get all clients</td>
+            </tr>
+            <tr>
+              <td><code>/admin/api/clients</code></td>
+              <td><span class="badge bg-success">POST</span></td>
+              <td>Create new client</td>
+            </tr>
+            <tr>
+              <td><code>/admin/api/clients/{id}</code></td>
+              <td><span class="badge bg-warning">PUT</span></td>
+              <td>Update client</td>
+            </tr>
+            <tr>
+              <td><code>/admin/api/clients/{id}</code></td>
+              <td><span class="badge bg-danger">DELETE</span></td>
+              <td>Delete client</td>
+            </tr>
+            <tr>
+              <td><code>/admin/api/stats</code></td>
+              <td><span class="badge bg-info">GET</span></td>
+              <td>Get client statistics</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 class="mt-4">Best Practices</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Do</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Use descriptive client names</li>
+                  <li>Use HTTPS for all URIs</li>
+                  <li>Keep API secrets secure</li>
+                  <li>Set appropriate status for unused clients</li>
+                  <li>Document client configurations</li>
+                  <li>Regular audit of active clients</li>
+                  <li>Backup before bulk changes</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="fas fa-times-circle me-2"></i>Don't</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Don't use HTTP for redirect URIs</li>
+                  <li>Don't share API secret keys</li>
+                  <li>Don't delete clients without backup</li>
+                  <li>Don't use same client_id for multiple apps</li>
+                  <li>Don't leave test clients active in production</li>
+                  <li>Don't ignore inactive clients</li>
+                  <li>Don't expose admin panel publicly</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-4">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Pro Tip:</strong> Use the client_id naming convention like <code>appname_environment_year</code> (e.g., <code>myapp_prod_2024</code>) to easily identify and manage clients.
         </div>
       </div>
 
       <div id="dashboard-api" class="section-content">
         <h1>Dashboard API</h1>
-        <p class="lead">Statistics and monitoring</p>
+        <p class="lead">Statistics and monitoring endpoints for the Admin Dashboard</p>
+
         <div class="alert alert-info">
           <i class="fas fa-info-circle me-2"></i>
-          This section is under construction.
+          <strong>Note:</strong> These are internal API endpoints used by the Admin Panel. They require admin authentication.
+        </div>
+
+        <h3>Statistics Endpoint</h3>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <div>
+              <span class="http-method method-get">GET</span>
+              <strong>/admin/api/stats</strong>
+            </div>
+            <span class="badge bg-warning text-dark">Admin Only</span>
+          </div>
+          <div class="card-body">
+            <h5>Description</h5>
+            <p>Returns real-time statistics for the admin dashboard, including client counts, request counts, and system health information.</p>
+
+            <h5>Authentication</h5>
+            <p>Requires active admin session (authenticated via admin login)</p>
+
+            <h5>Example Request</h5>
+            <div class="code-example">
+              <div class="code-tabs">
+                <button class="code-tab active" onclick="showCodeTab('stats-fetch')">
+                  JavaScript (Fetch)
+                </button>
+                <button class="code-tab" onclick="showCodeTab('stats-curl')">
+                  cURL
+                </button>
+              </div>
+              <div class="code-content">
+                <div id="stats-fetch" class="code-block active">
+                  <pre><code class="language-javascript">// Called from admin dashboard
+fetch('/admin/api/stats')
+  .then(res => res.json())
+  .then(data => {
+    console.log('Total Clients:', data.total_clients);
+    console.log('Active Clients:', data.active_clients);
+    console.log('Requests Today:', data.requests_today);
+  })
+  .catch(err => console.error('Error:', err));</code></pre>
+                </div>
+                <div id="stats-curl" class="code-block">
+                  <pre><code class="language-bash">curl -X GET 'https://sso.oas.psu.ac.th/admin/api/stats' \
+  -H 'Cookie: PHPSESSID=your_session_id' \
+  -H 'Content-Type: application/json'</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <h5>Response (Success)</h5>
+            <p>Returns JSON object with current statistics:</p>
+            <div class="code-example">
+              <div class="code-content">
+                <pre><code class="language-json">{
+  "success": true,
+  "data": {
+    "total_clients": 15,
+    "active_clients": 12,
+    "inactive_clients": 2,
+    "suspended_clients": 1,
+    "requests_today": 247,
+    "requests_this_week": 1834,
+    "requests_this_month": 7521,
+    "last_updated": "2024-01-20 15:30:00"
+  }
+}</code></pre>
+              </div>
+            </div>
+
+            <h5>Response Fields</h5>
+            <table class="table table-bordered parameter-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>total_clients</code></td>
+                  <td>integer</td>
+                  <td>Total number of registered clients (all statuses)</td>
+                </tr>
+                <tr>
+                  <td><code>active_clients</code></td>
+                  <td>integer</td>
+                  <td>Number of clients with status = 'active'</td>
+                </tr>
+                <tr>
+                  <td><code>inactive_clients</code></td>
+                  <td>integer</td>
+                  <td>Number of clients with status = 'inactive'</td>
+                </tr>
+                <tr>
+                  <td><code>suspended_clients</code></td>
+                  <td>integer</td>
+                  <td>Number of clients with status = 'suspended'</td>
+                </tr>
+                <tr>
+                  <td><code>requests_today</code></td>
+                  <td>integer</td>
+                  <td>Number of authentication requests today</td>
+                </tr>
+                <tr>
+                  <td><code>requests_this_week</code></td>
+                  <td>integer</td>
+                  <td>Number of requests in the current week</td>
+                </tr>
+                <tr>
+                  <td><code>requests_this_month</code></td>
+                  <td>integer</td>
+                  <td>Number of requests in the current month</td>
+                </tr>
+                <tr>
+                  <td><code>last_updated</code></td>
+                  <td>string</td>
+                  <td>Timestamp of when statistics were calculated</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h5>Error Responses</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="response-example">
+                  <h6>401 Unauthorized</h6>
+                  <pre><code class="language-json">{
+  "success": false,
+  "message": "Authentication required"
+}</code></pre>
+                  <p class="small">When admin session is not active</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="response-example">
+                  <h6>500 Internal Server Error</h6>
+                  <pre><code class="language-json">{
+  "success": false,
+  "message": "Database connection failed"
+}</code></pre>
+                  <p class="small">When database error occurs</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Clients List Endpoint</h3>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <div>
+              <span class="http-method method-get">GET</span>
+              <strong>/admin/api/clients</strong>
+            </div>
+            <span class="badge bg-warning text-dark">Admin Only</span>
+          </div>
+          <div class="card-body">
+            <h5>Description</h5>
+            <p>Returns list of all registered client applications with their configurations.</p>
+
+            <h5>Query Parameters</h5>
+            <table class="table table-bordered parameter-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Type</th>
+                  <th>Required</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>status</code></td>
+                  <td>string</td>
+                  <td><span class="badge-optional">Optional</span></td>
+                  <td>Filter by status: active, inactive, suspended</td>
+                </tr>
+                <tr>
+                  <td><code>search</code></td>
+                  <td>string</td>
+                  <td><span class="badge-optional">Optional</span></td>
+                  <td>Search by client_id, client_name, or redirect_uri</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h5>Example Response</h5>
+            <div class="code-example">
+              <div class="code-content">
+                <pre><code class="language-json">{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "client_id": "myapp_web_2024",
+      "client_name": "My Web Application",
+      "app_redirect_uri": "https://myapp.com/callback",
+      "post_logout_redirect_uri": "https://myapp.com/",
+      "user_handler_endpoint": "https://myapp.com/api/sso-handler",
+      "api_secret_key": "sk_live_xxxxxxxxxx",
+      "status": "active",
+      "authentication_mode": "JWT Mode",
+      "created_at": "2024-01-15 10:30:00",
+      "updated_at": "2024-01-20 15:45:00"
+    },
+    {
+      "id": 2,
+      "client_id": "legacy_php_app",
+      "client_name": "Legacy PHP Application",
+      "app_redirect_uri": "https://legacy.com/callback.php",
+      "post_logout_redirect_uri": null,
+      "user_handler_endpoint": null,
+      "api_secret_key": "sk_live_yyyyyyyyyy",
+      "status": "active",
+      "authentication_mode": "Legacy Mode",
+      "created_at": "2023-12-01 08:00:00",
+      "updated_at": "2023-12-01 08:00:00"
+    }
+  ],
+  "count": 2
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Dashboard Auto-Refresh</h3>
+        <p>The admin dashboard automatically refreshes statistics every 30 seconds:</p>
+
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-javascript">// Auto-refresh implementation in dashboard.js
+let refreshInterval;
+
+function startAutoRefresh() {
+  // Initial load
+  loadStatistics();
+  
+  // Set interval for 30 seconds
+  refreshInterval = setInterval(() => {
+    loadStatistics();
+    console.log('Dashboard statistics refreshed');
+  }, 30000);
+}
+
+function loadStatistics() {
+  fetch('/admin/api/stats')
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        updateDashboardCards(data.data);
+      }
+    })
+    .catch(err => console.error('Failed to load stats:', err));
+}
+
+function updateDashboardCards(stats) {
+  document.getElementById('total-clients').textContent = stats.total_clients;
+  document.getElementById('active-clients').textContent = stats.active_clients;
+  document.getElementById('requests-today').textContent = stats.requests_today;
+  document.getElementById('inactive-clients').textContent = stats.inactive_clients;
+}
+
+// Start auto-refresh when page loads
+document.addEventListener('DOMContentLoaded', startAutoRefresh);</code></pre>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Statistics Calculation</h3>
+        <p>How the statistics are calculated from the database:</p>
+
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-sql">-- Total clients
+SELECT COUNT(*) as total_clients FROM clients;
+
+-- Active clients
+SELECT COUNT(*) as active_clients 
+FROM clients 
+WHERE status = 'active';
+
+-- Inactive clients
+SELECT COUNT(*) as inactive_clients 
+FROM clients 
+WHERE status = 'inactive';
+
+-- Suspended clients
+SELECT COUNT(*) as suspended_clients 
+FROM clients 
+WHERE status = 'suspended';
+
+-- Requests today (if logging table exists)
+SELECT COUNT(*) as requests_today 
+FROM auth_logs 
+WHERE DATE(created_at) = CURDATE();
+
+-- Requests this week
+SELECT COUNT(*) as requests_this_week 
+FROM auth_logs 
+WHERE YEARWEEK(created_at) = YEARWEEK(NOW());
+
+-- Requests this month
+SELECT COUNT(*) as requests_this_month 
+FROM auth_logs 
+WHERE YEAR(created_at) = YEAR(NOW()) 
+AND MONTH(created_at) = MONTH(NOW());</code></pre>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-4">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Note:</strong> Request counting requires an <code>auth_logs</code> table. If this table doesn't exist, request counts will return 0 or be omitted from the response.
+        </div>
+
+        <h3 class="mt-4">Dashboard Cards Color Coding</h3>
+        <p>The dashboard uses specific colors for each statistic card:</p>
+
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Card</th>
+              <th>Color</th>
+              <th>Hex Code</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Total Clients</td>
+              <td><span class="badge" style="background-color: #3498DB; color: white;">Blue</span></td>
+              <td><code>#3498DB</code></td>
+              <td>Neutral/informational</td>
+            </tr>
+            <tr>
+              <td>Active Clients</td>
+              <td><span class="badge" style="background-color: #2ECC71; color: white;">Green</span></td>
+              <td><code>#2ECC71</code></td>
+              <td>Positive/healthy status</td>
+            </tr>
+            <tr>
+              <td>Requests Today</td>
+              <td><span class="badge" style="background-color: #E67E22; color: white;">Orange</span></td>
+              <td><code>#E67E22</code></td>
+              <td>Activity indicator</td>
+            </tr>
+            <tr>
+              <td>Inactive Clients</td>
+              <td><span class="badge" style="background-color: #34495E; color: white;">Dark Gray</span></td>
+              <td><code>#34495E</code></td>
+              <td>Neutral/disabled</td>
+            </tr>
+            <tr>
+              <td>Suspended Clients</td>
+              <td><span class="badge" style="background-color: #E74C3C; color: white;">Red</span></td>
+              <td><code>#E74C3C</code></td>
+              <td>Warning/critical</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 class="mt-4">Performance Considerations</h3>
+        <div class="alert alert-warning">
+          <h6><i class="fas fa-bolt me-2"></i>Optimization Tips</h6>
+          <ul class="mb-0">
+            <li><strong>Database Indexing:</strong> Add indexes on <code>status</code> and <code>created_at</code> columns for faster queries</li>
+            <li><strong>Caching:</strong> Consider caching statistics for 5-10 seconds to reduce database load</li>
+            <li><strong>Pagination:</strong> For large client lists (1000+), implement pagination</li>
+            <li><strong>Query Optimization:</strong> Use a single query with CASE statements instead of multiple queries</li>
+          </ul>
+        </div>
+
+        <h3 class="mt-4">Example: Optimized Statistics Query</h3>
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-sql">-- Single query to get all statistics
+SELECT 
+  COUNT(*) as total_clients,
+  SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_clients,
+  SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive_clients,
+  SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_clients
+FROM clients;</code></pre>
+          </div>
+        </div>
+
+        <div class="alert alert-success mt-4">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Pro Tip:</strong> Monitor the dashboard's performance using browser DevTools Network tab. The statistics endpoint should respond in under 100ms for optimal user experience.
         </div>
       </div>
 
       <div id="backup-restore" class="section-content">
         <h1>Backup & Restore</h1>
-        <p class="lead">Data backup and recovery</p>
-        <div class="alert alert-info">
-          <i class="fas fa-info-circle me-2"></i>
-          This section is under construction.
+        <p class="lead">Data backup and recovery procedures</p>
+
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Important:</strong> Regular backups are essential for disaster recovery and preventing data loss. Implement automated backups for production environments.
+        </div>
+
+        <h3>What to Backup</h3>
+        <p>SSO-Authen V.3 requires backing up both database and configuration files:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Database</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Tables to backup:</strong></p>
+                <ul>
+                  <li><code>clients</code> - Client applications</li>
+                  <li><code>jwt_secret_history</code> - JWT secret audit trail</li>
+                  <li><code>auth_logs</code> - Authentication logs (optional)</li>
+                </ul>
+                <p class="mb-0"><strong>Database:</strong> <code>sso_authen</code></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-file-code me-2"></i>Configuration Files</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Files to backup:</strong></p>
+                <ul>
+                  <li><code>config/config.php</code> - Main configuration</li>
+                  <li><code>.env</code> - Environment variables (if used)</li>
+                  <li><code>config/database.php</code> - Database config</li>
+                </ul>
+                <p class="mb-0"><strong>Contains:</strong> JWT_SECRET, DB credentials, OIDC settings</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Manual Backup (Database)</h3>
+        
+        <h4>Using mysqldump (Recommended)</h4>
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('backup-mysqldump')">
+              Full Backup
+            </button>
+            <button class="code-tab" onclick="showCodeTab('backup-clients-only')">
+              Clients Only
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="backup-mysqldump" class="code-block active">
+              <pre><code class="language-bash"># Full database backup
+mysqldump -u root -p sso_authen > backup_sso_authen_$(date +%Y%m%d_%H%M%S).sql
+
+# With compression
+mysqldump -u root -p sso_authen | gzip > backup_sso_authen_$(date +%Y%m%d_%H%M%S).sql.gz</code></pre>
+            </div>
+            <div id="backup-clients-only" class="code-block">
+              <pre><code class="language-bash"># Backup only clients table
+mysqldump -u root -p sso_authen clients > backup_clients_$(date +%Y%m%d_%H%M%S).sql
+
+# Backup specific tables
+mysqldump -u root -p sso_authen clients jwt_secret_history > backup_$(date +%Y%m%d_%H%M%S).sql</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h4 class="mt-3">Using PHP Admin Panel</h4>
+        <p>The admin panel includes a backup feature (if implemented):</p>
+        <ol>
+          <li>Go to <strong>Backup & Restore</strong> page in admin panel</li>
+          <li>Click <strong>"Create Backup"</strong> button</li>
+          <li>Select tables to backup (clients, jwt_secret_history, etc.)</li>
+          <li>Click <strong>"Download Backup"</strong></li>
+          <li>Backup file will be downloaded as <code>backup_YYYYMMDD_HHMMSS.sql</code></li>
+        </ol>
+
+        <h3 class="mt-4">Automated Backup</h3>
+        
+        <h4>Using Cron Job (Linux)</h4>
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-bash"># Create backup script
+cat > /usr/local/bin/backup-sso-authen.sh << 'EOF'
+#!/bin/bash
+
+# Configuration
+DB_USER="root"
+DB_PASS="your_password"
+DB_NAME="sso_authen"
+BACKUP_DIR="/var/backups/sso-authen"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/backup_$DATE.sql.gz"
+
+# Create backup directory if not exists
+mkdir -p $BACKUP_DIR
+
+# Create backup
+mysqldump -u $DB_USER -p$DB_PASS $DB_NAME | gzip > $BACKUP_FILE
+
+# Delete backups older than 30 days
+find $BACKUP_DIR -name "backup_*.sql.gz" -mtime +30 -delete
+
+echo "Backup completed: $BACKUP_FILE"
+EOF
+
+# Make executable
+chmod +x /usr/local/bin/backup-sso-authen.sh
+
+# Add to crontab (daily at 2 AM)
+crontab -e
+# Add this line:
+0 2 * * * /usr/local/bin/backup-sso-authen.sh >> /var/log/sso-backup.log 2>&1</code></pre>
+          </div>
+        </div>
+
+        <h4 class="mt-3">Using Windows Task Scheduler</h4>
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-batch">@echo off
+REM backup-sso-authen.bat
+
+SET DB_USER=root
+SET DB_PASS=your_password
+SET DB_NAME=sso_authen
+SET BACKUP_DIR=C:\backups\sso-authen
+SET DATE=%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%%time:~6,2%
+SET DATE=%DATE: =0%
+
+REM Create backup directory
+if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
+
+REM Create backup
+"C:\laragon\bin\mysql\mysql-8.0.30\bin\mysqldump.exe" -u %DB_USER% -p%DB_PASS% %DB_NAME% > "%BACKUP_DIR%\backup_%DATE%.sql"
+
+echo Backup completed: %BACKUP_DIR%\backup_%DATE%.sql</code></pre>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Configuration Backup</h3>
+        
+        <h4>Manual Method</h4>
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('backup-config-linux')">
+              Linux/Mac
+            </button>
+            <button class="code-tab" onclick="showCodeTab('backup-config-windows')">
+              Windows
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="backup-config-linux" class="code-block active">
+              <pre><code class="language-bash"># Backup config directory
+tar -czf config_backup_$(date +%Y%m%d_%H%M%S).tar.gz config/
+
+# Backup specific files
+cp config/config.php config/config.php.backup.$(date +%Y%m%d_%H%M%S)</code></pre>
+            </div>
+            <div id="backup-config-windows" class="code-block">
+              <pre><code class="language-batch">REM Backup config directory
+xcopy config config_backup_%date:~-4,4%%date:~-10,2%%date:~-7,2% /E /I
+
+REM Backup specific file
+copy config\config.php config\config.php.backup.%date:~-4,4%%date:~-10,2%%date:~-7,2%</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <h4 class="mt-3">Automatic Config Backup</h4>
+        <p>SSO-Authen automatically creates config backups when:</p>
+        <ul>
+          <li>JWT secret key is updated (via admin panel)</li>
+          <li>Critical configuration changes are made</li>
+        </ul>
+        <p>Backups are stored in: <code>config/backups/</code></p>
+
+        <h3 class="mt-4">Restore from Backup</h3>
+        
+        <h4>Database Restore</h4>
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('restore-sql')">
+              .sql File
+            </button>
+            <button class="code-tab" onclick="showCodeTab('restore-gz')">
+              .sql.gz File
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="restore-sql" class="code-block active">
+              <pre><code class="language-bash"># Restore from .sql file
+mysql -u root -p sso_authen < backup_sso_authen_20240120_140000.sql
+
+# Or using specific user
+mysql -u sso_user -p sso_authen < backup_sso_authen_20240120_140000.sql</code></pre>
+            </div>
+            <div id="restore-gz" class="code-block">
+              <pre><code class="language-bash"># Restore from compressed .sql.gz file
+gunzip < backup_sso_authen_20240120_140000.sql.gz | mysql -u root -p sso_authen
+
+# Or decompress first, then restore
+gunzip backup_sso_authen_20240120_140000.sql.gz
+mysql -u root -p sso_authen < backup_sso_authen_20240120_140000.sql</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-danger mt-3">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Warning:</strong> Restoring a backup will overwrite existing data! Always create a backup of current data before restoring.
+        </div>
+
+        <h4 class="mt-3">Configuration Restore</h4>
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-bash"># Restore config.php from backup
+cp config/config.php.backup.20240120_140000 config/config.php
+
+# Or restore entire config directory
+tar -xzf config_backup_20240120_140000.tar.gz</code></pre>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Backup Strategy Recommendations</h3>
+        
+        <div class="card">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Production Environment</h5>
+          </div>
+          <div class="card-body">
+            <table class="table table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>Backup Type</th>
+                  <th>Frequency</th>
+                  <th>Retention</th>
+                  <th>Method</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Full Database</strong></td>
+                  <td>Daily (2 AM)</td>
+                  <td>30 days</td>
+                  <td>Automated cron job</td>
+                </tr>
+                <tr>
+                  <td><strong>Config Files</strong></td>
+                  <td>Before any change</td>
+                  <td>90 days</td>
+                  <td>Automatic + Git</td>
+                </tr>
+                <tr>
+                  <td><strong>Full System</strong></td>
+                  <td>Weekly</td>
+                  <td>12 weeks</td>
+                  <td>Complete snapshot</td>
+                </tr>
+                <tr>
+                  <td><strong>Off-site Backup</strong></td>
+                  <td>Weekly</td>
+                  <td>6 months</td>
+                  <td>Cloud storage</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Backup Verification</h3>
+        <p>Always verify backups can be restored successfully:</p>
+
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-bash">#!/bin/bash
+# Backup verification script
+
+BACKUP_FILE="backup_sso_authen_20240120.sql.gz"
+TEST_DB="sso_authen_test"
+
+# Create test database
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS $TEST_DB;"
+
+# Try to restore backup
+gunzip < $BACKUP_FILE | mysql -u root -p $TEST_DB
+
+if [ $? -eq 0 ]; then
+    echo "✓ Backup verification successful"
+    
+    # Check table count
+    TABLE_COUNT=$(mysql -u root -p -s -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$TEST_DB';")
+    echo "✓ Tables restored: $TABLE_COUNT"
+    
+    # Cleanup test database
+    mysql -u root -p -e "DROP DATABASE $TEST_DB;"
+else
+    echo "✗ Backup verification failed!"
+    exit 1
+fi</code></pre>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Disaster Recovery Procedure</h3>
+        <p>Step-by-step guide to recover from complete system failure:</p>
+
+        <div class="card">
+          <div class="card-body">
+            <h5>Recovery Steps</h5>
+            <ol>
+              <li><strong>Prepare Clean Environment</strong>
+                <ul>
+                  <li>Install PHP 7.4+ and MySQL 5.7+</li>
+                  <li>Install required PHP extensions (pdo, pdo_mysql, json, curl)</li>
+                  <li>Configure web server (Apache/Nginx)</li>
+                </ul>
+              </li>
+              <li><strong>Deploy Application Code</strong>
+                <ul>
+                  <li>Download or clone SSO-Authen V.3 from repository</li>
+                  <li>Set correct file permissions</li>
+                </ul>
+              </li>
+              <li><strong>Restore Configuration</strong>
+                <ul>
+                  <li>Restore <code>config/config.php</code> from backup</li>
+                  <li>Restore <code>.env</code> file (if used)</li>
+                  <li>Verify JWT_SECRET and database credentials</li>
+                </ul>
+              </li>
+              <li><strong>Restore Database</strong>
+                <ul>
+                  <li>Create database: <code>CREATE DATABASE sso_authen;</code></li>
+                  <li>Restore from latest backup</li>
+                  <li>Verify table integrity</li>
+                </ul>
+              </li>
+              <li><strong>Verify System</strong>
+                <ul>
+                  <li>Check admin panel login</li>
+                  <li>Verify client list loads correctly</li>
+                  <li>Test authentication with a client app</li>
+                </ul>
+              </li>
+              <li><strong>Monitor and Document</strong>
+                <ul>
+                  <li>Check error logs</li>
+                  <li>Monitor authentication requests</li>
+                  <li>Document recovery time and issues</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Best Practices</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Do</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Automate daily backups</li>
+                  <li>Store backups off-site</li>
+                  <li>Test restore procedures regularly</li>
+                  <li>Encrypt backup files</li>
+                  <li>Document recovery procedures</li>
+                  <li>Keep multiple backup generations</li>
+                  <li>Monitor backup job success</li>
+                  <li>Include config files in backups</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-danger">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="fas fa-times-circle me-2"></i>Don't</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Don't rely on single backup location</li>
+                  <li>Don't skip backup verification</li>
+                  <li>Don't store backups in same server</li>
+                  <li>Don't ignore backup failures</li>
+                  <li>Don't delete old backups immediately</li>
+                  <li>Don't backup without testing restore</li>
+                  <li>Don't expose backups publicly</li>
+                  <li>Don't forget JWT secret in backups</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-success mt-4">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Pro Tip:</strong> Use the 3-2-1 backup rule: Keep 3 copies of data, on 2 different media types, with 1 copy off-site. This ensures data safety even in worst-case scenarios.
         </div>
       </div>
 
