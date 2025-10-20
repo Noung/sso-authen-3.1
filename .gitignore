@@ -41,3 +41,4 @@ logs/
 
 # Windows
 Thumbs.db
+admin/storage/backups/test.zip
