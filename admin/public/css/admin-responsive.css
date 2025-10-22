@@ -4,6 +4,18 @@
  * Mobile-first approach for optimal user experience
  */
 
+/* Import Google Font - Bai Jamjuree (Thai font) */
+@import url('https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@200;300;400;500;600;700&display=swap');
+
+/* Apply Bai Jamjuree font to entire application */
+* {
+    font-family: 'Bai Jamjuree', sans-serif;
+}
+
+body {
+    font-family: 'Bai Jamjuree', sans-serif;
+}
+
 /* ========================================
    1. SIDEBAR RESPONSIVE STYLES
    ======================================== */
