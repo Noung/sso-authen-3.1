@@ -490,10 +490,10 @@ class DashboardController
                     </h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2 flex-wrap gap-mobile">
-                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-0" id="refresh-btn" onclick="refreshStats()">
+                            <button type="button" class="btn btn-outline-secondary rounded-0" id="refresh-btn" onclick="refreshStats()">
                                 <i class="fas fa-sync-alt"></i><span class="d-none d-sm-inline ms-1">Refresh</span>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-0" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
+                            <button type="button" class="btn btn-outline-primary rounded-0" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
                                 <i class="fas fa-pause-circle"></i><span class="d-none d-sm-inline ms-1">Stop Auto Refresh</span>
                             </button>
                         </div>

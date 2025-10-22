@@ -199,6 +199,79 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* ========================================
+   5. BUTTON STANDARDIZATION
+   ======================================== */
+
+/* Purple button class */
+.btn-purple {
+    background-color: #9B59B6 !important;
+    border-color: #9B59B6 !important;
+    color: white !important;
+}
+
+.btn-purple:hover,
+.btn-purple:focus,
+.btn-purple:active {
+    background-color: #8E44AD !important;
+    border-color: #8E44AD !important;
+    color: white !important;
+}
+
+.btn-purple:disabled {
+    background-color: #B99BC7 !important;
+    border-color: #B99BC7 !important;
+    opacity: 0.65;
+}
+
+/* Standard button sizes for all action buttons */
+.btn-sm,
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+/* Ensure consistent button heights */
+.btn {
+    min-height: 38px;
+}
+
+.btn-sm {
+    min-height: 31px;
+}
+
+/* Table action buttons */
+.table .btn-group .btn,
+.table .btn {
+    white-space: nowrap;
+}
+
+/* Modal button standardization */
+.modal-footer .btn {
+    min-width: 80px;
+}
+
+/* SweetAlert2 button standardization */
+/* Keep buttons centered (default behavior) */
+.swal2-confirm {
+    min-width: 100px !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.swal2-cancel {
+    min-width: 100px !important;
+    padding: 0.5rem 1rem !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.swal2-cancel:hover {
+    background-color: #5c636a !important;
+    border-color: #565e64 !important;
+}
+
 /* Mobile: Full width cards with proper spacing */
 @media (max-width: 575.98px) {
     .card {

@@ -883,7 +883,7 @@ function renderSettingsPage()
                     icon: "warning",
                     showCancelButton: true,
                     confirmButtonColor: "#d33",
-                    cancelButtonColor: "#3085d6",
+                    cancelButtonColor: "#6c757d",
                     confirmButtonText: "Yes, update it!",
                     cancelButtonText: "Cancel"
                 }).then((result) => {
@@ -2658,6 +2658,7 @@ function renderStatisticsPage()
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="' . $basePath . '/css/admin-responsive.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -2669,15 +2670,21 @@ function renderStatisticsPage()
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
+            <!-- Mobile Menu Toggle -->
+            <button class="btn mobile-menu-toggle d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+            
             <a class="navbar-brand" href="' . $basePath . '">
                 <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
             </a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3">
-                    <i class="fas fa-user me-1"></i>' . $adminName . '
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <span class="navbar-text me-2 me-md-3">
+                    <i class="fas fa-user me-1"></i><span class="d-none d-sm-inline">' . $adminName . '</span>
                 </span>
                 <a class="nav-link" href="' . $basePath . '/auth/logout">
-                    <i class="fas fa-sign-out-alt me-1"></i>Sign out
+                    <i class="fas fa-sign-out-alt"></i><span class="d-none d-sm-inline ms-1">Sign out</span>
                 </a>
             </div>
         </div>
@@ -2685,6 +2692,56 @@ function renderStatisticsPage()
 
     <div class="container-fluid">
         <div class="row">
+            <!-- Offcanvas Sidebar - Mobile -->
+            <div class="offcanvas offcanvas-start offcanvas-sidebar d-md-none" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+                <div class="offcanvas-header bg-primary text-white">
+                    <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">
+                        <i class="fas fa-bars me-2"></i>Menu
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body p-0">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/clients">
+                                <i class="fas fa-users me-2"></i>Client Applications
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="' . $basePath . '/statistics">
+                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/admin-users">
+                                <i class="fas fa-user-shield me-2"></i>Admin Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/backup-restore">
+                                <i class="fas fa-database me-2"></i>Backup & Restore
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/settings">
+                                <i class="fas fa-cog me-2"></i>System Configuration
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                                <i class="fas fa-book me-2"></i>Documentation
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Sidebar - Desktop -->
             <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
@@ -2738,17 +2795,9 @@ function renderStatisticsPage()
                                 <option value="90">Last 90 days</option>
                             </select>
                         </div>
-                        <!--<div class="btn-group me-2">
-                            <button type="button" class="btn btn-success" onclick="generateMockData()">
-                                <i class="fas fa-magic me-1"></i>Generate Demo Data
-                            </button>
-                            <a href="oidc-explanation.html" class="btn btn-outline-info" target="_blank">
-                                <i class="fas fa-question-circle me-1"></i>What is OIDC Action?
-                            </a>
-                        </div>
-                        <button type="button" class="btn btn-outline-secondary" onclick="loadStatistics()">
-                            <i class="fas fa-sync-alt me-1"></i>Refresh
-                        </button>-->
+                        <button type="button" class="btn btn-outline-secondary rounded-0" onclick="loadStatistics()">
+                            <i class="fas fa-sync-alt"></i><span class="d-none d-sm-inline ms-1">Refresh</span>
+                        </button>
                     </div>
                 </div>
 
@@ -2906,8 +2955,8 @@ function renderStatisticsPage()
                         <td>${client.unique_admins}</td>
                         <td><small>${lastActivity}</small></td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewClientStats(${client.id})">
-                                <i class="fas fa-chart-line"></i> Details
+                            <button class="btn btn-sm btn-outline-primary rounded-0" onclick="viewClientStats(${client.id})">
+                                <i class="fas fa-chart-line"></i><span class="d-none d-sm-inline ms-1">Details</span>
                             </button>
                         </td>
                     </tr>
