@@ -1,5 +1,5 @@
 /**
- * SSO Admin Panel - Responsive Styles
+ * SSO-Authen Admin Panel - Responsive Styles
  * Compatible with PHP 7.4.33 and Bootstrap 5
  * Mobile-first approach for optimal user experience
  */
@@ -126,6 +126,24 @@
 /* Ensure table takes full width */
 .table-responsive > .table {
     margin-bottom: 0;
+    width: 100%;
+}
+
+/* DataTables wrapper adjustments */
+.dataTables_wrapper {
+    width: 100%;
+}
+
+.dataTables_wrapper .dataTables_scroll {
+    width: 100%;
+}
+
+.dataTables_wrapper .dataTables_scrollBody {
+    width: 100% !important;
+}
+
+.dataTables_wrapper table {
+    width: 100% !important;
 }
 
 /* Desktop: Normal table */
@@ -161,8 +179,15 @@
     .table thead th {
         position: sticky;
         top: 0;
-        background-color: #212529;
+        background-color: #fff;
+        color: #212529;
+        border-bottom: 2px solid #dee2e6;
         z-index: 10;
+    }
+    
+    /* Ensure thead is always visible */
+    .table thead {
+        display: table-header-group !important;
     }
     
     /* Hide less important columns on mobile */

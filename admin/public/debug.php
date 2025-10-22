@@ -3,7 +3,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-echo "<h1>Debug SSO Admin Panel</h1>";
+echo "<h1>Debug SSO-Authen Admin Panel</h1>";
 
 // Test 1: Check if files exist
 echo "<h2>1. File Existence Check</h2>";

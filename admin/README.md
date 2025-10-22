@@ -1,4 +1,4 @@
-# SSO Admin Panel Setup Guide
+# SSO-Authen Admin Panel Setup Guide
 
 ## 🚀 Quick Setup
 

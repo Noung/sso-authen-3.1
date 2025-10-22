@@ -1,4 +1,4 @@
-# SSO Admin Panel - Client Management System
+# SSO-Authen Admin Panel - Client Management System
 
 ## 🎯 Overview
 Complete CRUD (Create, Read, Update, Delete) system for managing OAuth2/OIDC client applications with modern UI and comprehensive functionality.

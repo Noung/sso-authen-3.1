@@ -2,7 +2,7 @@
 
 ## Overview
 
-The SSO Admin Panel includes a comprehensive backup and restore system that allows administrators to:
+The SSO-Authen Admin Panel includes a comprehensive backup and restore system that allows administrators to:
 
 - Create full system backups including client configurations, admin users, and audit logs
 - Download and store backups securely

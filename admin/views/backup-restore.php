@@ -8,7 +8,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SSO Admin Panel - Backup & Restore</title>
+    <title>SSO-Authen Admin Panel - Backup & Restore</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -60,7 +60,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
         </button>
         
         <a class="navbar-brand" href="<?php echo $basePath; ?>">
-          <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
+          <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
         </a>
         
         <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
@@ -111,7 +111,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="<?php echo $basePath; ?>/api-docs.html" target="_blank">
+                <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
                   <i class="fas fa-book me-2"></i>Documentation
                 </a>
               </li>
@@ -123,7 +123,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
         <div class="offcanvas offcanvas-start offcanvas-sidebar d-md-none" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
           <div class="offcanvas-header bg-primary text-white">
             <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">
-              <i class="fas fa-shield-alt me-2"></i>SSO Admin
+              <i class="fas fa-bars me-2"></i>Menu
             </h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
           </div>
@@ -160,7 +160,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="<?php echo $basePath; ?>/api-docs.html" target="_blank">
+                <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
                   <i class="fas fa-book me-2"></i>Documentation
                 </a>
               </li>
@@ -174,13 +174,17 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
             <h1 class="h2 mb-2 mb-md-0">
               <i class="fas fa-database me-2"></i>Backup & Restore
             </h1>
-            <div class="d-flex flex-column flex-md-row gap-2">
-              <button class="btn btn-success" onclick="showCreateBackupModal()">
-                <i class="fas fa-plus me-1"></i><span class="d-none d-sm-inline">Create New </span>Backup
-              </button>
-              <button class="btn btn-outline-info" onclick="showScheduleInfo()">
-                <i class="fas fa-clock me-1"></i><span class="d-none d-sm-inline">Automation</span><span class="d-sm-none">Auto</span>
-              </button>
+            <div class="btn-toolbar mb-2 mb-md-0 flex-nowrap">
+              <div class="btn-group me-2">
+                <button class="btn btn-success rounded-0" onclick="showCreateBackupModal()">
+                  <i class="fas fa-plus"></i><span class="d-none d-sm-inline ms-1">Create New Backup</span>
+                </button>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-outline-info rounded-0" onclick="showScheduleInfo()">
+                  <i class="fas fa-clock"></i><span class="d-none d-sm-inline ms-1">Automation</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -527,8 +531,8 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                         <i class="fas fa-database fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">No backups found</h5>
                         <p class="text-muted">Create your first backup to get started</p>
-                        <button class="btn btn-success" onclick="showCreateBackupModal()">
-                            <i class="fas fa-plus me-1"></i>Create Backup
+                        <button class="btn btn-success rounded-0" onclick="showCreateBackupModal()">
+                            <i class="fas fa-plus"></i><span class="d-none d-sm-inline ms-1">Create Backup</span>
                         </button>
                     </div>
                 `;
@@ -561,20 +565,20 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                                     }</span>
                                 </div>
                                 <div class="backup-actions">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="downloadBackup('${
+                                    <button class="btn btn-outline-primary rounded-0" onclick="downloadBackup('${
                                       backup.filename
                                     }')">
-                                        <i class="fas fa-download"></i> Download
+                                        <i class="fas fa-download"></i><span class="d-none d-sm-inline ms-1">Download</span>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-warning" onclick="showRestoreModal('${
+                                    <button class="btn btn-outline-warning rounded-0" onclick="showRestoreModal('${
                                       backup.filename
                                     }')">
-                                        <i class="fas fa-upload"></i> Restore
+                                        <i class="fas fa-upload"></i><span class="d-none d-sm-inline ms-1">Restore</span>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteBackup('${
+                                    <button class="btn btn-outline-danger rounded-0" onclick="deleteBackup('${
                                       backup.filename
                                     }')">
-                                        <i class="fas fa-trash"></i> Delete
+                                        <i class="fas fa-trash"></i><span class="d-none d-sm-inline ms-1">Delete</span>
                                     </button>
                                 </div>
                             </div>
@@ -624,10 +628,11 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                 document.getElementById("createBackupModal")
               ).hide();
               Swal.fire({
-                title: "Success!",
+                title: '<i class="fas fa-check-circle text-success me-2"></i>Success!',
                 text: data.message,
                 icon: "success",
                 confirmButtonText: "OK",
+                confirmButtonColor: '#198754'
               }).then(() => {
                 loadBackups();
               });
@@ -721,10 +726,11 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
                 document.getElementById("restoreBackupModal")
               ).hide();
               Swal.fire({
-                title: "Success!",
+                title: '<i class="fas fa-check-circle text-success me-2"></i>Success!',
                 text: data.message,
                 icon: "success",
                 confirmButtonText: "OK",
+                confirmButtonColor: '#198754'
               }).then(() => {
                 loadBackups();
               });

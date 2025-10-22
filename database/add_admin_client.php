@@ -25,7 +25,7 @@ try {
 
     $result = $stmt->execute([
         'client_id' => 'admin-panel',
-        'client_name' => 'SSO Admin Panel',
+        'client_name' => 'SSO-Authen Admin Panel',
         'client_description' => 'Admin panel for managing the SSO system',
         'app_redirect_uri' => 'http://localhost:8080/sso-authen-3/admin/public/auth/callback.php',
         'post_logout_redirect_uri' => 'http://localhost:8080/sso-authen-3/admin/public/login.php',

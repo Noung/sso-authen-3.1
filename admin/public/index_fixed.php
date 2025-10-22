@@ -302,7 +302,7 @@ function renderSimpleLoginPage() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSO Admin Panel - Login</title>
+    <title>SSO-Authen Admin Panel - Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -314,7 +314,7 @@ function renderSimpleLoginPage() {
                     <div class="card-body">
                         <div class="text-center mb-4">
                             <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
-                            <h3>SSO Admin Panel</h3>
+                            <h3>SSO-Authen Admin Panel</h3>
                             <p class="text-muted">เข้าสู่ระบบด้วย SSO</p>
                         </div>
                         
@@ -361,7 +361,7 @@ function renderClientsPage() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSO Admin Panel - Clients</title>
+    <title>SSO-Authen Admin Panel - Clients</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -371,7 +371,7 @@ function renderClientsPage() {
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand" href="/admin/public/">
-                <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
+                <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
             <div class="navbar-nav ms-auto">
                 <span class="navbar-text me-3">

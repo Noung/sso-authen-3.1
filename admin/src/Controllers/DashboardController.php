@@ -359,7 +359,7 @@ class DashboardController
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSO Admin Panel - Dashboard</title>
+    <title>SSO-Authen Admin Panel - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="' . $basePath . '/css/admin-responsive.css" rel="stylesheet">
@@ -375,7 +375,7 @@ class DashboardController
             </button>
             
             <a class="navbar-brand" href="' . $basePath . '">
-                <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
+                <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
             
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
@@ -426,7 +426,7 @@ class DashboardController
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
                             </a>
                         </li>
@@ -475,7 +475,7 @@ class DashboardController
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
                             </a>
                         </li>
@@ -488,11 +488,13 @@ class DashboardController
                     <h1 class="h2 mb-2 mb-md-0">
                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                     </h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group me-2 flex-wrap gap-mobile">
+                    <div class="btn-toolbar mb-2 mb-md-0 flex-nowrap">
+                        <div class="btn-group me-2">
                             <button type="button" class="btn btn-outline-secondary rounded-0" id="refresh-btn" onclick="refreshStats()">
                                 <i class="fas fa-sync-alt"></i><span class="d-none d-sm-inline ms-1">Refresh</span>
                             </button>
+                        </div>
+                        <div class="btn-group">
                             <button type="button" class="btn btn-outline-primary rounded-0" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
                                 <i class="fas fa-pause-circle"></i><span class="d-none d-sm-inline ms-1">Stop Auto Refresh</span>
                             </button>

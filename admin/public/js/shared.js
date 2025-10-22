@@ -1,4 +1,4 @@
-// Shared JavaScript functions for the SSO Admin Panel
+// Shared JavaScript functions for the SSO-Authen Admin Panel
 // Compatible with PHP 7.4.33
 
 /**

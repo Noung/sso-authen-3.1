@@ -4,7 +4,7 @@
  * Run this script to set up the database for the admin panel
  */
 
-echo "<h1>SSO Admin Panel - Database Setup</h1>\n";
+echo "<h1>SSO-Authen Admin Panel - Database Setup</h1>\n";
 
 // Include the installation script
 try {

@@ -481,7 +481,7 @@ function renderSettingsPage()
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>SSO Admin Panel - System Configuration</title>
+        <title>SSO-Authen Admin Panel - System Configuration</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
         <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
@@ -534,7 +534,7 @@ function renderSettingsPage()
                 </button>
                 
                 <a class="navbar-brand" href="' . $basePath . '">
-                    <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
+                    <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
                 </a>
                 
                 <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
@@ -579,12 +579,12 @@ function renderSettingsPage()
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="' . $basePath . '/settings">
+                                <a class="nav-link active" href="' . $basePath . '/settings">
                                     <i class="fas fa-cog me-2"></i>System Configuration
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                                <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                     <i class="fas fa-book me-2"></i>Documentation
                                 </a>
                             </li>
@@ -596,7 +596,7 @@ function renderSettingsPage()
                 <div class="offcanvas offcanvas-start offcanvas-sidebar d-md-none" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
                     <div class="offcanvas-header bg-primary text-white">
                         <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">
-                            <i class="fas fa-shield-alt me-2"></i>SSO Admin
+                            <i class="fas fa-bars me-2"></i>Menu
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                     </div>
@@ -633,7 +633,7 @@ function renderSettingsPage()
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                                <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                     <i class="fas fa-book me-2"></i>Documentation
                                 </a>
                             </li>
@@ -665,21 +665,21 @@ function renderSettingsPage()
                                         <label class="form-label">Current Secret Key:</label>
                                         <div class="input-group mt-2">
                                             <input type="password" class="form-control" id="currentSecretKey" value="' . htmlspecialchars($currentSecret) . '" readonly>
-                                            <button class="btn btn-outline-secondary" onclick="toggleJwtSecret()" id="toggleJwtBtn" title="Show JWT Secret">
-                                                <i class="fas fa-eye" id="toggleJwtIcon"></i> Show
+                                            <button class="btn btn-outline-secondary rounded-0" onclick="toggleJwtSecret()" id="toggleJwtBtn" title="Show JWT Secret">
+                                                <i class="fas fa-eye" id="toggleJwtIcon"></i><span class="d-none d-sm-inline ms-1">Show</span>
                                             </button>
-                                            <button class="btn btn-outline-secondary" onclick="copyToClipboardText(\'' . htmlspecialchars($currentSecret) . '\')" title="Copy JWT Secret">
-                                                <i class="fas fa-copy"></i> Copy
+                                            <button class="btn btn-outline-secondary rounded-0" onclick="copyToClipboardText(\'' . htmlspecialchars($currentSecret) . '\')" title="Copy JWT Secret">
+                                                <i class="fas fa-copy"></i><span class="d-none d-sm-inline ms-1">Copy</span>
                                             </button>
                                         </div>
                                     </div>
                                     
                                     <div class="mb-3">
-                                        <button class="btn btn-primary" onclick="generateNewSecret()">
-                                            <i class="fas fa-sync-alt me-2"></i>Generate New Secret Key
+                                        <button class="btn btn-primary rounded-0" onclick="generateNewSecret()">
+                                            <i class="fas fa-sync-alt"></i><span class="d-none d-sm-inline ms-2">Generate New Secret Key</span>
                                         </button>
-                                        <button class="btn btn-success ms-2" onclick="saveSecretKey()" disabled id="saveButton">
-                                            <i class="fas fa-save me-2"></i>Save Changes
+                                        <button class="btn btn-success rounded-0 ms-2" onclick="saveSecretKey()" disabled id="saveButton">
+                                            <i class="fas fa-save"></i><span class="d-none d-sm-inline ms-2">Save Changes</span>
                                         </button>
                                     </div>
                                     
@@ -773,13 +773,13 @@ function renderSettingsPage()
                     // Show the secret
                     field.type = "text";
                     icon.className = "fas fa-eye-slash";
-                    btn.innerHTML = \'<i class="fas fa-eye-slash" id="toggleJwtIcon"></i> Hide\';
+                    btn.innerHTML = \'<i class="fas fa-eye-slash" id="toggleJwtIcon"></i><span class="d-none d-sm-inline ms-1">Hide</span>\';
                     btn.title = "Hide JWT Secret";
                 } else {
                     // Hide the secret
                     field.type = "password";
                     icon.className = "fas fa-eye";
-                    btn.innerHTML = \'<i class="fas fa-eye" id="toggleJwtIcon"></i> Show\';
+                    btn.innerHTML = \'<i class="fas fa-eye" id="toggleJwtIcon"></i><span class="d-none d-sm-inline ms-1">Show</span>\';
                     btn.title = "Show JWT Secret";
                 }
             }
@@ -847,10 +847,13 @@ function renderSettingsPage()
             
             // Initialize DataTable
             $(document).ready(function() {
+                const isMobile = window.innerWidth < 768;
                 $("#historyTable").DataTable({
                     "order": [[0, "desc"]],
                     "pageLength": 10,
-                    "responsive": true,
+                    "responsive": false,
+                    "scrollX": isMobile,
+                    "autoWidth": !isMobile,
                     "columnDefs": [
                         { "orderable": false, "targets": [1] }
                     ]
@@ -910,10 +913,11 @@ function renderSettingsPage()
                             if (data.success) {
                                 // Show success message
                                 Swal.fire({
-                                    title: "Updated!",
+                                    title: "<i class=\"fas fa-check-circle text-success me-2\"></i>Updated!",
                                     text: "JWT Secret Key updated successfully! All existing tokens have been invalidated.",
                                     icon: "success",
-                                    confirmButtonText: "OK"
+                                    confirmButtonText: "OK",
+                                    confirmButtonColor: "#198754"
                                 }).then(() => {
                                     // Reset button state
                                     document.getElementById("saveButton").disabled = true;
@@ -2261,7 +2265,7 @@ function renderSimpleLoginPage()
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSO Admin Panel - Login</title>
+    <title>SSO-Authen Admin Panel - Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -2273,7 +2277,7 @@ function renderSimpleLoginPage()
                     <div class="card-body">
                         <div class="text-center mb-4">
                             <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
-                            <h3>SSO Admin Panel</h3>
+                            <h3>SSO-Authen Admin Panel</h3>
                             <p class="text-muted">เข้าสู่ระบบด้วย SSO</p>
                         </div>
                         
@@ -2322,7 +2326,7 @@ function renderClientsPage()
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSO Admin Panel - Clients</title>
+    <title>SSO-Authen Admin Panel - Clients</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
@@ -2332,7 +2336,7 @@ function renderClientsPage()
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand" href="' . $basePath . '">
-                <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
+                <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
             <div class="navbar-nav ms-auto">
                 <span class="navbar-text me-3">
@@ -2654,7 +2658,7 @@ function renderStatisticsPage()
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSO Admin Panel - Usage Statistics</title>
+    <title>SSO-Authen Admin Panel - Usage Statistics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
@@ -2676,7 +2680,7 @@ function renderStatisticsPage()
             </button>
             
             <a class="navbar-brand" href="' . $basePath . '">
-                <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
+                <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
             
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
@@ -2733,7 +2737,7 @@ function renderStatisticsPage()
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
                             </a>
                         </li>
@@ -2776,7 +2780,7 @@ function renderStatisticsPage()
                                 </a>
                             </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/api-docs.html" target="_blank">
+                            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
                             </a>
                         </li>
@@ -2787,7 +2791,7 @@ function renderStatisticsPage()
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2"><i class="fas fa-chart-bar me-2"></i>Usage Statistics <small class="text-muted fs-6" id="demo-indicator" style="display:none"><i class="fas fa-flask me-1"></i>Demo Data Active</small></h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-toolbar mb-2 mb-md-0 flex-nowrap">
                         <div class="btn-group me-2">
                             <select class="form-select" id="periodSelect" onchange="loadStatistics()">
                                 <option value="7">Last 7 days</option>
@@ -2795,9 +2799,11 @@ function renderStatisticsPage()
                                 <option value="90">Last 90 days</option>
                             </select>
                         </div>
-                        <button type="button" class="btn btn-outline-secondary rounded-0" onclick="loadStatistics()">
-                            <i class="fas fa-sync-alt"></i><span class="d-none d-sm-inline ms-1">Refresh</span>
-                        </button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary rounded-0" onclick="loadStatistics()">
+                                <i class="fas fa-sync-alt"></i><span class="d-none d-sm-inline ms-1">Refresh</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -2972,10 +2978,13 @@ function renderStatisticsPage()
             clientStatsDiv.innerHTML = clientActivityHtml;
             
             // Initialize DataTable
+            const isMobile = window.innerWidth < 768;
             $("#clientStatsTable").DataTable({
                 "order": [[2, "desc"]],
                 "pageLength": 10,
-                "responsive": true,
+                "responsive": false,
+                "scrollX": isMobile,
+                "autoWidth": !isMobile,
                 "columnDefs": [
                     { "orderable": false, "targets": [7] }
                 ]

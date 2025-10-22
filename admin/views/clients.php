@@ -8,7 +8,7 @@
     ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSO Admin Panel - Client Management</title>
+    <title>SSO-Authen Admin Panel - Client Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="<?php echo $basePath; ?>/css/admin-responsive.css" rel="stylesheet">
@@ -70,7 +70,7 @@
             </button>
             
             <a class="navbar-brand" href="<?php echo $basePath; ?>">
-                <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
+                <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
             
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
@@ -121,7 +121,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/api-docs.html" target="_blank">
+                            <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
                             </a>
                         </li>
@@ -170,7 +170,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/api-docs.html" target="_blank">
+                            <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
                             </a>
                         </li>

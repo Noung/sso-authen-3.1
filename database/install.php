@@ -3,7 +3,7 @@
 /**
  * database/install.php
  * Database installation script
- * Sets up database and initial data for SSO Admin Panel
+ * Sets up database and initial data for SSO-Authen Admin Panel
  */
 
 // Load admin configuration

@@ -2,20 +2,19 @@
 <html lang="th">
 
 <head>
+    <?php
+    $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
+    $adminName = $_SESSION['admin_name'] ?? 'Administrator';
+    ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSO Admin Panel - Admin Users Management</title>
+    <title>SSO-Authen Admin Panel - Admin Users Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="<?php echo $basePath; ?>/css/admin-responsive.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        .table-responsive {
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
         .btn-group-sm>.btn,
         .btn-sm {
             padding: 0.25rem 0.5rem;
@@ -59,10 +58,6 @@
 </head>
 
 <body>
-    <?php
-    $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
-    $adminName = $_SESSION['admin_name'] ?? 'Administrator';
-    ?>
 
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -73,7 +68,7 @@
             </button>
             
             <a class="navbar-brand" href="<?php echo $basePath; ?>">
-                <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
+                <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
             
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
@@ -124,7 +119,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/api-docs.html" target="_blank">
+                            <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
                             </a>
                         </li>
@@ -132,11 +127,11 @@
                 </div>
             </nav>
 
-            <!-- Sidebar - Mobile Offcanvas -->
+            <!-- Offcanvas Sidebar - Mobile -->
             <div class="offcanvas offcanvas-start offcanvas-sidebar d-md-none" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
                 <div class="offcanvas-header bg-primary text-white">
                     <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">
-                        <i class="fas fa-shield-alt me-2"></i>SSO Admin
+                        <i class="fas fa-bars me-2"></i>Menu
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                 </div>
@@ -173,7 +168,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/api-docs.html" target="_blank">
+                            <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
                             </a>
                         </li>
@@ -188,8 +183,8 @@
                         <i class="fas fa-user-shield me-2"></i>Admin Users
                     </h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <button class="btn btn-primary" onclick="showAddAdminUserModal()">
-                            <i class="fas fa-plus me-1"></i><span class="d-none d-sm-inline">Add New </span>Admin
+                        <button class="btn btn-primary rounded-0" onclick="showAddAdminUserModal()">
+                            <i class="fas fa-plus"></i><span class="d-none d-sm-inline ms-1">Add New Admin</span>
                         </button>
                     </div>
                 </div>
@@ -417,18 +412,19 @@
             }
 
             let html = `
-                <table class="table table-hover" id="adminUsersTable">
-                    <thead class="table-dark">
-                        <tr>
-                            <th style="width: 30%">Name</th>
-                            <th style="width: 30%">Email</th>
-                            <th style="width: 15%">Role</th>
-                            <th style="width: 10%">Status</th>
-                            <th style="width: 15%">Created</th>
-                            <th style="width: 10%">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="adminUsersTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width: 30%">Name</th>
+                                <th style="width: 30%">Email</th>
+                                <th style="width: 15%">Role</th>
+                                <th style="width: 10%">Status</th>
+                                <th style="width: 15%">Created</th>
+                                <th style="width: 10%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
             
             users.forEach(user => {
@@ -464,7 +460,7 @@
                 `;
             });
             
-            html += '</tbody></table>';
+            html += '</tbody></table></div>';
             container.innerHTML = html;
             
             // Initialize DataTable

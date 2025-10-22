@@ -6,7 +6,7 @@
 
 return [
     'app' => [
-        'name' => 'SSO Admin Panel',
+        'name' => 'SSO-Authen Admin Panel',
         'version' => '1.0.0',
         'environment' => 'development', // development, production
         'debug' => true,

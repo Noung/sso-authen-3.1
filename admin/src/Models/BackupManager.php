@@ -476,7 +476,7 @@ class BackupManager
             "Type: {$metadata['backup_type']}\n" .
             "Description: {$metadata['description']}\n\n" .
             "This backup contains client configurations, admin users, and system settings.\n" .
-            "Use the SSO Admin Panel to restore this backup.\n";
+            "Use the SSO-Authen Admin Panel to restore this backup.\n";
     }
 
     /**

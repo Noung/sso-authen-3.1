@@ -135,7 +135,7 @@ $authorized_clients = loadAuthorizedClientsFromDatabase();
  * การตั้งค่าเหล่านี้จะใช้ร่วมกันสำหรับทุกแอปพลิเคชันที่เชื่อมต่อ
  */
 // 5. ตั้งค่า Secret Key สำหรับสร้าง JWT (ควรเป็นค่าสุ่มยาวๆ และเก็บเป็นความลับ)
-define('JWT_SECRET_KEY', '4ZSf7(wz6W$dkki)AcTg_HkLPPKq#Pwpsde=v^or|*sGctxv8|s.?k]biO>VkA}$');
+define('JWT_SECRET_KEY', '#z<BlpE=o%}BqWbN%Yl%*Do}<Tjw=DVHwwz*+T6_Ay}+y_.iCht%?ZPM<QiDJqA]');
 
 // 6. ตั้งค่าอายุของ Token (เช่น 1 ชั่วโมง = 3600 วินาที)
 define('JWT_EXPIRATION', 3600);
