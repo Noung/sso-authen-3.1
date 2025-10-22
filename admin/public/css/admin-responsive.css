@@ -67,6 +67,21 @@
     box-shadow: 0 2px 4px rgba(0,0,0,.1);
 }
 
+/* Navbar dropdown menu positioning */
+.navbar .dropdown-menu {
+    min-width: 200px;
+}
+
+@media (max-width: 767.98px) {
+    .navbar .dropdown-menu {
+        position: absolute;
+        right: 0;
+        left: auto;
+        top: 100%;
+        margin-top: 0.5rem;
+    }
+}
+
 /* Mobile navbar adjustments */
 @media (max-width: 767.98px) {
     .navbar-brand {
@@ -80,6 +95,24 @@
     .navbar-text {
         font-size: 0.85rem;
         padding: 0.25rem 0.5rem;
+    }
+    
+    /* Navbar user dropdown positioning on mobile */
+    .navbar .navbar-nav {
+        position: static;
+    }
+    
+    .navbar .dropdown {
+        position: static;
+    }
+    
+    .navbar .dropdown-menu {
+        position: absolute !important;
+        right: 1rem !important;
+        left: auto !important;
+        top: 100% !important;
+        transform: none !important;
+        margin-top: 0.5rem !important;
     }
     
     /* Mobile menu toggle button */

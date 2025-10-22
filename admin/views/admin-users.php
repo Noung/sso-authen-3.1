@@ -71,13 +71,17 @@
                 <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
             
-            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                <span class="navbar-text me-2 me-md-3">
-                    <i class="fas fa-user me-1"></i><span class="d-none d-sm-inline"><?php echo $adminName; ?></span>
-                </span>
-                <a class="nav-link" href="<?php echo $basePath; ?>/auth/logout">
-                    <i class="fas fa-sign-out-alt"></i><span class="d-none d-sm-inline ms-1">Sign out</span>
-                </a>
+            <div class="navbar-nav ms-auto">
+                <div class="dropdown">
+                    <button class="btn btn-link nav-link dropdown-toggle text-white text-decoration-none" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user me-1"></i><span class="d-none d-sm-inline"><?php echo $adminName; ?></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><h6 class="dropdown-header"><i class="fas fa-user me-2"></i><?php echo $adminName; ?></h6></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="<?php echo $basePath; ?>/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign out</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
