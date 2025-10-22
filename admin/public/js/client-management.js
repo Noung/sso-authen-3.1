@@ -63,20 +63,21 @@ function renderClientsTable(clients) {
     }
 
     let html = `
-        <table class="table table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th style="width: 15%">Client Name</th>
-                    <th style="width: 15%">Client ID</th>
-                    <th style="width: 15%">Redirect URI</th>
-                    <th style="width: 10%">Authen Mode</th>
-                    <th style="width: 10%">Status</th>
-                    <th style="width: 10%">Created</th>
-                    <th style="width: 15%">Created By</th>
-                    <th style="width: 10%">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 15%">Client Name</th>
+                        <th style="width: 15%">Client ID</th>
+                        <th style="width: 15%" class="hide-mobile">Redirect URI</th>
+                        <th style="width: 10%">Authen Mode</th>
+                        <th style="width: 10%">Status</th>
+                        <th style="width: 10%" class="hide-mobile">Created</th>
+                        <th style="width: 15%" class="hide-mobile">Created By</th>
+                        <th style="width: 10%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
     `;
     
     clients.forEach(client => {
@@ -131,7 +132,7 @@ function renderClientsTable(clients) {
                         </button>
                     </div>
                 </td>
-                <td>
+                <td class="hide-mobile">
                     <span class="small" title="${escapeHtml(client.app_redirect_uri)}">
                         ${escapeHtml(truncatedUri)}
                     </span>
@@ -140,12 +141,12 @@ function renderClientsTable(clients) {
                     ${authModeBadge}
                 </td>
                 <td class="text-center">${statusBadge}</td>
-                <td class="text-center">
+                <td class="text-center hide-mobile">
                     <span title="${new Date(client.created_at).toLocaleString('th-TH')}">
                         ${createdDate}
                     </span>
                 </td>
-                <td class="text-center">
+                <td class="text-center hide-mobile">
                     <span title="${escapeHtml(client.created_by || 'N/A')}">
                         ${client.created_by ? escapeHtml(client.created_by.substring(0, 15) + (client.created_by.length > 15 ? '...' : '')) : 'N/A'}
                     </span>
@@ -170,7 +171,7 @@ function renderClientsTable(clients) {
         `;
     });
     
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 

@@ -17,6 +17,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       rel="stylesheet"
     />
+    <link href="<?php echo $basePath; ?>/css/admin-responsive.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
       .backup-card {
@@ -53,15 +54,21 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container-fluid">
+        <!-- Mobile Menu Toggle -->
+        <button class="btn mobile-menu-toggle d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle navigation">
+          <i class="fas fa-bars"></i>
+        </button>
+        
         <a class="navbar-brand" href="<?php echo $basePath; ?>">
           <i class="fas fa-shield-alt me-2"></i>SSO Admin Panel
         </a>
-        <div class="navbar-nav ms-auto">
-          <span class="navbar-text me-3">
-            <i class="fas fa-user me-1"></i><?php echo $adminName; ?>
+        
+        <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+          <span class="navbar-text me-2 me-md-3">
+            <i class="fas fa-user me-1"></i><span class="d-none d-sm-inline"><?php echo $adminName; ?></span>
           </span>
           <a class="nav-link" href="<?php echo $basePath; ?>/auth/logout">
-            <i class="fas fa-sign-out-alt me-1"></i>Sign out
+            <i class="fas fa-sign-out-alt"></i><span class="d-none d-sm-inline ms-1">Sign out</span>
           </a>
         </div>
       </div>
@@ -69,7 +76,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
 
     <div class="container-fluid">
       <div class="row">
-        <!-- Sidebar -->
+        <!-- Sidebar - Desktop -->
         <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
           <div class="position-sticky pt-3">
             <ul class="nav flex-column">
@@ -112,22 +119,68 @@ $adminName = $_SESSION['admin_name'] ?? 'Administrator';
           </div>
         </nav>
 
+        <!-- Sidebar - Mobile Offcanvas -->
+        <div class="offcanvas offcanvas-start offcanvas-sidebar d-md-none" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+          <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">
+              <i class="fas fa-shield-alt me-2"></i>SSO Admin
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body p-0">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link" href="<?php echo $basePath; ?>">
+                  <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<?php echo $basePath; ?>/clients">
+                  <i class="fas fa-users me-2"></i>Client Applications
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
+                  <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<?php echo $basePath; ?>/admin-users">
+                  <i class="fas fa-user-shield me-2"></i>Admin Users
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link active" href="<?php echo $basePath; ?>/backup-restore">
+                  <i class="fas fa-database me-2"></i>Backup & Restore
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<?php echo $basePath; ?>/settings">
+                  <i class="fas fa-cog me-2"></i>System Configuration
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<?php echo $basePath; ?>/api-docs.html" target="_blank">
+                  <i class="fas fa-book me-2"></i>Documentation
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
-          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h1 class="h2">
+          <div class="d-flex justify-content-between flex-wrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2 mb-2 mb-md-0">
               <i class="fas fa-database me-2"></i>Backup & Restore
             </h1>
-            <div>
+            <div class="d-flex flex-column flex-md-row gap-2">
               <button class="btn btn-success" onclick="showCreateBackupModal()">
-                <i class="fas fa-plus me-1"></i>Create New Backup
+                <i class="fas fa-plus me-1"></i><span class="d-none d-sm-inline">Create New </span>Backup
               </button>
               <button class="btn btn-outline-info" onclick="showScheduleInfo()">
-                <i class="fas fa-clock me-1"></i>Automation Setup
+                <i class="fas fa-clock me-1"></i><span class="d-none d-sm-inline">Automation</span><span class="d-sm-none">Auto</span>
               </button>
-              <!-- <button class="btn btn-outline-secondary" onclick="loadBackups()">
-                <i class="fas fa-sync-alt me-1"></i>Refresh
-              </button> -->
             </div>
           </div>
 
