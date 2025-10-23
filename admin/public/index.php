@@ -638,7 +638,12 @@ function renderSettingsPage()
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
-                                    <i class="fas fa-book me-2"></i>Documentation
+                                    <i class="fas fa-book me-2"></i>API Documentation
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="' . $basePath . '/claims-update.html" target="_blank">
+                                    <i class="fas fa-certificate me-2"></i>Extended Claims
                                 </a>
                             </li>
                         </ul>
