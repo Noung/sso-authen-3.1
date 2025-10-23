@@ -2633,12 +2633,21 @@ function renderAlert($title, $message, $icon, $redirectUrl)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>' . htmlspecialchars($title) . '</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            font-family: \'Bai Jamjuree\', sans-serif;
+        }
+        body {
+            font-family: \'Bai Jamjuree\', sans-serif;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
         <div class="text-center">
-            <h3>กรุณารอสักครู่...</h3>
+            <h3>Please wait...</h3>
         </div>
     </div>
     <script>

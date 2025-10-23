@@ -305,6 +305,15 @@ function renderSimpleLoginPage() {
     <title>SSO-Authen Admin Panel - Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: \'Bai Jamjuree\', sans-serif;
+        }
+        body {
+            font-family: \'Bai Jamjuree\', sans-serif;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <div class="container">
@@ -364,6 +373,15 @@ function renderClientsPage() {
     <title>SSO-Authen Admin Panel - Clients</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: \'Bai Jamjuree\', sans-serif;
+        }
+        body {
+            font-family: \'Bai Jamjuree\', sans-serif;
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
@@ -523,17 +541,26 @@ function renderClientsPage() {
 
 function renderAlert($title, $message, $icon, $redirectUrl) {
     return '<!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>' . htmlspecialchars($title) . '</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            font-family: "Bai Jamjuree", sans-serif;
+        }
+        body {
+            font-family: "Bai Jamjuree", sans-serif;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
         <div class="text-center">
-            <h3>กรุณารอสักครู่...</h3>
+            <h3>Please wait...</h3>
         </div>
     </div>
     <script>
@@ -542,7 +569,7 @@ function renderAlert($title, $message, $icon, $redirectUrl) {
                 title: "' . addslashes($title) . '",
                 text: "' . addslashes($message) . '",
                 icon: "' . addslashes($icon) . '",
-                confirmButtonText: "ตกลง"
+                confirmButtonText: "OK"
             }).then((result) => {
                 window.location.href = "' . addslashes($redirectUrl) . '";
             });

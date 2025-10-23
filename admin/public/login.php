@@ -33,14 +33,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $basePath = dirname($_SERVER['SCRIPT_NAME']);
 ?>
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SSO-Authen Admin Panel - Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            font-family: 'Bai Jamjuree', sans-serif;
+        }
+        body {
+            font-family: 'Bai Jamjuree', sans-serif;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <div class="container">
@@ -51,12 +60,12 @@ $basePath = dirname($_SERVER['SCRIPT_NAME']);
                         <div class="text-center mb-4">
                             <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
                             <h3>SSO-Authen Admin Panel</h3>
-                            <p class="text-muted">เข้าสู่ระบบด้วย SSO</p>
+                            <p class="text-muted">Login with SSO</p>
                         </div>
                         
                         <div class="d-grid">
                             <button onclick="devLogin()" class="btn btn-primary btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>เข้าสู่ระบบ
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
                             </button>
                         </div>
                         
@@ -89,8 +98,8 @@ $basePath = dirname($_SERVER['SCRIPT_NAME']);
         function devLogin() {
             // Show loading
             Swal.fire({
-                title: 'กำลังเข้าสู่ระบบ...',
-                text: 'กรุณารอสักครู่',
+                title: 'Logging in...',
+                text: 'Please wait',
                 icon: 'info',
                 allowOutsideClick: false,
                 showConfirmButton: false,
@@ -114,8 +123,8 @@ $basePath = dirname($_SERVER['SCRIPT_NAME']);
             .then(data => {
                 if (data.success) {
                     Swal.fire({
-                        title: 'เข้าสู่ระบบสำเร็จ!',
-                        text: 'กำลังนำท่านเข้าสู่ระบบจัดการ',
+                        title: 'Login Successful!',
+                        text: 'Redirecting to admin panel',
                         icon: 'success',
                         timer: 1500,
                         showConfirmButton: false
@@ -124,8 +133,8 @@ $basePath = dirname($_SERVER['SCRIPT_NAME']);
                     });
                 } else {
                     Swal.fire({
-                        title: 'เกิดข้อผิดพลาด',
-                        text: 'ไม่สามารถเข้าสู่ระบบได้',
+                        title: 'Error',
+                        text: 'Unable to login',
                         icon: 'error'
                     });
                 }
@@ -133,8 +142,8 @@ $basePath = dirname($_SERVER['SCRIPT_NAME']);
             .catch(error => {
                 console.error("Error:", error);
                 Swal.fire({
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+                    title: 'Error',
+                    text: 'Unable to connect to server',
                     icon: 'error'
                 });
             });

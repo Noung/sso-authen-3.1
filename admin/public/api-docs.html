@@ -16,6 +16,10 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css"
       rel="stylesheet"
     />
+    <link
+      href="css/admin-responsive.css"
+      rel="stylesheet"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
@@ -201,6 +205,23 @@
           margin-left: 200px;
         }
         .endpoint-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .http-method {
+          margin-bottom: 0.5rem;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 100%;
+          height: auto;
+          position: relative;
+          border-right: none;
+          border-bottom: 1px solid #dee2e6;
+        }
+        .main-content {
           flex-direction: column;
           align-items: flex-start;
           gap: 0.5rem;

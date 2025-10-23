@@ -25,14 +25,23 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
 
 ?>
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SSO-Authen Admin Panel - Simple Test</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            font-family: 'Bai Jamjuree', sans-serif;
+        }
+        body {
+            font-family: 'Bai Jamjuree', sans-serif;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
@@ -48,7 +57,7 @@ $isLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'
                             <form method="POST">
                                 <input type="hidden" name="action" value="dev_login">
                                 <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-sign-in-alt me-2"></i>เข้าสู่ระบบ
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
                                 </button>
                             </form>
                         </div>
