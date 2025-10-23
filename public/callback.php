@@ -23,12 +23,12 @@ try {
     // 3. ตรวจสอบและดึงข้อมูล Client จาก Session
     $clientId = $_SESSION['current_client_id'] ?? null;
     if (!$clientId) {
-        throw new \Exception('ไม่สามารถระบุแอปพลิเคชันต้นทางได้ (Client ID not found in session)');
+        throw new \Exception('Cannot identify source application (Client ID not found in session)');
     }
 
     $clientConfig = $authorized_clients[$clientId] ?? null;
     if (!$clientConfig) {
-        throw new \Exception("แอปพลิเคชันนี้ไม่ได้รับอนุญาต (Unauthorized client ID: " . htmlspecialchars($clientId) . ")");
+        throw new \Exception("This application is not authorized (Unauthorized client ID: " . htmlspecialchars($clientId) . ")");
     }
 
     // 4. **สำคัญ:** สร้างค่าคงที่แบบไดนามิกเพื่อให้ SsoHandler ทำงานต่อได้ถูกต้อง
@@ -41,7 +41,7 @@ try {
     $internalUser = $handler->handleCallback($clientConfig);
 
     if (!$internalUser || !isset($internalUser['id'])) {
-        throw new \Exception("ไม่ได้รับข้อมูลผู้ใช้จาก Web App API หรือข้อมูลไม่ถูกต้อง");
+        throw new \Exception("Did not receive user data from Web App API or data is invalid");
     }
 
     // 6. สร้าง JWT
@@ -115,7 +115,7 @@ try {
     $redirect_url_on_error = $_SESSION['login_start_uri'] ?? '/';
 
     render_alert_and_redirect(
-        'เกิดข้อผิดพลาดในการยืนยันตัวตน',
+        'Authentication Error',
         $e->getMessage(),
         'error',
         $redirect_url_on_error

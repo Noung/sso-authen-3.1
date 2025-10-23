@@ -50,9 +50,9 @@ try {
     // หากเกิดข้อผิดพลาด ให้แสดงข้อความ แต่ไม่ redirect ไปที่ URL ที่ไม่น่าไว้ใจ
     // การส่งกลับไปหน้าแรกของ sso-authen เองเป็นทางที่ปลอดภัย
     render_alert_and_redirect(
-        'เกิดข้อผิดพลาด',
+        'Error',
         $e->getMessage(),
         'error',
-        '/' // กลับไปหน้าแรกของ sso-authen
+        '/' // Redirect to sso-authen home
     );
 }
