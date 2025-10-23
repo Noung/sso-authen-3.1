@@ -265,12 +265,10 @@ function showAddClientModal() {
     // Generate API Secret Key for new clients after auth mode is set
     generateApiSecretKey();
     
-    // Reset all scope checkboxes to default
+    // Reset all scope checkboxes to default (all fixed to openid, profile, email)
     document.getElementById('scope-openid').checked = true;
     document.getElementById('scope-profile').checked = true;
     document.getElementById('scope-email').checked = true;
-    document.getElementById('scope-phone').checked = false;
-    document.getElementById('scope-address').checked = false;
     updateScopesInput();
     
     new bootstrap.Modal(document.getElementById('clientModal')).show();
@@ -1260,19 +1258,11 @@ function setupEventListeners() {
         saveClient();
     });
 
-    // Scope checkboxes
+    // Scope checkboxes - Since scopes are now fixed, no need for complex validation
     document.querySelectorAll('.scope-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            // Ensure openid is always checked
-            if (this.value === 'openid' && !this.checked) {
-                this.checked = true;
-                Swal.fire({
-                    title: 'Info',
-                    text: 'openid scope is required and cannot be unchecked',
-                    icon: 'info',
-                    confirmButtonColor: '#198754'
-                });
-            }
+            // Prevent any changes - scopes are fixed to openid, profile, email
+            this.checked = ['openid', 'profile', 'email'].includes(this.value);
             updateScopesInput();
         });
     });

@@ -18,16 +18,25 @@ return [
 
     'scopes'       => ['openid', 'profile', 'email'],
 
-    // การแปลงชื่อ Claims จาก PSU SSO ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
+    // การแปลงชื่อ Claims จาก Okta ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
     'claim_mapping' => [
-        'id'        => 'sub',          // 'sub' (Subject) คือ ID เฉพาะตัวของผู้ใช้ ซึ่งเป็นมาตรฐาน OIDC
-        'username'  => 'preferred_username',     // preferred_username ชื่อเล่นหรือชื่อผู้ใช้
-        'name'      => 'name',         // 'name' คือชื่อเต็ม
-        'firstName' => 'given_name',   // 'given_name' คือชื่อจริง
-        'lastName'  => 'family_name',  // 'family_name' คือนามสกุล
-        'email'     => 'email',
-        'picture'   => 'picture',      // URL รูปโปรไฟล์
-        'department' => null            // Auth0 ไม่มีข้อมูลแผนกโดยตรง จึงใส่ null
+        // Basic Claims (Required)
+        'id'           => 'sub',          // 'sub' (Subject) คือ ID เฉพาะตัวของผู้ใช้ ซึ่งเป็นมาตรฐาน OIDC
+        'username'     => 'preferred_username', // preferred_username ชื่อเล่นหรือชื่อผู้ใช้
+        'name'         => 'name',         // 'name' คือชื่อเต็ม
+        'firstName'    => 'given_name',   // 'given_name' คือชื่อจริง
+        'lastName'     => 'family_name',  // 'family_name' คือนามสกุล
+        'email'        => 'email',
+        'department'   => null,           // Okta ไม่มีข้อมูลแผนกใน basic claims
+        
+        // Extended Claims (Not available from Okta by default)
+        'position'     => null,
+        'campus'       => null,
+        'officeName'   => null,
+        'facultyId'    => null,
+        'departmentId' => null,
+        'campusId'     => null,
+        'groups'       => 'groups'        // Okta อาจมี 'groups' claim
     ]
 ];
 

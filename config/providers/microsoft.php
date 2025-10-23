@@ -18,14 +18,24 @@ return [
 
     'scopes'       => ['openid', 'profile', 'email'],
 
-    // การแปลงชื่อ Claims จาก PSU SSO ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
+    // การแปลงชื่อ Claims จาก Microsoft ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
     'claim_mapping' => [
-        'id'        => 'sub',          // 'sub' (Subject) คือ ID เฉพาะตัวของผู้ใช้ ซึ่งเป็นมาตรฐาน OIDC
-        'username'  => 'preferred_username',     // 'nickname' คือชื่อเล่นหรือชื่อผู้ใช้
-        'name'      => 'name',         // 'name' คือชื่อเต็ม
-        'firstName' =>  null,   // 'given_name' คือชื่อจริง
-        'lastName'  =>  null,  // 'family_name' คือนามสกุล
-        'email'     => 'email',      // URL รูปโปรไฟล์
-        'department' => null            // Auth0 ไม่มีข้อมูลแผนกโดยตรง จึงใส่ null
+        // Basic Claims (Required)
+        'id'           => 'sub',          // 'sub' (Subject) คือ ID เฉพาะตัวของผู้ใช้ ซึ่งเป็นมาตรฐาน OIDC
+        'username'     => 'preferred_username',
+        'name'         => 'name',         // 'name' คือชื่อเต็ม
+        'firstName'    => 'given_name',   // Microsoft อาจมี given_name
+        'lastName'     => 'family_name',  // Microsoft อาจมี family_name
+        'email'        => 'email',
+        'department'   => null,           // Microsoft ไม่มีข้อมูลแผนกใน basic claims
+        
+        // Extended Claims (Not available from Microsoft by default)
+        'position'     => null,
+        'campus'       => null,
+        'officeName'   => null,
+        'facultyId'    => null,
+        'departmentId' => null,
+        'campusId'     => null,
+        'groups'       => null            // Microsoft อาจมี 'groups' ถ้าตั้งค่า Azure AD
     ]
 ];

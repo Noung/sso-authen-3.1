@@ -20,12 +20,22 @@ return [
 
     // การแปลงชื่อ Claims จาก PSU SSO ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
     'claim_mapping' => [
-        'id'        => 'psu_id',
-        'username'  => 'preferred_username',
-        'name'      => 'display_name_th',
-        'firstName' => 'first_name_th',
-        'lastName'  => 'last_name_th',
-        'email'     => 'email',
-        'department' => 'department_th'
+        // Basic Claims (Required)
+        'id'           => 'psu_id',
+        'username'     => 'preferred_username',
+        'name'         => 'display_name_th',
+        'firstName'    => 'first_name_th',
+        'lastName'     => 'last_name_th',
+        'email'        => 'email',
+        'department'   => 'department_th',
+        
+        // Extended Claims (PSU-specific)
+        'position'     => 'position_th',
+        'campus'       => 'campus_th',
+        'officeName'   => 'office_name_th',
+        'facultyId'    => 'faculty_id',
+        'departmentId' => 'department_id',
+        'campusId'     => 'campus_id',
+        'groups'       => 'groups'
     ]
 ];

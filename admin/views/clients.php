@@ -428,46 +428,36 @@
                         </div>
                         <div class="mb-3">
                             <label for="allowedScopes" class="form-label">Allowed Scopes</label>
+                            <div class="alert alert-info mb-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <small>The following scopes are supported by PSU SSO and are required for all clients. These cannot be modified.</small>
+                            </div>
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="form-check">
-                                        <input class="form-check-input scope-checkbox" type="checkbox" value="openid" id="scope-openid" checked>
+                                        <input class="form-check-input scope-checkbox" type="checkbox" value="openid" id="scope-openid" checked disabled>
                                         <label class="form-check-label" for="scope-openid">
-                                            <strong>openid</strong> <small class="text-muted">(Required)</small>
+                                            <strong>openid</strong> <small class="text-muted">(Required - Basic Authentication)</small>
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input scope-checkbox" type="checkbox" value="profile" id="scope-profile" checked>
+                                        <input class="form-check-input scope-checkbox" type="checkbox" value="profile" id="scope-profile" checked disabled>
                                         <label class="form-check-label" for="scope-profile">
-                                            <strong>profile</strong> <small class="text-muted">(Name, Email)</small>
+                                            <strong>profile</strong> <small class="text-muted">(Required - User Profile Information)</small>
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input scope-checkbox" type="checkbox" value="email" id="scope-email" checked>
+                                        <input class="form-check-input scope-checkbox" type="checkbox" value="email" id="scope-email" checked disabled>
                                         <label class="form-check-label" for="scope-email">
-                                            <strong>email</strong> <small class="text-muted">(Email Address)</small>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input scope-checkbox" type="checkbox" value="phone" id="scope-phone">
-                                        <label class="form-check-label" for="scope-phone">
-                                            <strong>phone</strong> <small class="text-muted">(Phone Number)</small>
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input scope-checkbox" type="checkbox" value="address" id="scope-address">
-                                        <label class="form-check-label" for="scope-address">
-                                            <strong>address</strong> <small class="text-muted">(Physical Address)</small>
+                                            <strong>email</strong> <small class="text-muted">(Required - Email Address)</small>
                                         </label>
                                     </div>
                                 </div>
                             </div>
                             <input type="hidden" class="form-control" id="allowedScopes" value="openid,profile,email">
                             <div class="form-text">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Scopes define what user information your application can access. <strong>openid</strong> is always required.
+                                <i class="fas fa-lock me-1"></i>
+                                These scopes are configured in the provider settings and cannot be changed from the admin panel.
                             </div>
                         </div>
 
@@ -565,14 +555,12 @@
                 saveClient();
             });
 
-            // Scope checkboxes
+            // Scope checkboxes - Since they're all disabled and required, no need for change handlers
+            // Just ensure they're always set to the default values
             document.querySelectorAll('.scope-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
-                    // Ensure openid is always checked
-                    if (this.value === 'openid' && !this.checked) {
-                        this.checked = true;
-                        Swal.fire('Info', 'openid scope is required and cannot be unchecked', 'info');
-                    }
+                    // Prevent any changes - scopes are fixed
+                    this.checked = ['openid', 'profile', 'email'].includes(this.value);
                     updateScopesInput();
                 });
             });

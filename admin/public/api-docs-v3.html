@@ -399,6 +399,13 @@
         >
           <i class="fas fa-users me-2"></i>Client Management
         </a>
+        <a
+          href="#oauth-scopes"
+          class="nav-link"
+          onclick="showSection('oauth-scopes')"
+        >
+          <i class="fas fa-key me-2"></i>OAuth Scopes
+        </a>
         <!-- <a
           href="#dashboard-api"
           class="nav-link"
@@ -1744,15 +1751,21 @@ module.exports = router;</code></pre>
               <div class="card-body">
                 <p>Contains the claims (user data):</p>
                 <pre><code class="language-json">{
+  "iss": "sso-authen-service",
   "data": {
     "id": 123,
-    "email": "user@example.com",
-    "name": "John Doe",
-    "role": "user"
+    "email": "user@psu.ac.th",
+    "name": "สมชาย ใจดี",
+    "position": "อาจารย์",
+    "facultyId": "31",
+    "groups": ["staff"],
+    "role": "admin"
+    // ...14 fields total
   },
   "iat": 1700000000,
   "exp": 1700007200
 }</code></pre>
+                <p class="small text-muted mb-0">All fields from User Handler API are included</p>
               </div>
             </div>
           </div>
@@ -1775,22 +1788,91 @@ module.exports = router;</code></pre>
         </div>
 
         <h3 class="mt-4">Token Claims</h3>
-        <p>SSO-Authen generates JWT tokens with the following structure:</p>
+        <p>SSO-Authen generates JWT tokens with the following structure. The <code>data</code> object contains <strong>all fields</strong> returned by your User Handler API:</p>
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Dynamic Payload:</strong> The JWT payload includes ALL fields returned by your User Handler API. With Extended Claims support, PSU SSO users will have up to 14 normalized fields plus any application-specific fields you add.
+        </div>
 
         <div class="code-example">
-          <div class="code-content">
-            <pre><code class="language-json">{
-  "data": {
-    "id": 123,                    // Your internal user ID (from User Handler)
-    "email": "user@psu.ac.th",   // User's email
-    "name": "นายสมชาย ใจดี",      // User's display name
-    "role": "user",              // User's role (from User Handler)
-    "department": "IT"           // Additional fields from User Handler
-  },
-  "iat": 1700000000,             // Issued At (timestamp)
-  "exp": 1700007200              // Expiration Time (timestamp)
-}</code></pre>
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('jwt-psu')">
+              PSU SSO User
+            </button>
+            <button class="code-tab" onclick="showCodeTab('jwt-google')">
+              Google User
+            </button>
           </div>
+          <div class="code-content">
+            <div id="jwt-psu" class="code-block active">
+              <pre><code class="language-json">// Complete JWT payload with PSU SSO user (14 normalized fields)
+{
+  "iss": "sso-authen-service",
+  "iat": 1700000000,             // Issued At (timestamp)
+  "exp": 1700007200,             // Expiration Time (timestamp)
+  "data": {
+    // Basic Claims (from PSU SSO + User Handler)
+    "id": 123,                   // Your internal user ID (from User Handler)
+    "email": "somchai.j@psu.ac.th",
+    "name": "นายสมชาย ใจดี",
+    "firstName": "สมชาย",
+    "lastName": "ใจดี",
+    "username": "somchai.j",
+    "department": "คณะวิทยาศาสตร์",
+    
+    // Extended Claims (from PSU SSO)
+    "position": "นักวิชาการคอมพิวเตอร์",
+    "campus": "หาดใหญ่",
+    "officeName": "สำนักบริการคอมพิวเตอร์",
+    "facultyId": "31",
+    "departmentId": "3101",
+    "campusId": "01",
+    "groups": ["staff", "it-admin"],
+    
+    // Application-specific fields (from User Handler)
+    "role": "admin",             // Assigned by your User Handler
+    "permissions": ["read", "write", "delete"],
+    "lastLogin": "2024-01-20T10:30:00Z"
+  }
+}</code></pre>
+            </div>
+            <div id="jwt-google" class="code-block">
+              <pre><code class="language-json">// JWT payload with Google user (basic fields only)
+{
+  "iss": "sso-authen-service",
+  "iat": 1700000000,
+  "exp": 1700007200,
+  "data": {
+    // Basic Claims (from Google + User Handler)
+    "id": 456,
+    "email": "john.doe@gmail.com",
+    "name": "John Doe",
+    "firstName": "John",
+    "lastName": "Doe",
+    "username": "john.doe@gmail.com",
+    "department": null,
+    
+    // Extended Claims (null for Google)
+    "position": null,
+    "campus": null,
+    "officeName": null,
+    "facultyId": null,
+    "departmentId": null,
+    "campusId": null,
+    "groups": null,
+    
+    // Application-specific fields
+    "role": "user"
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-warning mt-3">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Important:</strong> Extended Claims (position, campus, facultyId, etc.) are <strong>only available from PSU SSO</strong>. Other providers (Google, Microsoft, Auth0) will return <code>null</code> for these fields. Always check for null values in your application logic.
         </div>
 
         <h4>Standard Claims</h4>
@@ -1817,50 +1899,199 @@ module.exports = router;</code></pre>
         </table>
 
         <h4>Custom Claims (data object)</h4>
-        <p>The <code>data</code> object contains user information returned from your User Handler API:</p>
-        <table class="table table-bordered parameter-table">
-          <thead>
-            <tr>
-              <th>Field</th>
-              <th>Type</th>
-              <th>Required</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>id</code></td>
-              <td>string/number</td>
-              <td><span class="badge-required">Required</span></td>
-              <td>Your application's internal user ID</td>
-            </tr>
-            <tr>
-              <td><code>email</code></td>
-              <td>string</td>
-              <td><span class="badge-required">Required</span></td>
-              <td>User's email address</td>
-            </tr>
-            <tr>
-              <td><code>name</code></td>
-              <td>string</td>
-              <td><span class="badge-required">Required</span></td>
-              <td>User's display name</td>
-            </tr>
-            <tr>
-              <td><code>role</code></td>
-              <td>string</td>
-              <td><span class="badge-optional">Optional</span></td>
-              <td>User's role in your application (e.g., "admin", "user", "editor")</td>
-            </tr>
-            <tr>
-              <td colspan="4" class="text-muted"><em>...any additional fields returned by your User Handler API</em></td>
-            </tr>
-          </tbody>
-        </table>
+        <p>The <code>data</code> object contains user information returned from your User Handler API. The structure varies by OIDC provider:</p>
+        
+        <div class="table-responsive">
+          <table class="table table-bordered parameter-table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>PSU SSO</th>
+                <th>Google/Others</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="table-light">
+                <td colspan="5"><strong><i class="fas fa-id-card me-2"></i> Basic Claims (Always in JWT)</strong></td>
+              </tr>
+              <tr>
+                <td><code>id</code></td>
+                <td>number/string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td>Your application's internal user ID (from User Handler)</td>
+              </tr>
+              <tr>
+                <td><code>email</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td>User's email address</td>
+              </tr>
+              <tr>
+                <td><code>name</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td>User's full display name</td>
+              </tr>
+              <tr>
+                <td><code>firstName</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td>User's first name</td>
+              </tr>
+              <tr>
+                <td><code>lastName</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td>User's last name</td>
+              </tr>
+              <tr>
+                <td><code>username</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td>User's username/login ID</td>
+              </tr>
+              <tr>
+                <td><code>department</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-secondary">null</span></td>
+                <td>Department/Faculty name</td>
+              </tr>
+              <tr class="table-light">
+                <td colspan="5"><strong><i class="fas fa-plus-circle me-2"></i> Extended Claims (PSU SSO Only)</strong></td>
+              </tr>
+              <tr>
+                <td><code>position</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-secondary">null</span></td>
+                <td>Job position/title</td>
+              </tr>
+              <tr>
+                <td><code>campus</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-secondary">null</span></td>
+                <td>Campus name</td>
+              </tr>
+              <tr>
+                <td><code>officeName</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-secondary">null</span></td>
+                <td>Office/Unit name</td>
+              </tr>
+              <tr>
+                <td><code>facultyId</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-secondary">null</span></td>
+                <td>Faculty identifier (numeric)</td>
+              </tr>
+              <tr>
+                <td><code>departmentId</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-secondary">null</span></td>
+                <td>Department identifier (numeric)</td>
+              </tr>
+              <tr>
+                <td><code>campusId</code></td>
+                <td>string</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-secondary">null</span></td>
+                <td>Campus identifier (numeric)</td>
+              </tr>
+              <tr>
+                <td><code>groups</code></td>
+                <td>array</td>
+                <td><span class="badge bg-success">Yes</span></td>
+                <td><span class="badge bg-secondary">null</span></td>
+                <td>User groups/roles (e.g., ["staff", "admin"])</td>
+              </tr>
+              <tr class="table-light">
+                <td colspan="5"><strong><i class="fas fa-cog me-2"></i> Application-Specific Fields</strong></td>
+              </tr>
+              <tr>
+                <td><code>role</code></td>
+                <td>string</td>
+                <td><span class="badge bg-info">Custom</span></td>
+                <td><span class="badge bg-info">Custom</span></td>
+                <td>User's role in YOUR application (assigned by User Handler)</td>
+              </tr>
+              <tr>
+                <td colspan="5" class="text-muted"><em>...any other fields returned by your User Handler API will be included in the JWT</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         <div class="alert alert-success">
           <i class="fas fa-lightbulb me-2"></i>
           <strong>Flexibility:</strong> You can include any additional fields in the <code>data</code> object by returning them from your User Handler API. SSO-Authen will include all fields in the JWT.
+        </div>
+
+        <h4 class="mt-4">Using Extended Claims in Your Application</h4>
+        <p>Extended Claims enable powerful authorization and personalization features:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-primary h-100">
+              <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-shield-alt me-2"></i> Authorization Examples</h6>
+              </div>
+              <div class="card-body">
+                <pre class="small mb-0"><code class="language-javascript">// After validating JWT
+const user = decoded.data;
+
+// Faculty-based access
+if (user.facultyId === '31') {
+  grantScienceFacultyAccess();
+}
+
+// Group-based permissions
+if (user.groups?.includes('it-admin')) {
+  showAdminPanel();
+}
+
+// Campus-specific content
+if (user.campusId === '01') {
+  loadHatYaiResources();
+}</code></pre>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-warning h-100">
+              <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Null Handling</h6>
+              </div>
+              <div class="card-body">
+                <pre class="small mb-0"><code class="language-javascript">// Always check for null (non-PSU providers)
+const position = user.position || 'N/A';
+const groups = user.groups || [];
+
+// Safe optional chaining
+if (user.groups?.includes('admin')) {
+  // ...
+}
+
+// PHP example
+$position = $user['position'] ?? 'ไม่ระบุ';
+if (in_array('admin', $user['groups'] ?? [])) {
+  // ...
+}</code></pre>
+              </div>
+            </div>
+          </div>
         </div>
 
         <h3>Token Expiration</h3>
@@ -2301,18 +2532,28 @@ const userId = decoded.data.id;
             </table>
 
             <h5>Request Body</h5>
-            <p>SSO-Authen sends normalized user data:</p>
+            <p>SSO-Authen sends normalized user data with all available claims:</p>
             <div class="code-example">
               <div class="code-content">
                 <pre><code class="language-json">{
   "normalizedUser": {
+    // Basic Claims (Always available)
+    "id": "6510110001",
     "email": "somchai.jaidee@psu.ac.th",
     "name": "สมชาย ใจดี",
-    "given_name": "สมชาย",
-    "family_name": "ใจดี",
-    "oid": "12345-67890-abcde",        // OIDC provider's user ID
-    "preferred_username": "somchai.j",
-    "sub": "12345-67890-abcde"         // OIDC subject identifier
+    "firstName": "สมชาย",
+    "lastName": "ใจดี",
+    "username": "somchai.j",
+    "department": "คณะวิทยาศาสตร์",
+    
+    // Extended Claims (PSU SSO specific, null for other providers)
+    "position": "นักวิชาการคอมพิวเตอร์",
+    "campus": "หาดใหญ่",
+    "officeName": "สำนักบริการคอมพิวเตอร์",
+    "facultyId": "31",
+    "departmentId": "3101",
+    "campusId": "01",
+    "groups": ["staff", "it-admin"]
   }
 }</code></pre>
               </div>
@@ -2329,6 +2570,15 @@ const userId = decoded.data.id;
                 </tr>
               </thead>
               <tbody>
+                <tr class="table-light">
+                  <td colspan="4"><strong>Basic Claims</strong></td>
+                </tr>
+                <tr>
+                  <td><code>id</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-success">Yes</span></td>
+                  <td>User's unique identifier from provider (always present)</td>
+                </tr>
                 <tr>
                   <td><code>email</code></td>
                   <td>string</td>
@@ -2342,41 +2592,84 @@ const userId = decoded.data.id;
                   <td>Full name (always present)</td>
                 </tr>
                 <tr>
-                  <td><code>given_name</code></td>
+                  <td><code>firstName</code></td>
                   <td>string</td>
                   <td><span class="badge bg-warning text-dark">Maybe</span></td>
                   <td>First name (if available from provider)</td>
                 </tr>
                 <tr>
-                  <td><code>family_name</code></td>
+                  <td><code>lastName</code></td>
                   <td>string</td>
                   <td><span class="badge bg-warning text-dark">Maybe</span></td>
                   <td>Last name (if available from provider)</td>
                 </tr>
                 <tr>
-                  <td><code>oid</code></td>
-                  <td>string</td>
-                  <td><span class="badge bg-warning text-dark">Maybe</span></td>
-                  <td>Object ID from OIDC provider</td>
-                </tr>
-                <tr>
-                  <td><code>sub</code></td>
-                  <td>string</td>
-                  <td><span class="badge bg-warning text-dark">Maybe</span></td>
-                  <td>Subject identifier from OIDC provider</td>
-                </tr>
-                <tr>
-                  <td><code>preferred_username</code></td>
+                  <td><code>username</code></td>
                   <td>string</td>
                   <td><span class="badge bg-warning text-dark">Maybe</span></td>
                   <td>Preferred username from provider</td>
+                </tr>
+                <tr>
+                  <td><code>department</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-warning text-dark">Maybe</span></td>
+                  <td>Department/Faculty name</td>
+                </tr>
+                <tr class="table-light">
+                  <td colspan="4"><strong>Extended Claims (PSU SSO only)</strong></td>
+                </tr>
+                <tr>
+                  <td><code>position</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-secondary">PSU Only</span></td>
+                  <td>Job position/title (null for non-PSU providers)</td>
+                </tr>
+                <tr>
+                  <td><code>campus</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-secondary">PSU Only</span></td>
+                  <td>Campus name (null for non-PSU providers)</td>
+                </tr>
+                <tr>
+                  <td><code>officeName</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-secondary">PSU Only</span></td>
+                  <td>Office/Unit name (null for non-PSU providers)</td>
+                </tr>
+                <tr>
+                  <td><code>facultyId</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-secondary">PSU Only</span></td>
+                  <td>Faculty identifier (null for non-PSU providers)</td>
+                </tr>
+                <tr>
+                  <td><code>departmentId</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-secondary">PSU Only</span></td>
+                  <td>Department identifier (null for non-PSU providers)</td>
+                </tr>
+                <tr>
+                  <td><code>campusId</code></td>
+                  <td>string</td>
+                  <td><span class="badge bg-secondary">PSU Only</span></td>
+                  <td>Campus identifier (null for non-PSU providers)</td>
+                </tr>
+                <tr>
+                  <td><code>groups</code></td>
+                  <td>array</td>
+                  <td><span class="badge bg-secondary">PSU/Okta</span></td>
+                  <td>User groups (array, null for most providers)</td>
                 </tr>
               </tbody>
             </table>
 
             <div class="alert alert-info mt-3">
               <i class="fas fa-info-circle me-2"></i>
-              <strong>Note:</strong> Only <code>email</code> and <code>name</code> are guaranteed. Other fields depend on what the OIDC provider returns. Always check field existence before using.
+              <strong>Note:</strong> Only <code>id</code>, <code>email</code>, and <code>name</code> are guaranteed across all providers. Extended claims are primarily available from PSU SSO. Always check field existence before using:
+              <pre class="mt-2 mb-0"><code class="language-php">$position = $normalizedUser['position'] ?? null;
+if ($position !== null) {
+    // Use position data
+}</code></pre>
             </div>
 
             <h5>Response (Your Implementation)</h5>
@@ -3532,6 +3825,7 @@ module.exports = router;</code></pre>
                   <li><strong>Post-Logout URI:</strong> Where to redirect after logout</li>
                   <li><strong>User Handler Endpoint:</strong> Your API endpoint (for JWT Mode) or leave empty (for Legacy Mode)</li>
                   <li><strong>API Secret Key:</strong> Auto-generated or custom</li>
+                  <li><strong>Allowed Scopes:</strong> Fixed to <code>openid,profile,email</code> (configured by PSU SSO provider)</li>
                   <li><strong>Status:</strong> Active, Inactive, or Suspended</li>
                 </ul>
               </li>
@@ -3771,6 +4065,736 @@ module.exports = router;</code></pre>
         <div class="alert alert-info mt-4">
           <i class="fas fa-lightbulb me-2"></i>
           <strong>Pro Tip:</strong> Use the client_id naming convention like <code>appname_environment_year</code> (e.g., <code>myapp_prod_2024</code>) to easily identify and manage clients.
+        </div>
+      </div>
+
+      <div id="oauth-scopes" class="section-content">
+        <h1>OAuth 2.0 / OIDC Scopes</h1>
+        <p class="lead">Understanding scopes, claims, and what data is available from PSU SSO</p>
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Important:</strong> SSO-Authen uses PSU SSO as the OIDC provider. The available scopes and claims are determined by PSU SSO's configuration, not by individual client applications.
+        </div>
+
+        <h3>Scopes vs Claims</h3>
+        <p>It's important to understand the difference between <strong>scopes</strong> and <strong>claims</strong>:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-primary">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-key me-2"></i>Scopes</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Permission Requests</strong></p>
+                <p>Scopes are what you <em>ask for</em> - they represent your application's request to access certain categories of user information.</p>
+                <ul class="mb-0">
+                  <li>Defined in OAuth/OIDC standards</li>
+                  <li>Sent in the authentication request</li>
+                  <li>Examples: <code>openid</code>, <code>profile</code>, <code>email</code></li>
+                  <li>Think of them as "permission categories"</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Claims</h5>
+              </div>
+              <div class="card-body">
+                <p><strong>Actual Data Fields</strong></p>
+                <p>Claims are what you <em>actually get</em> - they are the specific pieces of user information returned by the provider.</p>
+                <ul class="mb-0">
+                  <li>Actual user data fields</li>
+                  <li>Returned in the ID Token/UserInfo</li>
+                  <li>Examples: <code>sub</code>, <code>name</code>, <code>email</code>, <code>psu_id</code></li>
+                  <li>Provider-specific (PSU SSO determines what's available)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Supported Scopes in SSO-Authen</h3>
+        <p>SSO-Authen clients are configured with the following fixed scopes, as supported by PSU SSO:</p>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="table table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>Scope</th>
+                  <th>Status</th>
+                  <th>Description</th>
+                  <th>Standard Claims Requested</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>openid</code></td>
+                  <td><span class="badge bg-success">Required</span></td>
+                  <td>Basic OIDC authentication. Always required for OpenID Connect.</td>
+                  <td><code>sub</code> (subject identifier)</td>
+                </tr>
+                <tr>
+                  <td><code>profile</code></td>
+                  <td><span class="badge bg-success">Required</span></td>
+                  <td>Request access to user's profile information</td>
+                  <td><code>name</code>, <code>given_name</code>, <code>family_name</code>, <code>preferred_username</code>, etc.</td>
+                </tr>
+                <tr>
+                  <td><code>email</code></td>
+                  <td><span class="badge bg-success">Required</span></td>
+                  <td>Request access to user's email address</td>
+                  <td><code>email</code>, <code>email_verified</code></td>
+                </tr>
+                <tr>
+                  <td><code>phone</code></td>
+                  <td><span class="badge bg-danger">Not Supported</span></td>
+                  <td>PSU SSO does not provide phone number claims</td>
+                  <td><em>N/A - Not available from PSU SSO</em></td>
+                </tr>
+                <tr>
+                  <td><code>address</code></td>
+                  <td><span class="badge bg-danger">Not Supported</span></td>
+                  <td>PSU SSO does not provide address claims</td>
+                  <td><em>N/A - Not available from PSU SSO</em></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="alert alert-warning mt-3">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Fixed Configuration:</strong> All clients are configured with <code>openid,profile,email</code> scopes. This cannot be changed from the Admin Panel as it's determined by PSU SSO provider capabilities.
+        </div>
+
+        <h3 class="mt-4">Available Claims from PSU SSO</h3>
+        <p>When you request the scopes above, PSU SSO returns the following claims based on its OpenID Configuration:</p>
+
+        <div class="alert alert-success">
+          <i class="fas fa-check-circle me-2"></i>
+          <strong>Updated Claims Support:</strong> Based on actual PSU SSO OpenID Configuration, the following claims are available through <code>openid</code>, <code>profile</code>, and <code>email</code> scopes.
+        </div>
+
+        <div class="code-example">
+          <div class="code-content">
+            <pre><code class="language-json">// Example ID Token payload from PSU SSO
+// Actual claims supported per PSU SSO OpenID Configuration
+{
+  // Basic Identity Claims (openid scope)
+  "sub": "user123",                          // Unique user identifier
+  "psu_id": "6510110001",                    // PSU Student/Staff ID
+  "preferred_username": "john.d",            // Username
+  
+  // Profile Claims (profile scope)
+  "display_name_th": "นายจอห์น โด",         // Thai display name
+  "display_name_en": "Mr. John Doe",         // English display name
+  "first_name_th": "จอห์น",                 // Thai first name
+  "last_name_th": "โด",                     // Thai last name
+  "first_name_en": "John",                   // English first name
+  "last_name_en": "Doe",                     // English last name
+  "department_th": "คณะวิทยาศาสตร์",         // Thai department name
+  "department_en": "Faculty of Science",     // English department name
+  
+  // Email Claims (email scope)
+  "email": "john.d@psu.ac.th",               // Email address
+  "email_verified": true,                    // Email verification status
+  
+  // Extended PSU Claims (profile scope - additional fields)
+  "position_th": "นักวิชาการคอมพิวเตอร์",   // Position in Thai
+  "campus_th": "หาดใหญ่",                   // Campus in Thai
+  "office_name_th": "สำนักบริการคอมพิวเตอร์", // Office name in Thai
+  "faculty_id": "31",                       // Faculty identifier
+  "department_id": "3101",                   // Department identifier
+  "campus_id": "01",                         // Campus identifier
+  "groups": ["staff", "it-admin"],          // User groups (array)
+  
+  // Organization Info
+  "organization_name_th": "มหาวิทยาลัยสงขลานครินทร์",
+  "organization_name_en": "Prince of Songkla University",
+  
+  // Token Metadata
+  "iat": 1700000000,                         // Issued at timestamp
+  "exp": 1700003600                          // Expiration timestamp
+}</code></pre>
+          </div>
+        </div>
+
+        <h4 class="mt-3">Claims by Category</h4>
+        <p>PSU SSO provides claims in three main categories:</p>
+
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <div class="card border-success h-100">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-id-card me-2"></i> Basic Claims</h6>
+              </div>
+              <div class="card-body">
+                <p class="small">Always available from PSU SSO:</p>
+                <ul class="small mb-0">
+                  <li><code>psu_id</code></li>
+                  <li><code>preferred_username</code></li>
+                  <li><code>display_name_th</code></li>
+                  <li><code>first_name_th</code></li>
+                  <li><code>last_name_th</code></li>
+                  <li><code>email</code></li>
+                  <li><code>department_th</code></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-primary h-100">
+              <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Extended Claims</h6>
+              </div>
+              <div class="card-body">
+                <p class="small">PSU-specific organizational data:</p>
+                <ul class="small mb-0">
+                  <li><code>position_th</code> - Job title</li>
+                  <li><code>campus_th</code> - Campus name</li>
+                  <li><code>office_name_th</code> - Office/unit</li>
+                  <li><code>faculty_id</code> - Faculty ID</li>
+                  <li><code>department_id</code> - Dept ID</li>
+                  <li><code>campus_id</code> - Campus ID</li>
+                  <li><code>groups</code> - User groups</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-info h-100">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-language me-2"></i> Optional Claims</h6>
+              </div>
+              <div class="card-body">
+                <p class="small">May be available (English versions):</p>
+                <ul class="small mb-0">
+                  <li><code>display_name_en</code></li>
+                  <li><code>first_name_en</code></li>
+                  <li><code>last_name_en</code></li>
+                  <li><code>department_en</code></li>
+                  <li><code>organization_name_th</code></li>
+                  <li><code>organization_name_en</code></li>
+                  <li><code>email_verified</code></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h4 class="mt-4">Claim Mapping to Normalized Format</h4>
+        <p>SSO-Authen normalizes PSU SSO claims into a standard format for your application. All extended claims are now supported:</p>
+
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Important:</strong> The normalized format provides a consistent structure across different OIDC providers. When PSU SSO is used, all fields are populated. When using other providers (Google, Microsoft, etc.), extended fields may be <code>null</code>.
+        </div>
+
+        <h5>Complete Claim Mapping (PSU SSO Provider)</h5>
+        <table class="table table-bordered parameter-table">
+          <thead>
+            <tr>
+              <th>Normalized Field</th>
+              <th>PSU SSO Claim</th>
+              <th>Description</th>
+              <th>Example Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-light">
+              <td colspan="4"><strong><i class="fas fa-id-card me-2"></i> Basic Claims (Required)</strong></td>
+            </tr>
+            <tr>
+              <td><code>id</code></td>
+              <td><code>psu_id</code></td>
+              <td>Unique PSU identifier (student/staff ID)</td>
+              <td><code>"6510110001"</code></td>
+            </tr>
+            <tr>
+              <td><code>username</code></td>
+              <td><code>preferred_username</code></td>
+              <td>PSU account username</td>
+              <td><code>"john.d"</code></td>
+            </tr>
+            <tr>
+              <td><code>name</code></td>
+              <td><code>display_name_th</code></td>
+              <td>Full Thai display name</td>
+              <td><code>"นายจอห์น โด"</code></td>
+            </tr>
+            <tr>
+              <td><code>firstName</code></td>
+              <td><code>first_name_th</code></td>
+              <td>Thai first name</td>
+              <td><code>"จอห์น"</code></td>
+            </tr>
+            <tr>
+              <td><code>lastName</code></td>
+              <td><code>last_name_th</code></td>
+              <td>Thai last name</td>
+              <td><code>"โด"</code></td>
+            </tr>
+            <tr>
+              <td><code>email</code></td>
+              <td><code>email</code></td>
+              <td>PSU email address</td>
+              <td><code>"john.d@psu.ac.th"</code></td>
+            </tr>
+            <tr>
+              <td><code>department</code></td>
+              <td><code>department_th</code></td>
+              <td>Thai department/faculty name</td>
+              <td><code>"คณะวิทยาศาสตร์"</code></td>
+            </tr>
+            <tr class="table-light">
+              <td colspan="4"><strong><i class="fas fa-plus-circle me-2"></i> Extended Claims (PSU-Specific)</strong></td>
+            </tr>
+            <tr>
+              <td><code>position</code></td>
+              <td><code>position_th</code></td>
+              <td>Job position/title in Thai</td>
+              <td><code>"นักวิชาการคอมพิวเตอร์"</code></td>
+            </tr>
+            <tr>
+              <td><code>campus</code></td>
+              <td><code>campus_th</code></td>
+              <td>Campus name in Thai</td>
+              <td><code>"หาดใหญ่"</code></td>
+            </tr>
+            <tr>
+              <td><code>officeName</code></td>
+              <td><code>office_name_th</code></td>
+              <td>Office/Unit name in Thai</td>
+              <td><code>"สำนักบริการคอมพิวเตอร์"</code></td>
+            </tr>
+            <tr>
+              <td><code>facultyId</code></td>
+              <td><code>faculty_id</code></td>
+              <td>Numeric faculty identifier</td>
+              <td><code>"31"</code></td>
+            </tr>
+            <tr>
+              <td><code>departmentId</code></td>
+              <td><code>department_id</code></td>
+              <td>Numeric department identifier</td>
+              <td><code>"3101"</code></td>
+            </tr>
+            <tr>
+              <td><code>campusId</code></td>
+              <td><code>campus_id</code></td>
+              <td>Numeric campus identifier</td>
+              <td><code>"01"</code></td>
+            </tr>
+            <tr>
+              <td><code>groups</code></td>
+              <td><code>groups</code></td>
+              <td>User groups/roles array</td>
+              <td><code>["staff", "it-admin"]</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alert alert-success">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Automatic Normalization:</strong> SSO-Authen automatically converts provider-specific claims into normalized fields through configurable claim mapping, so your application always receives consistent data structure regardless of which OIDC provider is used.
+        </div>
+
+        <h5 class="mt-4">Claim Mapping by Provider</h5>
+        <p>Different OIDC providers support different claims. Here's how the normalized format works across providers:</p>
+
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm">
+            <thead>
+              <tr>
+                <th>Normalized Field</th>
+                <th>PSU SSO</th>
+                <th>Google</th>
+                <th>Microsoft</th>
+                <th>Auth0</th>
+                <th>Okta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="table-light">
+                <td colspan="6"><strong>Basic Claims</strong></td>
+              </tr>
+              <tr>
+                <td><code>id</code></td>
+                <td><code>psu_id</code></td>
+                <td><code>sub</code></td>
+                <td><code>oid</code></td>
+                <td><code>sub</code></td>
+                <td><code>sub</code></td>
+              </tr>
+              <tr>
+                <td><code>username</code></td>
+                <td><code>preferred_username</code></td>
+                <td><code>email</code></td>
+                <td><code>preferred_username</code></td>
+                <td><code>nickname</code></td>
+                <td><code>preferred_username</code></td>
+              </tr>
+              <tr>
+                <td><code>name</code></td>
+                <td><code>display_name_th</code></td>
+                <td><code>name</code></td>
+                <td><code>name</code></td>
+                <td><code>name</code></td>
+                <td><code>name</code></td>
+              </tr>
+              <tr>
+                <td><code>email</code></td>
+                <td><code>email</code></td>
+                <td><code>email</code></td>
+                <td><code>email</code></td>
+                <td><code>email</code></td>
+                <td><code>email</code></td>
+              </tr>
+              <tr class="table-light">
+                <td colspan="6"><strong>Extended Claims</strong></td>
+              </tr>
+              <tr>
+                <td><code>position</code></td>
+                <td><code>position_th</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+              </tr>
+              <tr>
+                <td><code>campus</code></td>
+                <td><code>campus_th</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+              </tr>
+              <tr>
+                <td><code>officeName</code></td>
+                <td><code>office_name_th</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+              </tr>
+              <tr>
+                <td><code>facultyId</code></td>
+                <td><code>faculty_id</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+              </tr>
+              <tr>
+                <td><code>departmentId</code></td>
+                <td><code>department_id</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+              </tr>
+              <tr>
+                <td><code>campusId</code></td>
+                <td><code>campus_id</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+              </tr>
+              <tr>
+                <td><code>groups</code></td>
+                <td><code>groups</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td class="text-muted"><code>null</code></td>
+                <td><code>groups</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4 class="mt-4">Example UserInfo Response</h4>
+        <p>Here's what your User Handler API will receive when a PSU SSO user authenticates:</p>
+
+        <div class="code-example">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="showCodeTab('userinfo-psu')">
+              PSU SSO User
+            </button>
+            <button class="code-tab" onclick="showCodeTab('userinfo-google')">
+              Google User
+            </button>
+          </div>
+          <div class="code-content">
+            <div id="userinfo-psu" class="code-block active">
+              <pre><code class="language-json">// User Handler API receives (from PSU SSO)
+{
+  "normalizedUser": {
+    // Basic claims
+    "id": "6510110001",
+    "username": "john.d",
+    "name": "นายจอห์น โด",
+    "firstName": "จอห์น",
+    "lastName": "โด",
+    "email": "john.d@psu.ac.th",
+    "department": "คณะวิทยาศาสตร์",
+    
+    // Extended claims (PSU-specific)
+    "position": "นักวิชาการคอมพิวเตอร์",
+    "campus": "หาดใหญ่",
+    "officeName": "สำนักบริการคอมพิวเตอร์",
+    "facultyId": "31",
+    "departmentId": "3101",
+    "campusId": "01",
+    "groups": ["staff", "it-admin"]
+  },
+  "ssoUserInfo": {
+    // Raw claims from PSU SSO (for reference)
+    "sub": "user123",
+    "psu_id": "6510110001",
+    "preferred_username": "john.d",
+    "display_name_th": "นายจอห์น โด",
+    "email": "john.d@psu.ac.th",
+    "position_th": "นักวิชาการคอมพิวเตอร์",
+    "groups": ["staff", "it-admin"]
+    // ... other raw claims
+  }
+}</code></pre>
+            </div>
+            <div id="userinfo-google" class="code-block">
+              <pre><code class="language-json">// User Handler API receives (from Google)
+{
+  "normalizedUser": {
+    // Basic claims
+    "id": "1234567890",
+    "username": "john.doe@gmail.com",
+    "name": "John Doe",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@gmail.com",
+    "department": null,
+    
+    // Extended claims (not available from Google)
+    "position": null,
+    "campus": null,
+    "officeName": null,
+    "facultyId": null,
+    "departmentId": null,
+    "campusId": null,
+    "groups": null
+  },
+  "ssoUserInfo": {
+    // Raw claims from Google
+    "sub": "1234567890",
+    "name": "John Doe",
+    "given_name": "John",
+    "family_name": "Doe",
+    "email": "john.doe@gmail.com",
+    "email_verified": true,
+    "picture": "https://..."
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-3">
+          <i class="fas fa-code me-2"></i>
+          <strong>Using Extended Claims:</strong> Your User Handler API should always check if extended fields exist before using them:
+          <pre class="mt-2 mb-0"><code class="language-php">// PHP example
+$position = $normalizedUser['position'] ?? 'N/A';
+$groups = $normalizedUser['groups'] ?? [];
+
+// JavaScript example
+const position = normalizedUser.position || 'N/A';
+const groups = normalizedUser.groups || [];</code></pre>
+        </div>
+
+        <h3 class="mt-4">Use Cases for Extended Claims</h3>
+        <p>Extended claims from PSU SSO enable advanced authorization and personalization features:</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-building me-2"></i> Faculty/Department-Based Authorization</h6>
+              </div>
+              <div class="card-body">
+                <p class="small">Restrict access based on organizational units:</p>
+                <pre class="small"><code class="language-php">// Allow only Faculty of Science users
+if ($user['facultyId'] === '31') {
+  grantAccess();
+}
+
+// Department-specific features
+if ($user['departmentId'] === '3101') {
+  showDepartmentResources();
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i> Campus-Based Features</h6>
+              </div>
+              <div class="card-body">
+                <p class="small">Customize content by campus location:</p>
+                <pre class="small"><code class="language-javascript">// Show campus-specific resources
+if (user.campusId === '01') {
+  showHatYaiResources();
+} else if (user.campusId === '02') {
+  showPattaniResources();
+}
+
+// Campus-based announcements
+loadAnnouncements(user.campus);</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 mt-3">
+            <div class="card h-100">
+              <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-users me-2"></i> Group-Based Access Control</h6>
+              </div>
+              <div class="card-body">
+                <p class="small">Use groups for role-based authorization:</p>
+                <pre class="small"><code class="language-php">// Check if user is in admin group
+$groups = json_decode($user['groups']);
+if (in_array('it-admin', $groups)) {
+  enableAdminPanel();
+}
+
+// Multiple group check
+if (hasAnyGroup($groups, ['staff', 'faculty'])) {
+  grantStaffAccess();
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 mt-3">
+            <div class="card h-100">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-id-badge me-2"></i> Position-Based Features</h6>
+              </div>
+              <div class="card-body">
+                <p class="small">Personalize UI based on job position:</p>
+                <pre class="small"><code class="language-javascript">// Show position-specific dashboard
+if (user.position.includes('อาจารย์')) {
+  showLecturerDashboard();
+} else if (user.position.includes('นักศึกษา')) {
+  showStudentDashboard();
+}
+
+// Display position in UI
+displayWelcome(user.name, user.position);</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Best Practices</h3>
+        <p>You may notice that standard OIDC scopes like <code>phone</code> and <code>address</code> are not available:</p>
+
+        <div class="card bg-light">
+          <div class="card-body">
+            <h6><i class="fas fa-question-circle me-2"></i>Technical Explanation</h6>
+            <p>While OAuth 2.0 / OIDC standards define several standard scopes (<code>openid</code>, <code>profile</code>, <code>email</code>, <code>phone</code>, <code>address</code>), each OIDC provider decides which claims to actually support.</p>
+            
+            <p><strong>PSU SSO's Claim Mapping:</strong></p>
+            <ul>
+              <li><strong>Supports:</strong> User ID, username, name (Thai/English), email, department</li>
+              <li><strong>Does NOT support:</strong> Phone numbers, physical addresses</li>
+            </ul>
+
+            <p class="mb-0">Therefore, even if we request <code>phone</code> or <code>address</code> scopes, PSU SSO won't return those claims. To avoid confusion, these options have been removed from the Admin Panel UI.</p>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Scope Flow Diagram</h3>
+        <p>This diagram shows how scopes and claims work in the authentication flow:</p>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="mermaid">
+sequenceDiagram
+    participant App as Your Application
+    participant SSO as SSO-Authen
+    participant PSU as PSU SSO Provider
+    
+    App->>SSO: 1. Login request with client_id
+    SSO->>PSU: 2. Auth request with scopes: openid,profile,email
+    PSU->>PSU: 3. User authenticates
+    PSU->>SSO: 4. Returns ID Token with claims
+    Note over SSO: Claims: psu_id, preferred_username,<br/>display_name_th, email, department_th, etc.
+    SSO->>SSO: 5. Normalizes claims (claim mapping)
+    Note over SSO: Normalized: id, username, name,<br/>firstName, lastName, email, department
+    SSO->>SSO: 6. Calls User Handler API
+    SSO->>App: 7. Returns JWT with user data
+    Note over App: JWT contains normalized user data<br/>+ your app's internal user info (id, role, etc.)
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-4">Best Practices</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Do</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Use the normalized fields in your application</li>
+                  <li>Always check if extended claims exist before using them</li>
+                  <li>Understand your provider's capabilities</li>
+                  <li>Request only the scopes you actually need</li>
+                  <li>Handle missing claims gracefully with null-coalescing</li>
+                  <li>Map provider claims to your data model via User Handler</li>
+                  <li>Store extended claims in your database for faster access</li>
+                  <li>Use groups claim for authorization logic</li>
+                  <li>Leverage facultyId/departmentId for organizational access control</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-danger">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="fas fa-times-circle me-2"></i>Don't</h6>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li>Don't assume all OIDC scopes are available</li>
+                  <li>Don't rely on claims not in claim mapping</li>
+                  <li>Don't access extended claims without null checks</li>
+                  <li>Don't request scopes your provider doesn't support</li>
+                  <li>Don't expect phone/address from PSU SSO</li>
+                  <li>Don't hardcode provider-specific claim names in your app</li>
+                  <li>Don't ignore claim mapping configuration</li>
+                  <li>Don't assume extended claims will always have values</li>
+                  <li>Don't use extended claims for primary user identification</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-4">
+          <i class="fas fa-book me-2"></i>
+          <strong>Further Reading:</strong>
+          <ul class="mb-0">
+            <li>For detailed information about the extended claims update, see <a href="../CLAIMS_UPDATE.md" target="_blank" class="alert-link">CLAIMS_UPDATE.md</a></li>
+            <li>For OAuth 2.0 scopes and OIDC claims specification, see the <a href="https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims" target="_blank" class="alert-link">OpenID Connect Core Specification</a></li>
+          </ul>
         </div>
       </div>
 
@@ -6564,21 +7588,101 @@ ini_set('error_log', '/path/to/error.log');</code></pre>
             <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
               <div class="accordion-body">
                 <p><strong>Yes!</strong> You have full control over JWT payload through your User Handler API.</p>
-                <p>SSO-Authen includes whatever data you return from the User Handler:</p>
-                <pre><code class="language-javascript">// In your User Handler API
-return res.json({
-  id: user.id,
-  email: user.email,
-  name: user.name,
-  role: user.role,
-  department: user.department,  // Custom field
-  permissions: user.permissions, // Custom field
-  avatar: user.avatar_url        // Custom field
-});
+                
+                <h6>How it works:</h6>
+                <ol>
+                  <li>SSO-Authen receives user data from OIDC provider (PSU SSO/Google/etc.)</li>
+                  <li>SSO-Authen normalizes the data to 14 standard fields</li>
+                  <li>SSO-Authen calls YOUR User Handler API with normalized data</li>
+                  <li>Your API returns whatever fields you want (id, role, permissions, etc.)</li>
+                  <li>SSO-Authen includes <strong>ALL</strong> returned fields in the JWT</li>
+                </ol>
 
-// These will all be included in the JWT token</code></pre>
-                <div class="alert alert-warning mt-2">
-                  <strong>Note:</strong> Don't include sensitive data (passwords, credit cards, etc.) in JWT tokens as they can be decoded by anyone.
+                <h6 class="mt-3">Example - PSU SSO User:</h6>
+                <pre><code class="language-javascript">// Your User Handler returns:
+{
+  id: 123,
+  email: "somchai.j@psu.ac.th",
+  name: "นายสมชาย ใจดี",
+  
+  // Extended Claims (from PSU SSO)
+  position: "นักวิชาการคอมพิวเตอร์",
+  facultyId: "31",
+  groups: ["staff", "it-admin"],
+  
+  // Your custom fields
+  role: "admin",
+  permissions: ["read", "write", "delete"],
+  department_code: "CS101"
+}
+
+// ALL these fields will be in JWT's data object!</code></pre>
+
+                <div class="alert alert-info mt-3 mb-0">
+                  <i class="fas fa-info-circle me-2"></i>
+                  <strong>Note:</strong> When using PSU SSO, you automatically get 14 normalized fields (7 basic + 7 extended). Other providers (Google, Microsoft) only provide basic fields, with extended fields as null.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ 8.5 - Extended Claims -->
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8_5">
+                What are Extended Claims and how do I use them?
+              </button>
+            </h2>
+            <div id="faq8_5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                <p><strong>Extended Claims</strong> are additional user data fields available from PSU SSO beyond basic profile information.</p>
+                
+                <h6>Available Extended Claims (PSU SSO only):</h6>
+                <ul>
+                  <li><code>position</code> - Job position/title (ตำแหน่งงาน)</li>
+                  <li><code>campus</code> - Campus name (วิทยาเขต)</li>
+                  <li><code>officeName</code> - Office/Unit name (สำนักงาน)</li>
+                  <li><code>facultyId</code> - Faculty identifier (รหัสคณะ)</li>
+                  <li><code>departmentId</code> - Department identifier (รหัสภาควิชา)</li>
+                  <li><code>campusId</code> - Campus identifier (รหัสวิทยาเขต)</li>
+                  <li><code>groups</code> - User groups array (กลุ่มผู้ใช้)</li>
+                </ul>
+
+                <h6 class="mt-3">Common Use Cases:</h6>
+                <div class="row">
+                  <div class="col-md-6">
+                    <strong>1. Faculty/Department Authorization</strong>
+                    <pre class="small"><code class="language-javascript">// Allow only Faculty of Science
+if (user.facultyId === '31') {
+  grantAccess();
+}</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>2. Campus-Specific Content</strong>
+                    <pre class="small"><code class="language-javascript">// Show Hat Yai resources
+if (user.campusId === '01') {
+  loadHatYaiContent();
+}</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>3. Group-Based Access</strong>
+                    <pre class="small"><code class="language-javascript">// Check admin group
+if (user.groups?.includes('it-admin')) {
+  showAdminPanel();
+}</code></pre>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>4. Position-Based Features</strong>
+                    <pre class="small"><code class="language-php">// Show lecturer dashboard
+if (str_contains($user['position'], 'อาจารย์')) {
+  showLecturerDashboard();
+}</code></pre>
+                  </div>
+                </div>
+
+                <div class="alert alert-warning mt-3 mb-0">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  <strong>Important:</strong> Extended Claims are <code>null</code> when using providers other than PSU SSO (Google, Microsoft, Auth0). Always check for null values before using!
                 </div>
               </div>
             </div>

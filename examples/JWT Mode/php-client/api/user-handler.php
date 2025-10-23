@@ -101,15 +101,71 @@ function findOrCreateUserInApp(array $normalizedUser, object $ssoUserInfo): arra
         $user = $stmt->fetch();
 
         if ($user) {
-            // พบผู้ใช้: อัปเดตข้อมูล
-            $updateStmt = $pdo->prepare("UPDATE users SET name = ?, user_id = ? WHERE id = ?");
-            $updateStmt->execute([$normalizedUser['name'], $normalizedUser['id'], $user['id']]);
+            // พบผู้ใช้: อัปเดตข้อมูลทั้งหมด (รวม Extended Claims)
+            $updateStmt = $pdo->prepare("
+                UPDATE users SET 
+                    name = ?, 
+                    user_id = ?,
+                    first_name = ?,
+                    last_name = ?,
+                    username = ?,
+                    position = ?,
+                    campus = ?,
+                    office_name = ?,
+                    faculty_id = ?,
+                    department_id = ?,
+                    campus_id = ?,
+                    `groups` = ?
+                WHERE id = ?
+            ");
+            
+            $updateStmt->execute([
+                $normalizedUser['name'],
+                $normalizedUser['id'],
+                $normalizedUser['firstName'] ?? null,
+                $normalizedUser['lastName'] ?? null,
+                $normalizedUser['username'] ?? null,
+                $normalizedUser['position'] ?? null,
+                $normalizedUser['campus'] ?? null,
+                $normalizedUser['officeName'] ?? null,
+                $normalizedUser['facultyId'] ?? null,
+                $normalizedUser['departmentId'] ?? null,
+                $normalizedUser['campusId'] ?? null,
+                isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null,
+                $user['id']
+            ]);
+            
             return $user;
         } else {
-            // ไม่พบผู้ใช้: สร้างใหม่
+            // ไม่พบผู้ใช้: สร้างใหม่พร้อม Extended Claims
             $defaultRole = 'user';
-            $insertStmt = $pdo->prepare("INSERT INTO users (user_id, email, name, role) VALUES (?, ?, ?, ?)");
-            $insertStmt->execute([$normalizedUser['id'], $normalizedUser['email'], $normalizedUser['name'], $defaultRole]);
+            
+            $insertStmt = $pdo->prepare("
+                INSERT INTO users (
+                    user_id, email, name, first_name, last_name, username,
+                    position, campus, office_name,
+                    faculty_id, department_id, campus_id, `groups`,
+                    role
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $insertStmt->execute([
+                $normalizedUser['id'],
+                $normalizedUser['email'],
+                $normalizedUser['name'],
+                $normalizedUser['firstName'] ?? null,
+                $normalizedUser['lastName'] ?? null,
+                $normalizedUser['username'] ?? null,
+                $normalizedUser['position'] ?? null,
+                $normalizedUser['campus'] ?? null,
+                $normalizedUser['officeName'] ?? null,
+                $normalizedUser['facultyId'] ?? null,
+                $normalizedUser['departmentId'] ?? null,
+                $normalizedUser['campusId'] ?? null,
+                isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null,
+                $defaultRole
+            ]);
+            
             $newUserId = $pdo->lastInsertId();
 
             return [
@@ -118,6 +174,11 @@ function findOrCreateUserInApp(array $normalizedUser, object $ssoUserInfo): arra
                 'user_id' => $normalizedUser['id'],
                 'email' => $normalizedUser['email'],
                 'name' => $normalizedUser['name'],
+                'first_name' => $normalizedUser['firstName'] ?? null,
+                'last_name' => $normalizedUser['lastName'] ?? null,
+                'position' => $normalizedUser['position'] ?? null,
+                'campus' => $normalizedUser['campus'] ?? null,
+                'faculty_id' => $normalizedUser['facultyId'] ?? null,
                 'role' => $defaultRole // คีย์ role เพื่อนำไปกำหนดเส้นทางหลังจาก login สำเร็จ
             ];
         }

@@ -18,15 +18,24 @@ return [
 
     'scopes'       => ['openid', 'profile', 'email'],
 
-    // การแปลงชื่อ Claims จาก PSU SSO ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
+    // การแปลงชื่อ Claims จาก Auth0 ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
     'claim_mapping' => [
-        'id'        => 'sub',          // 'sub' (Subject) คือ ID เฉพาะตัวของผู้ใช้ ซึ่งเป็นมาตรฐาน OIDC
-        'username'  => 'nickname',     // 'nickname' คือชื่อเล่นหรือชื่อผู้ใช้
-        'name'      => 'name',         // 'name' คือชื่อเต็ม
-        'firstName' => 'given_name',   // 'given_name' คือชื่อจริง
-        'lastName'  => 'family_name',  // 'family_name' คือนามสกุล
-        'email'     => 'email',
-        'picture'   => 'picture',      // URL รูปโปรไฟล์
-        'department' => null            // Auth0 ไม่มีข้อมูลแผนกโดยตรง จึงใส่ null
+        // Basic Claims (Required)
+        'id'           => 'sub',          // 'sub' (Subject) คือ ID เฉพาะตัวของผู้ใช้ ซึ่งเป็นมาตรฐาน OIDC
+        'username'     => 'nickname',     // 'nickname' คือชื่อเล่นหรือชื่อผู้ใช้
+        'name'         => 'name',         // 'name' คือชื่อเต็ม
+        'firstName'    => 'given_name',   // 'given_name' คือชื่อจริง
+        'lastName'     => 'family_name',  // 'family_name' คือนามสกุล
+        'email'        => 'email',
+        'department'   => null,           // Auth0 ไม่มีข้อมูลแผนกโดยตรง จึงใส่ null
+        
+        // Extended Claims (Not available from Auth0 by default)
+        'position'     => null,
+        'campus'       => null,
+        'officeName'   => null,
+        'facultyId'    => null,
+        'departmentId' => null,
+        'campusId'     => null,
+        'groups'       => null            // Auth0 อาจมี 'groups' ถ้าตั้งค่า custom claim
     ]
 ];

@@ -109,10 +109,12 @@ CREATE TABLE clients (
    - **Post Logout URI**: URL for post-logout redirect (optional)
    - **User Handler Endpoint**: API endpoint for user management (optional)
    - **API Secret Key**: Secret key for API communication (optional)
-   - **Allowed Scopes**: OAuth scopes using checkboxes
+   - **Allowed Scopes**: Fixed to `openid,profile,email` (configured by PSU SSO provider)
    - **Status**: Initial status (active/inactive/suspended)
 3. Click "Save Client"
 4. Client will be created with auto-generated Client ID
+
+**Note about Scopes**: OAuth scopes are fixed to `openid`, `profile`, and `email` as these are the only scopes supported by PSU SSO provider. These scopes are configured in the provider configuration file and cannot be modified from the admin panel.
 
 ### Managing Existing Clients
 - **View**: Click the eye icon to see full client details
@@ -123,8 +125,15 @@ CREATE TABLE clients (
 ### Security Best Practices
 1. **API Secret Keys**: Store securely when used for API endpoints
 2. **Redirect URIs**: Validate and use HTTPS in production
-3. **Scopes**: Grant minimal necessary permissions
+3. **Scopes**: Fixed to `openid,profile,email` as configured by PSU SSO provider
 4. **Status Management**: Use inactive/suspended for temporary disabling
+
+**Understanding OAuth Scopes**:
+- **Scopes** are permission requests that define what user information can be accessed
+- **Claims** are the actual data fields returned by the provider
+- PSU SSO provider only supports certain claims based on its configuration
+- The scopes (`openid`, `profile`, `email`) request user information, but actual data returned depends on PSU SSO's claim mapping
+- PSU SSO does NOT support `phone` or `address` scopes, so these options have been removed from the UI
 
 ## 🎨 UI Components
 
