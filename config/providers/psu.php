@@ -19,6 +19,8 @@ return [
     'scopes'       => ['openid', 'profile', 'email', 'psu_profile'],
 
     // การแปลงชื่อ Claims จาก PSU SSO ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
+    // PSU SSO รองรับ Extended Claims ครบ 14 ฟิลด์ (7 basic + 7 extended)
+    // Extended Claims ช่วยให้ทำ Authorization และ Personalization ได้ละเอียดยิ่งขึ้น
     'claim_mapping' => [
         // Basic Claims (Required)
         'id'           => 'psu_id',

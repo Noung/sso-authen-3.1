@@ -88,10 +88,11 @@ sequenceDiagram
     OidcProvider->>User: 7. ส่งกลับมาที่ SsoAuthen พร้อม Authorization Code
     User->>SsoAuthen: 8. /callback.php
     SsoAuthen->>OidcProvider: 9. แลก Code เป็น ID Token (Back-Channel)
-    OidcProvider-->>SsoAuthen: 10. ส่ง ID Token กลับมา
-    SsoAuthen->>ClientApp: 11. (API Call) เรียก User Handler Endpoint ของ ClientApp
+    OidcProvider-->>SsoAuthen: 10. ส่ง ID Token กลับมา (14 ฟิลด์ claims)
+    SsoAuthen->>SsoAuthen: 10.5 Normalize Claims (7 basic + 7 extended)
+    SsoAuthen->>ClientApp: 11. (API Call) เรียก User Handler Endpoint
     ClientApp-->>SsoAuthen: 12. (API Response) ส่งข้อมูลผู้ใช้ในระบบกลับมา
-    SsoAuthen->>SsoAuthen: 13. สร้าง JWT พร้อมข้อมูลผู้ใช้
+    SsoAuthen->>SsoAuthen: 13. สร้าง JWT พร้อมข้อมูลผู้ใช้ (14 ฟิลด์ + app data)
     SsoAuthen->>User: 14. Redirect กลับไปที่ ClientApp พร้อมแนบ JWT
     User->>ClientApp: 15. /callback (รับ Token)
     ClientApp->>ClientApp: 16. ตรวจสอบ JWT, สร้าง Session/State ของตัวเอง
@@ -167,18 +168,140 @@ define('JWT_EXPIRATION', 3600); // อายุของ Token (วินาท�
 return [
     'clientID'     => 'YOUR_PSU_CLIENT_ID_HERE',
     'clientSecret' => 'YOUR_PSU_CLIENT_SECRET_HERE',
-    'providerURL'  => '[https://psusso.psu.ac.th/](https://psusso.psu.ac.th/)...',
-    'redirectUri'  => '[http://your-app.test/sso-authen/public/callback.php](http://your-app.test/sso-authen/public/callback.php)', 
+    'providerURL'  => 'https://psusso.psu.ac.th/...',
+    'redirectUri'  => 'http://your-app.test/sso-authen/public/callback.php', 
     'scopes'       => ['openid', 'profile', 'email', 'psu_profile'],
+    
+    // การแปลงชื่อ Claims จาก PSU SSO ให้เป็นชื่อมาตรฐาน (14 ฟิลด์)
     'claim_mapping' => [
-        'id'        => 'psu_id',
-        'username'  => 'preferred_username',
-        'name'      => 'display_name_th',
-        'email'     => 'email',
-        // ... map fields as needed ...
+        // Basic Claims (7 fields - Required)
+        'id'           => 'psu_id',
+        'username'     => 'preferred_username',
+        'name'         => 'display_name_th',
+        'firstName'    => 'first_name_th',
+        'lastName'     => 'last_name_th',
+        'email'        => 'email',
+        'department'   => 'department_th',
+        
+        // Extended Claims (7 fields - PSU-specific)
+        'position'     => 'position_th',      // ตำแหน่งงาน
+        'campus'       => 'campus_th',        // วิทยาเขต
+        'officeName'   => 'office_name_th',   // ชื่อสำนักงาน
+        'facultyId'    => 'faculty_id',       // รหัสคณะ
+        'departmentId' => 'department_id',    // รหัสภาควิชา
+        'campusId'     => 'campus_id',        // รหัสวิทยาเขต
+        'groups'       => 'groups'            // กลุ่มผู้ใช้ (array)
     ]
 ];
 ```
+
+---
+
+## 🆕 Extended Claims Support (V.3)
+
+**SSO-Authen V.3** รองรับ **Extended Claims** จาก PSU SSO ทำให้คุณสามารถใช้ข้อมูลผู้ใช้ที่ละเอียดยิ่งขึ้นสำหรับ Authorization และ Personalization
+
+### ข้อมูลที่ได้รับทั้งหมด (14 ฟิลด์)
+
+เมื่อผู้ใช้ล็อกอินผ่าน PSU SSO คุณจะได้รับข้อมูล:
+
+**Basic Claims (7 ฟิลด์)** - รับจากทุก Provider:
+- `id` - รหัสผู้ใช้ (PSU ID)
+- `username` - username
+- `name` - ชื่อ-นามสกุล (ภาษาไทย)
+- `firstName` - ชื่อ
+- `lastName` - นามสกุล
+- `email` - อีเมล
+- `department` - ภาควิชา/คณะ
+
+**Extended Claims (7 ฟิลด์)** - เฉพาะ PSU SSO:
+- `position` - ตำแหน่งงาน (เช่น "อาจารย์", "นักวิชาการ")
+- `campus` - วิทยาเขต (เช่น "หาดใหญ่", "ปัตตานี")
+- `officeName` - ชื่อสำนักงาน/หน่วยงาน
+- `facultyId` - รหัสคณะ (เช่น "31" = คณะวิทยาศาสตร์)
+- `departmentId` - รหัสภาควิชา
+- `campusId` - รหัสวิทยาเขต (เช่น "01" = หาดใหญ่)
+- `groups` - กลุ่มผู้ใช้ (array เช่น `["staff", "it-admin"]`)
+
+### ตัวอย่าง JWT Payload ที่คุณจะได้รับ
+
+```json
+{
+  "iss": "sso-authen-service",
+  "iat": 1700000000,
+  "exp": 1700003600,
+  "data": {
+    // Basic Claims
+    "id": 123,
+    "email": "somchai.j@psu.ac.th",
+    "name": "นายสมชาย ใจดี",
+    "firstName": "สมชาย",
+    "lastName": "ใจดี",
+    "username": "somchai.j",
+    "department": "คณะวิทยาศาสตร์",
+    
+    // Extended Claims (PSU SSO only)
+    "position": "นักวิชาการคอมพิวเตอร์",
+    "campus": "หาดใหญ่",
+    "officeName": "สำนักบริการคอมพิวเตอร์",
+    "facultyId": "31",
+    "departmentId": "3101",
+    "campusId": "01",
+    "groups": ["staff", "it-admin"],
+    
+    // Application-specific fields (from your User Handler)
+    "role": "admin"
+  }
+}
+```
+
+### กรณีการใช้งาน (Use Cases)
+
+**1. Faculty-Based Authorization**
+```php
+// อนุญาตเฉพาะคณะวิทยาศาสตร์
+if ($user['facultyId'] === '31') {
+    grantAccess();
+}
+```
+
+**2. Campus-Specific Resources**
+```javascript
+// แสดงทรัพยากรเฉพาะวิทยาเขต
+if (user.campusId === '01') {
+    loadHatYaiResources();
+}
+```
+
+**3. Group-Based Permissions**
+```php
+// ตรวจสอบกลุ่ม IT Admin
+$groups = json_decode($user['groups']);
+if (in_array('it-admin', $groups)) {
+    showAdminPanel();
+}
+```
+
+### ⚠️ สำคัญ: Null Handling
+
+Provider อื่นที่ไม่ใช่ PSU SSO (เช่น Google, Microsoft) จะให้ค่า `null` สำหรับ Extended Claims:
+
+```javascript
+// ✅ ตรวจสอบ null ก่อนใช้เสมอ
+const position = user.position || 'N/A';
+const groups = user.groups || [];
+
+if (user.facultyId !== null) {
+    // ใช้ facultyId ได้
+}
+```
+
+### 📚 อ่านเพิ่มเติม
+
+สำหรับรายละเอียดการใช้งาน Extended Claims:
+- ดู [`CLAIMS_UPDATE.md`](./CLAIMS_UPDATE.md) - คู่มือฉบับสมบูรณ์
+- ดู [`admin/public/api-docs-v3.html`](./admin/public/api-docs-v3.html) - API Documentation
+- ดู [`examples/JWT Mode/php-client/api/user-handler.php`](./examples/JWT%20Mode/php-client/api/user-handler.php) - Code Examples
 
 ---
 

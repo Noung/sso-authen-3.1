@@ -128,12 +128,47 @@ CREATE TABLE clients (
 3. **Scopes**: Fixed to `openid,profile,email` as configured by PSU SSO provider
 4. **Status Management**: Use inactive/suspended for temporary disabling
 
-**Understanding OAuth Scopes**:
+**Understanding OAuth Scopes and Extended Claims**:
 - **Scopes** are permission requests that define what user information can be accessed
 - **Claims** are the actual data fields returned by the provider
 - PSU SSO provider only supports certain claims based on its configuration
 - The scopes (`openid`, `profile`, `email`) request user information, but actual data returned depends on PSU SSO's claim mapping
 - PSU SSO does NOT support `phone` or `address` scopes, so these options have been removed from the UI
+
+### Provider Capabilities Comparison
+
+Different OIDC providers support different sets of user claims:
+
+| Claim Type | PSU SSO | Google | Microsoft | Auth0 | Okta |
+|------------|---------|--------|-----------|-------|------|
+| **Basic Claims (7 fields)** |
+| `id` | ✅ psu_id | ✅ sub | ✅ oid | ✅ sub | ✅ sub |
+| `username` | ✅ preferred_username | ✅ email | ✅ preferred_username | ✅ nickname | ✅ preferred_username |
+| `name` | ✅ display_name_th | ✅ name | ✅ name | ✅ name | ✅ name |
+| `email` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `firstName` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `lastName` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `department` | ✅ department_th | ❌ null | ❌ null | ❌ null | ❌ null |
+| **Extended Claims (7 fields)** |
+| `position` | ✅ position_th | ❌ null | ❌ null | ❌ null | ❌ null |
+| `campus` | ✅ campus_th | ❌ null | ❌ null | ❌ null | ❌ null |
+| `officeName` | ✅ office_name_th | ❌ null | ❌ null | ❌ null | ❌ null |
+| `facultyId` | ✅ faculty_id | ❌ null | ❌ null | ❌ null | ❌ null |
+| `departmentId` | ✅ department_id | ❌ null | ❌ null | ❌ null | ❌ null |
+| `campusId` | ✅ campus_id | ❌ null | ❌ null | ❌ null | ❌ null |
+| `groups` | ✅ groups (array) | ❌ null | ❌ null | ❌ null | ✅ groups |
+
+**Key Points:**
+- **PSU SSO** provides the most comprehensive user data with 14 normalized fields (7 basic + 7 extended)
+- **Extended Claims** enable advanced authorization features like:
+  - Faculty/department-based access control (`facultyId`, `departmentId`)
+  - Campus-specific content delivery (`campusId`, `campus`)
+  - Group-based permissions (`groups`)
+  - Position-based features (`position`)
+- **Other Providers** (Google, Microsoft, Auth0) only support basic claims
+- Applications must handle `null` values gracefully for extended claims when using non-PSU providers
+
+For detailed information about extended claims, see [`CLAIMS_UPDATE.md`](../CLAIMS_UPDATE.md)
 
 ## 🎨 UI Components
 

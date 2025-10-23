@@ -19,6 +19,8 @@ return [
     'scopes'       => ['openid', 'profile', 'email'],
 
     // การแปลงชื่อ Claims จาก Microsoft ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
+    // Microsoft รองรับเฉพาะ Basic Claims (7 ฟิลด์) Extended Claims จะเป็น null
+    // Extended Claims เป็นข้อมูลเฉพาะของ PSU SSO เท่านั้น
     'claim_mapping' => [
         // Basic Claims (Required)
         'id'           => 'sub',          // 'sub' (Subject) คือ ID เฉพาะตัวของผู้ใช้ ซึ่งเป็นมาตรฐาน OIDC

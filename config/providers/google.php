@@ -18,7 +18,9 @@ return [
 
     'scopes'       => ['openid', 'profile', 'email'], // Scopes มาตรฐานของ Google
 
-    // แปลงชื่อ Claims จาก Google ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
+    // การแปลงชื่อ Claims จาก Google ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
+    // Google รองรับเฉพาะ Basic Claims (7 ฟิลด์) Extended Claims จะเป็น null
+    // Extended Claims เป็นข้อมูลเฉพาะของ PSU SSO เท่านั้น
     'claim_mapping' => [
         // Basic Claims (Required)
         'id'           => 'sub',        // Google ใช้ 'sub' เป็น User ID

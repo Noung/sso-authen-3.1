@@ -19,6 +19,8 @@ return [
     'scopes'       => ['openid', 'profile', 'email'],
 
     // การแปลงชื่อ Claims จาก Okta ให้เป็นชื่อมาตรฐานที่ Library เราเข้าใจ
+    // Okta รองรับ Basic Claims (7 ฟิลด์) + groups, Extended Claims อื่นๆ จะเป็น null
+    // Extended Claims เป็นข้อมูลเฉพาะของ PSU SSO เท่านั้น
     'claim_mapping' => [
         // Basic Claims (Required)
         'id'           => 'sub',          // 'sub' (Subject) คือ ID เฉพาะตัวของผู้ใช้ ซึ่งเป็นมาตรฐาน OIDC

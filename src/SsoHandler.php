@@ -201,9 +201,18 @@ class SsoHandler {
     }
 
     /**
-     * เมธอดภายใน (private) สำหรับแปลงชื่อ Claims
-     * @param object $ssoUserInfo ข้อมูลดิบที่ได้จาก SSO
-     * @return array ข้อมูลที่ถูกแปลงเป็นรูปแบบมาตรฐานแล้ว
+     * Normalize raw claims from OIDC provider to standardized format
+     * 
+     * This method dynamically maps ALL fields defined in the provider's claim_mapping configuration.
+     * For PSU SSO, this includes 14 normalized fields:
+     * - 7 Basic Claims: id, username, name, firstName, lastName, email, department
+     * - 7 Extended Claims: position, campus, officeName, facultyId, departmentId, campusId, groups
+     * 
+     * For other providers (Google, Microsoft, Auth0), extended claims will be null.
+     * The claim_mapping is configured in config/providers/{provider}.php
+     * 
+     * @param object $ssoUserInfo Raw user data from OIDC provider (ID Token claims)
+     * @return array Normalized user data with standard field names (14 fields for PSU SSO)
      */
     private function normalizeClaims(object $ssoUserInfo): array {
         $mapping = $this->config['claim_mapping'];
