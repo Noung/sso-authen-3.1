@@ -1,0 +1,730 @@
+/**
+ * SSO-Authen Admin Panel - Responsive Styles
+ * Compatible with PHP 7.4.33 and Bootstrap 5
+ * Mobile-first approach for optimal user experience
+ */
+
+/* Import Google Font - Bai Jamjuree (Thai font) */
+@import url('https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@200;300;400;500;600;700&display=swap');
+
+/* Apply Bai Jamjuree font to entire application */
+* {
+    font-family: 'Bai Jamjuree', sans-serif;
+}
+
+body {
+    font-family: 'Bai Jamjuree', sans-serif;
+}
+
+/* ========================================
+   1. SIDEBAR RESPONSIVE STYLES
+   ======================================== */
+
+/* Desktop: Static sidebar (not fixed) */
+@media (min-width: 768px) {
+    .sidebar {
+        padding: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    
+    .sidebar .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+    
+    .sidebar .nav-link:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+        padding-left: 1.5rem;
+    }
+    
+    .sidebar .nav-link.active {
+        background-color: rgba(13, 110, 253, 0.1);
+        border-left: 3px solid #0d6efd;
+        font-weight: 600;
+    }
+}
+
+/* Mobile: Hide sidebar, show offcanvas instead */
+@media (max-width: 767.98px) {
+    .sidebar.d-md-block {
+        display: none !important;
+    }
+    
+    /* Offcanvas sidebar for mobile */
+    .offcanvas-sidebar {
+        width: 280px !important;
+    }
+    
+    .offcanvas-sidebar .nav-link {
+        padding: 1rem 1.25rem;
+        font-size: 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .offcanvas-sidebar .nav-link.active {
+        background-color: rgba(13, 110, 253, 0.1);
+        border-left: 4px solid #0d6efd;
+        font-weight: 600;
+    }
+}
+
+/* ========================================
+   2. NAVBAR RESPONSIVE STYLES
+   ======================================== */
+
+.navbar {
+    min-height: 56px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+/* Navbar dropdown menu positioning */
+.navbar .dropdown-menu {
+    min-width: 200px;
+}
+
+@media (max-width: 767.98px) {
+    .navbar .dropdown-menu {
+        position: absolute;
+        right: 0;
+        left: auto;
+        top: 100%;
+        margin-top: 0.5rem;
+    }
+}
+
+/* Mobile navbar adjustments */
+@media (max-width: 767.98px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    .navbar-brand i {
+        font-size: 1.1rem;
+    }
+    
+    .navbar-text {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Navbar user dropdown positioning on mobile */
+    .navbar .navbar-nav {
+        position: static;
+    }
+    
+    .navbar .dropdown {
+        position: static;
+    }
+    
+    .navbar .dropdown-menu {
+        position: absolute !important;
+        right: 1rem !important;
+        left: auto !important;
+        top: 100% !important;
+        transform: none !important;
+        margin-top: 0.5rem !important;
+    }
+    
+    /* Mobile menu toggle button */
+    .mobile-menu-toggle {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .mobile-menu-toggle:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .mobile-menu-toggle:focus {
+        box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+        outline: none;
+    }
+    
+    /* Extra small screens - show Menu text */
+    @media (max-width: 575.98px) {
+        .mobile-menu-toggle {
+            font-size: 0.9rem;
+        }
+    }
+}
+
+/* ========================================
+   3. TABLE RESPONSIVE STYLES
+   ======================================== */
+
+.table-responsive {
+    border-radius: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    display: block;
+    width: 100%;
+}
+
+/* Ensure table takes full width */
+.table-responsive > .table {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+/* DataTables wrapper adjustments */
+.dataTables_wrapper {
+    width: 100%;
+}
+
+.dataTables_wrapper .dataTables_scroll {
+    width: 100%;
+}
+
+.dataTables_wrapper .dataTables_scrollBody {
+    width: 100% !important;
+}
+
+.dataTables_wrapper table {
+    width: 100% !important;
+}
+
+/* Desktop: Normal table */
+@media (min-width: 992px) {
+    /* Keep table responsive for very wide tables */
+}
+
+/* Tablet: Adjust column widths */
+@media (max-width: 991.98px) {
+    .table th,
+    .table td {
+        white-space: nowrap;
+        font-size: 0.875rem;
+        padding: 0.5rem;
+    }
+    
+    .table .btn-group-sm > .btn,
+    .table .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Mobile: Stack table or horizontal scroll */
+@media (max-width: 767.98px) {
+    .table th,
+    .table td {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.3rem;
+        white-space: nowrap;
+    }
+    
+    .table thead th {
+        position: sticky;
+        top: 0;
+        background-color: #fff;
+        color: #212529;
+        border-bottom: 2px solid #dee2e6;
+        z-index: 10;
+    }
+    
+    /* Ensure thead is always visible */
+    .table thead {
+        display: table-header-group !important;
+    }
+    
+    /* Hide less important columns on mobile */
+    .table .hide-mobile {
+        display: none;
+    }
+    
+    /* Action buttons - keep inline on mobile for scrolling */
+    .table .btn-group {
+        display: flex;
+        flex-direction: row;
+        gap: 0.25rem;
+        flex-wrap: nowrap;
+    }
+    
+    .table .btn-group .btn {
+        flex-shrink: 0;
+    }
+}
+
+/* ========================================
+   4. CARDS RESPONSIVE STYLES
+   ======================================== */
+
+/* Statistics Cards */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   5. BUTTON STANDARDIZATION
+   ======================================== */
+
+/* Purple button class */
+.btn-purple {
+    background-color: #9B59B6 !important;
+    border-color: #9B59B6 !important;
+    color: white !important;
+}
+
+.btn-purple:hover,
+.btn-purple:focus,
+.btn-purple:active {
+    background-color: #8E44AD !important;
+    border-color: #8E44AD !important;
+    color: white !important;
+}
+
+.btn-purple:disabled {
+    background-color: #B99BC7 !important;
+    border-color: #B99BC7 !important;
+    opacity: 0.65;
+}
+
+/* Standard button sizes for all action buttons */
+.btn-sm,
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+/* Ensure consistent button heights */
+.btn {
+    min-height: 38px;
+}
+
+.btn-sm {
+    min-height: 31px;
+}
+
+/* Table action buttons */
+.table .btn-group .btn,
+.table .btn {
+    white-space: nowrap;
+}
+
+/* Modal button standardization */
+.modal-footer .btn {
+    min-width: 80px;
+}
+
+/* SweetAlert2 button standardization */
+/* Keep buttons centered (default behavior) */
+.swal2-confirm {
+    min-width: 100px !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.swal2-cancel {
+    min-width: 100px !important;
+    padding: 0.5rem 1rem !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.swal2-cancel:hover {
+    background-color: #5c636a !important;
+    border-color: #565e64 !important;
+}
+
+/* Mobile: Full width cards with proper spacing */
+@media (max-width: 575.98px) {
+    .card {
+        margin-bottom: 1rem !important;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .card-title {
+        font-size: 0.9rem;
+    }
+    
+    .card h3 {
+        font-size: 1.75rem;
+    }
+}
+
+/* Tablet: 2 cards per row */
+@media (min-width: 576px) and (max-width: 991.98px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-title {
+        font-size: 0.85rem;
+    }
+    
+    .card h3 {
+        font-size: 1.5rem;
+    }
+}
+
+/* ========================================
+   5. MODAL RESPONSIVE STYLES
+   ======================================== */
+
+/* Mobile: Full screen modal */
+@media (max-width: 767.98px) {
+    .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+    }
+    
+    .modal-content {
+        min-height: 100vh;
+        border-radius: 0;
+    }
+    
+    .modal-body {
+        padding: 1.5rem 1rem;
+    }
+    
+    .modal-body .row > .col-md-6 {
+        margin-bottom: 1rem;
+    }
+    
+    /* Form controls in modal */
+    .modal-body .form-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .modal-body .form-control,
+    .modal-body .form-select {
+        font-size: 1rem;
+        padding: 0.75rem;
+    }
+}
+
+/* Tablet: Adjust modal width */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .modal-lg {
+        max-width: 720px;
+    }
+}
+
+/* ========================================
+   6. BUTTON RESPONSIVE STYLES
+   ======================================== */
+
+/* Remove rounded corners for specific buttons */
+.btn.rounded-0 {
+    border-radius: 0 !important;
+}
+
+/* Touch-friendly buttons on mobile */
+@media (max-width: 767.98px) {
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        min-height: 44px; /* Accessibility: minimum touch target */
+    }
+    
+    .btn-sm {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        min-height: 38px;
+    }
+    
+    .btn-group {
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+    }
+    
+    /* Action buttons toolbar */
+    .btn-toolbar {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-toolbar .btn-group {
+        width: 100%;
+        justify-content: stretch;
+    }
+}
+
+/* ========================================
+   7. MAIN CONTENT RESPONSIVE STYLES
+   ======================================== */
+
+.admin-content {
+    margin-bottom: 2rem;
+    padding-top: 1rem;
+}
+
+/* Mobile: Adjust content padding */
+@media (max-width: 767.98px) {
+    .admin-content {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Page header */
+    .admin-content h1,
+    .admin-content .h2 {
+        font-size: 1.5rem;
+    }
+    
+    /* Reduce margins */
+    .admin-content .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .admin-content .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+}
+
+/* Tablet: Adjust content padding */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .admin-content {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+/* ========================================
+   8. SEARCH AND FILTER RESPONSIVE STYLES
+   ======================================== */
+
+/* Mobile: Stack search and filters */
+@media (max-width: 767.98px) {
+    .card-body .row.g-3 > .col-md-6,
+    .card-body .row.g-3 > .col-md-3 {
+        margin-bottom: 1rem;
+    }
+    
+    .input-group {
+        width: 100%;
+    }
+    
+    .form-select {
+        width: 100%;
+    }
+}
+
+/* ========================================
+   9. PAGINATION RESPONSIVE STYLES
+   ======================================== */
+
+.pagination {
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+/* Mobile: Smaller pagination */
+@media (max-width: 767.98px) {
+    .pagination {
+        justify-content: center;
+    }
+    
+    .page-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .page-item:not(.active):not(.disabled) .page-link {
+        display: none;
+    }
+    
+    .page-item.active .page-link,
+    .page-item:first-child .page-link,
+    .page-item:last-child .page-link {
+        display: block;
+    }
+}
+
+/* ========================================
+   10. UTILITY CLASSES
+   ======================================== */
+
+/* Text size adjustments */
+@media (max-width: 767.98px) {
+    .text-small-mobile {
+        font-size: 0.85rem !important;
+    }
+    
+    .hide-mobile {
+        display: none !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .show-mobile-only {
+        display: none !important;
+    }
+}
+
+/* Spacing utilities */
+.gap-mobile {
+    gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .gap-mobile {
+        gap: 1rem;
+    }
+}
+
+/* ========================================
+   11. COPY BUTTON STYLES
+   ======================================== */
+
+.copy-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+}
+
+@media (max-width: 767.98px) {
+    .copy-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+    }
+}
+
+/* ========================================
+   12. SECRET FIELD STYLES
+   ======================================== */
+
+.secret-field {
+    font-family: 'Courier New', monospace;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 12px;
+}
+
+@media (max-width: 767.98px) {
+    .secret-field {
+        font-size: 11px;
+        padding: 10px;
+    }
+}
+
+/* ========================================
+   13. BADGE STYLES
+   ======================================== */
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+@media (max-width: 767.98px) {
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 0.3em 0.5em;
+    }
+}
+
+/* ========================================
+   14. CHART RESPONSIVE STYLES
+   ======================================== */
+
+@media (max-width: 767.98px) {
+    canvas {
+        max-height: 250px !important;
+    }
+}
+
+/* ========================================
+   15. PRINT STYLES
+   ======================================== */
+
+@media print {
+    .sidebar,
+    .navbar,
+    .btn-toolbar,
+    .pagination {
+        display: none !important;
+    }
+    
+    .admin-content {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .card {
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+    }
+}
+
+/* ========================================
+   16. ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+
+/* Focus states */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #0d6efd;
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-to-main:focus {
+    top: 0;
+}
+
+/* ========================================
+   17. ANIMATION & TRANSITIONS
+   ======================================== */
+
+/* Smooth transitions for better UX */
+.nav-link,
+.btn,
+.card,
+.form-control,
+.form-select {
+    transition: all 0.3s ease;
+}
+
+/* Reduce motion for users with motion sensitivity */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

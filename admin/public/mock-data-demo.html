@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mock Data Generator - Test</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="css/admin-responsive.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body class="bg-light">
+    <div class="container mt-5">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+              <h4 class="mb-0">
+                <i class="fas fa-magic me-2"></i>Mock Data Generator - Demo
+              </h4>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info">
+                <h5>
+                  <i class="fas fa-info-circle me-2"></i>Generate Demo Data
+                </h5>
+                <p class="mb-0">
+                  This tool generates realistic mock authentication and usage
+                  data to populate the Usage Statistics dashboard for
+                  demonstration purposes.
+                </p>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label for="daysSelect" class="form-label">Time Period</label>
+                  <select class="form-select" id="daysSelect">
+                    <option value="7">7 days</option>
+                    <option value="30" selected>30 days</option>
+                    <option value="60">60 days</option>
+                    <option value="90">90 days</option>
+                  </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                  <button
+                    class="btn btn-success w-100"
+                    onclick="generateData()"
+                  >
+                    <i class="fas fa-magic me-2"></i>Generate Mock Data
+                  </button>
+                </div>
+              </div>
+
+              <div class="card bg-light">
+                <div class="card-body">
+                  <h6 class="card-title">What will be generated:</h6>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <ul class="list-unstyled">
+                        <li>
+                          <i class="fas fa-check text-success me-2"></i
+                          >Authentication logs (success/failure)
+                        </li>
+                        <li>
+                          <i class="fas fa-check text-success me-2"></i>Admin
+                          login activities
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="col-md-6">
+                      <ul class="list-unstyled">
+                        <li>
+                          <i class="fas fa-check text-success me-2"></i>JWT
+                          secret view logs
+                        </li>
+                        <li>
+                          <i class="fas fa-check text-success me-2"></i>Client
+                          management activities
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 text-center">
+                <a href="statistics" class="btn btn-primary me-2">
+                  <i class="fas fa-chart-bar me-1"></i>View Statistics
+                </a>
+                <a href="./" class="btn btn-outline-secondary">
+                  <i class="fas fa-home me-1"></i>Back to Dashboard
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function generateData() {
+        const days = document.getElementById("daysSelect").value;
+
+        Swal.fire({
+          title: "Generating Mock Data...",
+          html: `Creating ${days} days of demo data...`,
+          allowOutsideClick: false,
+          showConfirmButton: false,
+          willOpen: () => {
+            Swal.showLoading();
+          },
+        });
+
+        fetch("/sso-authen-3/admin/public/api/generate-mock-data", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ days: parseInt(days) }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              Swal.fire({
+                title: "Success!",
+                html: `
+                            <div class="text-start">
+                                <p class="mb-3">Generated mock data for <strong>${data.data.period_days} days</strong>:</p>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i><strong>${data.data.authentication_logs}</strong> authentication logs</li>
+                                    <li><i class="fas fa-check text-success me-2"></i><strong>${data.data.admin_activities}</strong> admin activities</li>
+                                    <li><i class="fas fa-check text-success me-2"></i><strong>${data.data.jwt_views}</strong> JWT secret views</li>
+                                    <li><i class="fas fa-check text-success me-2"></i><strong>${data.data.client_modifications}</strong> client modifications</li>
+                                </ul>
+                                <div class="alert alert-success mt-3">
+                                    <i class="fas fa-info-circle me-2"></i>Ready to view in Statistics dashboard!
+                                </div>
+                            </div>
+                        `,
+                icon: "success",
+                confirmButtonText: "View Statistics",
+                showCancelButton: true,
+                cancelButtonText: "Stay Here",
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  window.location.href = "statistics";
+                }
+              });
+            } else {
+              Swal.fire("Error", data.message, "error");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            Swal.fire(
+              "Error",
+              "Failed to generate mock data: " + error.message,
+              "error"
+            );
+          });
+      }
+    </script>
+  </body>
+</html>

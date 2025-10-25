@@ -1,0 +1,123 @@
+<?php
+
+/** * public/callback.php
+ * หน้าสำหรับรับข้อมูลกลับจาก SSO Provider, สร้าง JWT, และส่งกลับไปให้ Web App
+ * (เวอร์ชั่น 3 - Multi-Client Support)
+ */
+
+// 1. โหลดไฟล์ที่จำเป็น
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/helpers.php';
+
+// 2. บอก PHP ว่าเราจะใช้ Class อะไรบ้าง
+use SsoAuthen\SsoHandler;
+use Firebase\JWT\JWT;
+
+// เริ่ม session (สำคัญมากสำหรับ V.3)
+if (!session_id()) {
+    session_start();
+}
+
+try {
+    // 3. ตรวจสอบและดึงข้อมูล Client จาก Session
+    $clientId = $_SESSION['current_client_id'] ?? null;
+    if (!$clientId) {
+        throw new \Exception('Cannot identify source application (Client ID not found in session)');
+    }
+
+    $clientConfig = $authorized_clients[$clientId] ?? null;
+    if (!$clientConfig) {
+        throw new \Exception("This application is not authorized (Unauthorized client ID: " . htmlspecialchars($clientId) . ")");
+    }
+
+    // 4. **สำคัญ:** สร้างค่าคงที่แบบไดนามิกเพื่อให้ SsoHandler ทำงานต่อได้ถูกต้อง
+    // สำหรับการเรียก API ไปยัง Web App ที่ถูกต้อง
+    define('USER_HANDLER_ENDPOINT', $clientConfig['user_handler_endpoint']);
+    define('API_SECRET_KEY', $clientConfig['api_secret_key']);
+
+    // 5. สร้าง Instance ของ SsoHandler และจัดการ Callback
+    $handler = new SsoHandler($providerConfig);
+    $internalUser = $handler->handleCallback($clientConfig);
+
+    if (!$internalUser || !isset($internalUser['id'])) {
+        throw new \Exception("Did not receive user data from Web App API or data is invalid");
+    }
+
+    // 6. สร้าง JWT
+    $issuedAt   = time();
+    $expire     = $issuedAt + JWT_EXPIRATION;
+    $payload = [
+        'iss'  => "sso-authen-service",
+        'iat'  => $issuedAt,
+        'exp'  => $expire,
+        'data' => $internalUser
+    ];
+    $jwt = JWT::encode($payload, JWT_SECRET_KEY, 'HS256');
+
+    // 6.5. Log successful OIDC authentication
+    try {
+        require_once __DIR__ . '/../admin/src/Database/Connection.php';
+        $db = SsoAdmin\Database\Connection::getPdo();
+
+        $stmt = $db->prepare("
+            INSERT INTO audit_logs (admin_email, action, resource_type, resource_id, ip_address, user_agent, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ");
+
+        $stmt->execute([
+            $internalUser['email'] ?? 'unknown_user', // Use actual user email
+            'oidc_auth_success',
+            'authentication',
+            $clientId,
+            $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+            $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+        ]);
+    } catch (Exception $dbError) {
+        // Log silently fails, don't interrupt authentication
+        error_log('Failed to log OIDC authentication success: ' . $dbError->getMessage());
+    }
+
+    // 7. Redirect กลับไปที่ Web App ที่ถูกต้อง พร้อมแนบ Token
+    $redirectUrl = $clientConfig['app_redirect_uri'] . '?token=' . $jwt;
+
+    // ล้างค่า session ที่ไม่ใช้แล้ว
+    unset($_SESSION['current_client_id']);
+
+    header("Location: " . $redirectUrl);
+    exit;
+} catch (Exception $e) {
+    // Log failed OIDC authentication
+    try {
+        require_once __DIR__ . '/../admin/src/Database/Connection.php';
+        $db = SsoAdmin\Database\Connection::getPdo();
+
+        $stmt = $db->prepare("
+            INSERT INTO audit_logs (admin_email, action, resource_type, resource_id, ip_address, user_agent, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ");
+
+        $clientId = $_SESSION['current_client_id'] ?? 'unknown';
+        $stmt->execute([
+            'system', // Unknown user since auth failed
+            'oidc_auth_failed',
+            'authentication',
+            $clientId,
+            $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+            $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+        ]);
+    } catch (Exception $dbError) {
+        error_log('Failed to log OIDC authentication failure: ' . $dbError->getMessage());
+    }
+
+    // หากเกิดข้อผิดพลาด ให้ส่งกลับไปที่หน้าที่ผู้ใช้เริ่มต้นกด Login
+    // หรือถ้าไม่มี ก็ส่งไปหน้าหลักของ sso-authen เอง
+    $redirect_url_on_error = $_SESSION['login_start_uri'] ?? '/';
+
+    render_alert_and_redirect(
+        'Authentication Error',
+        $e->getMessage(),
+        'error',
+        $redirect_url_on_error
+    );
+}
