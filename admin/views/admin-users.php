@@ -658,7 +658,13 @@
                     if (data.success) {
                         const user = data.data;
                         const createdDate = new Date(user.created_at);
+                        const updatedDate = new Date(user.updated_at);
                         const lastLoginDate = user.last_login_at ? new Date(user.last_login_at) : null;
+                        
+                        // Format extended claims data
+                        const groupsDisplay = user.groups ? 
+                            (user.groups.length > 50 ? user.groups.substring(0, 50) + '...' : user.groups) : 
+                            'N/A';
                         
                         const content = `
                             <div class="row">
@@ -667,7 +673,7 @@
                                     <table class="table table-borderless">
                                         <tr>
                                             <td><strong>Name:</strong></td>
-                                            <td>${escapeHtml(user.name)}</td>
+                            <td>${escapeHtml(user.name)}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>Email:</strong></td>
@@ -681,14 +687,57 @@
                                             <td><strong>Status:</strong></td>
                                             <td>${getStatusBadge(user.status)}</td>
                                         </tr>
+                                        <tr>
+                                            <td><strong>Provider:</strong></td>
+                                            <td><span class="badge bg-info">${user.provider || 'N/A'}</span></td>
+                                        </tr>
                                     </table>
                                 </div>
                                 <div class="col-md-6">
+                                    <h5><i class="fas fa-building me-2"></i>Organization Information</h5>
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>Position:</strong></td>
+                                            <td>${user.position || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Campus:</strong></td>
+                                            <td>${user.campus || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Office:</strong></td>
+                                            <td>${user.office_name || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Faculty ID:</strong></td>
+                                            <td>${user.faculty_id || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Department ID:</strong></td>
+                                            <td>${user.department_id || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Campus ID:</strong></td>
+                                            <td>${user.campus_id || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Groups:</strong></td>
+                                            <td>${groupsDisplay}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-12">
                                     <h5><i class="fas fa-calendar me-2"></i>Timestamps</h5>
                                     <table class="table table-borderless">
                                         <tr>
                                             <td><strong>Created:</strong></td>
                                             <td>${createdDate.toLocaleString('th-TH')}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Updated:</strong></td>
+                                            <td>${updatedDate.toLocaleString('th-TH')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>Last Login:</strong></td>
