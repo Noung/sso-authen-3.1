@@ -1,8 +1,8 @@
-# **คู่มือการติดตั้งและใช้งาน sso-authen Service (V.3)**
+# **คู่มือการติดตั้งและใช้งาน sso-authen Service (V.3.1)**
 
-`sso-authen` V.3 คือ บริการกลาง (Centralized Service) สำหรับการยืนยันตัวตนด้วยมาตรฐาน OpenID Connect (OIDC) ที่ถูกออกแบบมาเพื่อทำหน้าที่เป็น Single Sign-On Gateway ให้กับทุกเว็บแอปพลิเคชันในองค์กรของคุณ
+`sso-authen` V.3.1 คือ บริการกลาง (Centralized Service) สำหรับการยืนยันตัวตนด้วยมาตรฐาน OpenID Connect (OIDC) ที่ถูกออกแบบมาเพื่อทำหน้าที่เป็น Single Sign-On Gateway ให้กับทุกเว็บแอปพลิเคชันในองค์กรของคุณ
 
-สถาปัตยกรรม V.3 ได้รับการยกเครื่องใหม่ทั้งหมดให้เป็น Stateless Authentication Service ที่ทันสมัย, ยืดหยุ่น, และปลอดภัยสูง สามารถรองรับแอปพลิเคชันที่หลากหลาย (Multi-Client) ไม่ว่าจะเป็น PHP, Node.js, React, Vue, หรือเทคโนโลยีอื่นๆ ได้อย่างสมบูรณ์
+สถาปัตยกรรม V.3.1 ได้รับการปรับปรุงให้เป็น Stateless Authentication Service ที่ทันสมัย, ยืดหยุ่น, และปลอดภัยสูง สามารถรองรับแอปพลิเคชันที่หลากหลาย (Multi-Client) ไม่ว่าจะเป็น PHP, Node.js, React, Vue, หรือเทคโนโลยีอื่นๆ ได้อย่างสมบูรณ์
 
 ---
 
@@ -18,21 +18,28 @@
 * **User-Friendly Feedback:** มีระบบแสดงผลข้อความโต้ตอบที่สวยงามด้วย SweetAlert2
 * **Admin Panel:** ระบบจัดการผู้ดูแลที่ทันสมัยพร้อมแดชบอร์ดแบบเรียลไทม์, การจัดการ Client Applications แบบครบวงจร, และระบบสถิติการใช้งาน
 * **Enhanced Security:** ระบบบันทึกกิจกรรม (Audit Logs), การจัดการ JWT Secret, และการตรวจสอบความปลอดภัยแบบครบวงจร
+* **Extended Claims Support:** รองรับข้อมูลผู้ใช้เพิ่มเติมจาก PSU SSO รวม 14 ฟิลด์ (7 basic + 7 extended) สำหรับการกำหนดสิทธิ์ที่ละเอียด
+* **OAuth Scope Management:** ระบบจัดการ OAuth Scopes ที่สอดคล้องกับข้อกำหนดของ PSU SSO โดยอัตโนมัติ
 
 ---
 
 ## 📋 ข้อกำหนด (Requirements)
 
 * **สำหรับ `sso-authen` Service:**
-    * Web Server ที่รัน PHP 7.0+ ได้ (เช่น Apache, Nginx)
+    * Web Server ที่รัน PHP 7.4.33 ได้ (เช่น Apache, Nginx)
     * Composer
-    * PHP Extensions: cURL, JSON, OpenSSL
+    * PHP Extensions: cURL, JSON, OpenSSL, PDO MySQL
     * Credentials (Client ID และ Client Secret) จาก OIDC Provider (เช่น PSU SSO, Google)
+    * MySQL 5.7+ หรือ MariaDB 10.2+ สำหรับฐานข้อมูล
 * **สำหรับเว็บแอปพลิเคชันของคุณ:**
     * ความสามารถในการสร้างลิงก์ HTTP ที่มี Query String
     * ความสามารถในการสร้างหน้า Callback เพื่อรับพารามิเตอร์จาก URL
     * (สำหรับ JWT Mode) Library สำหรับถอดรหัสและตรวจสอบ JWT
     * (แนะนำ) ความสามารถในการสร้าง API Endpoint เพื่อจัดการข้อมูลผู้ใช้ของตัวเอง
+* **สำหรับ Admin Panel:**
+    * Web Browser ที่รองรับ Bootstrap 5 (Chrome, Firefox, Edge, Safari)
+    * การเชื่อมต่อฐานข้อมูลที่ถูกต้อง
+    * บัญชีผู้ดูแลระบบ (admin user) ที่ลงทะเบียนในระบบ
 
 ---
 
@@ -46,26 +53,52 @@
 |-- config/                     <-- เก็บไฟล์ตั้งค่าทั้งหมด
 |   |-- config.php              (ไฟล์ตั้งค่าหลัก, ลงทะเบียน Clients)
 |   `-- providers/
-|       `-- psu.php             (ตัวอย่างการตั้งค่า OIDC Provider)
+|       |-- psu.php             (ตัวอย่างการตั้งค่า PSU SSO Provider)
+|       |-- google.php          (ตัวอย่างการตั้งค่า Google Provider)
+|       |-- microsoft.php       (ตัวอย่างการตั้งค่า Microsoft Provider)
+|       |-- auth0.php           (ตัวอย่างการตั้งค่า Auth0 Provider)
+|       `-- okta.php            (ตัวอย่างการตั้งค่า Okta Provider)
 |
 |-- public/                     <-- Endpoints ที่เข้าถึงได้จากภายนอก
-|   |-- callback.php
-|   |-- login.php
-|   |-- logout.php
-|   |-- helpers.php
+|   |-- callback.php            (หน้ารับข้อมูลกลับจาก SSO Provider)
+|   |-- login.php               (หน้าเริ่มต้นกระบวนการ Login)
+|   |-- logout.php              (หน้าออกจากระบบ)
+|   |-- helpers.php             (ฟังก์ชันช่วยเหลือ)
 |   `-- templates/
-|       `-- layout.php
+|       `-- layout.php          (เทมเพลตพื้นฐาน)
 |
 |-- src/                        <-- Core Logic ของบริการ
-|   `-- SsoHandler.php
+|   `-- SsoHandler.php          (คลาสจัดการกระบวนการ OIDC)
+|
+|-- database/                   <-- ไฟล์ฐานข้อมูลและ Migration
+|   |-- schema.sql              (โครงสร้างฐานข้อมูลหลัก)
+|   |-- migrations/             (ไฟล์ Migration)
+|   `-- install.php             (สคริปต์ติดตั้งฐานข้อมูล)
+|
+|-- admin/                      <-- Admin Panel
+|   |-- config/
+|   |   `-- admin_config.php    (การตั้งค่า Admin Panel)
+|   |-- src/
+|   |   |-- Controllers/        (Controller ของระบบ)
+|   |   |-- Models/             (Model ของระบบ)
+|   |   `-- Database/           (การเชื่อมต่อฐานข้อมูล)
+|   |-- public/
+|   |   |-- index.php           (หน้า Dashboard หลัก)
+|   |   |-- auth/               (ระบบยืนยันตัวตนของ Admin)
+|   |   |-- css/                (ไฟล์ CSS)
+|   |   |-- js/                 (ไฟล์ JavaScript)
+|   |   `-- api/                (API Endpoints)
+|   |-- views/                  (เทมเพลต View)
+|   `-- storage/                (เก็บไฟล์ Log, Backup)
 |
 |-- examples/                   <-- (แนะนำ) โค้ดตัวอย่างสำหรับ Client App
-|   |-- js-client/              (ตัวอย่างแอป Vanilla JS + Node.js)
-|   `-- php-client/             (ตัวอย่างแอป PHP)
+|   |-- JWT Mode/               (ตัวอย่างแอปแบบ JWT Mode)
+|   `-- Legacy Mode/            (ตัวอย่างแอปแบบ Legacy Mode)
 |
 |-- vendor/                     (สร้างโดย Composer)
 `-- composer.json
 ```
+
 ---
 
 ## ⚙️ หลักการทำงาน (How it Works)
@@ -113,56 +146,47 @@ sequenceDiagram
 composer install
 ```
 
-### 2. ตั้งค่า `config.php`
+### 2. ตั้งค่าฐานข้อมูล
 
-เปิดไฟล์ `sso-authen/config/config.php` และกำหนดค่า 3 ส่วนหลัก:
+สร้างฐานข้อมูล MySQL ใหม่:
 
-2.1 ลงทะเบียนแอปพลิเคชันที่จะมาเชื่อมต่อ (Authorized Clients)
-นี่คือหัวใจของ V.3 ใช้สำหรับลงทะเบียนแอปพลิเคชันทั้งหมดที่ได้รับอนุญาตให้ใช้บริการ SSO นี้
-
-```php
-// sso-authen/config/config.php
-
-$authorized_clients = [
-    // ตัวอย่างสำหรับ React/JS App
-    'my_react_app' => [
-        'app_redirect_uri'         => 'http://localhost:3000/auth/callback',
-        'post_logout_redirect_uri' => 'http://localhost:3000/logout-success',
-        'user_handler_endpoint'    => 'http://localhost:8080/api/sso-user-handler',
-        'api_secret_key'           => 'SECRET_KEY_FOR_REACT_APP'
-    ],
-    // ตัวอย่างสำหรับ PHP App ที่ใช้ JWT
-    'my_php_app' => [
-        'app_redirect_uri'         => '[http://my-php-app.test/sso_callback.php](http://my-php-app.test/sso_callback.php)',
-        'post_logout_redirect_uri' => '[http://my-php-app.test/index.php](http://my-php-app.test/index.php)',
-        'user_handler_endpoint'    => '[http://my-php-app.test/api/user_handler.php](http://my-php-app.test/api/user_handler.php)',
-        'api_secret_key'           => 'ANOTHER_SECRET_KEY_FOR_PHP_APP'
-    ],
-    // ตัวอย่างสำหรับ Legacy PHP App ที่ต้องการให้สร้าง Session ให้ (Backward Compatibility)
-    'legacy_app' => [
-        'app_redirect_uri'         => '[http://legacy-app.test/index.php](http://legacy-app.test/index.php)',
-        'post_logout_redirect_uri' => '[http://legacy-app.test/index.php](http://legacy-app.test/index.php)',
-        'user_handler_endpoint'    => null, // ตั้งเป็น null เพื่อเข้าสู่ Legacy Mode
-        'api_secret_key'           => null
-    ]
-];
+```sql
+CREATE DATABASE sso_authen CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-2.2 ตั้งค่า JWT
-กำหนด Secret Key ที่จะใช้ "ลงลายเซ็น" ใน JWT ทุกใบที่บริการนี้ออกให้
+จากนั้นรันสคริปต์ติดตั้ง:
 
-```php
-// sso-authen/config/config.php
-
-define('JWT_SECRET_KEY', 'YOUR_SUPER_SECRET_KEY_FOR_JWT_GENERATION_THAT_IS_VERY_LONG');
-define('JWT_EXPIRATION', 3600); // อายุของ Token (วินาที)
+```bash
+php database/install.php
 ```
 
-2.3 เพิ่ม Provider ใหม่ (ถ้าจำเป็น)
+### 3. ตั้งค่า `admin/config/admin_config.php`
 
-หากต้องการเชื่อมต่อกับผู้ให้บริการรายใหม่ (เช่น มหาวิทยาลัยอื่น) ให้สร้างไฟล์คอนฟิกสำหรับผู้ให้บริการแต่ละรายใน `sso-authen/config/providers/` โดยใช้ psu.php เป็นต้นแบบ และแก้ไขค่า `clientID`, `clientSecret`, `providerURL`, `redirectUri`, `scopes`, และ `claim_mapping` ให้ถูกต้อง 
+เปิดไฟล์ `admin/config/admin_config.php` และกำหนดค่าการเชื่อมต่อฐานข้อมูล:
 
-ตัวอย่าง **psu.php**:
+```php
+'database' => [
+    'host' => 'localhost',
+    'port' => 3306,
+    'database' => 'sso_authen',
+    'username' => 'root',
+    'password' => '',
+    'charset' => 'utf8mb4',
+],
+```
+
+### 4. ตั้งค่า `config/config.php`
+
+เปิดไฟล์ `sso-authen/config/config.php` และกำหนดค่า Provider:
+
+```php
+// เลือกว่าจะใช้ Provider (มหาวิทยาลัย) ไหน
+$activeProvider = 'psu'; // ตัวอย่าง: 'psu', 'google', 'microsoft', 'auth0', 'okta'
+```
+
+### 5. ตั้งค่า Provider Configuration
+
+เปิดไฟล์ `config/providers/{provider}.php` และกำหนดค่า:
 
 ```php
 <?php
@@ -171,7 +195,7 @@ return [
     'clientID'     => 'YOUR_PSU_CLIENT_ID_HERE',
     'clientSecret' => 'YOUR_PSU_CLIENT_SECRET_HERE',
     'providerURL'  => 'https://psusso.psu.ac.th/...',
-    'redirectUri'  => 'http://your-app.test/sso-authen/public/callback.php', 
+    'redirectUri'  => 'http://your-domain.com/public/callback.php', 
     'scopes'       => ['openid', 'profile', 'email', 'psu_profile'],
     
     // การแปลงชื่อ Claims จาก PSU SSO ให้เป็นชื่อมาตรฐาน (14 ฟิลด์)
@@ -197,184 +221,25 @@ return [
 ];
 ```
 
----
+### 6. ตั้งค่า JWT
 
-## 🎛 Admin Panel Features
+กำหนด Secret Key ที่จะใช้ "ลงลายเซ็น" ใน JWT ทุกใบที่บริการนี้ออกให้:
 
-### Dashboard แบบเรียลไทม์
-ระบบ Admin Panel มีแดชบอร์ดที่แสดงข้อมูลแบบเรียลไทม์ พร้อมระบบ Auto Refresh ทุก 30 วินาที:
-- สถิติ Client Applications (Total, Active, Inactive, Suspended)
-- สถิติการใช้งานระบบ (Requests Today, Authentication Requests, Success Rate)
-- กิจกรรมล่าสุดของระบบ
-- แผนภูมิ Top Client Activities และ System Usage Trend
-
-### การจัดการ Client Applications
-ระบบจัดการ Client Applications แบบครบวงจร:
-- **CRUD Operations**: Create, Read, Update, Delete Client Applications
-- **Advanced Search**: ค้นหาแบบเรียลไทม์ด้วย Debouncing
-- **Filtering**: กรองตามสถานะ (Active, Inactive, Suspended)
-- **Pagination**: แสดงผลแบบหน้าๆ พร้อมตัวเลือกจำนวนรายการต่อหน้า
-- **Security Features**: 
-  - สร้าง Client Secret แบบปลอดภัยด้วย `bin2hex(random_bytes(32))`
-  - ระบบ Copy to Clipboard สำหรับ Client ID และ API Secret
-  - แสดง Client Secret เพียงครั้งเดียวเมื่อสร้าง
-
-### ระบบจัดการผู้ดูแลระบบ
-- จัดการ Admin Users แบบ Multi-role (Super Admin, Admin, Viewer)
-- ระบบ Audit Logs สำหรับติดตามกิจกรรมของผู้ดูแล
-- ระบบ Backup & Restore ฐานข้อมูล
-
-### ระบบความปลอดภัย
-- บันทึกกิจกรรมทุกอย่างของผู้ดูแล (Audit Trail)
-- ประวัติการเปลี่ยนแปลง JWT Secret
-- ตรวจสอบและยืนยันความถูกต้องของ URLs
-- ระบบ Session Management
-
----
-
-## 🛡 OAuth 2.0 / OIDC Scopes Configuration
-
-### ขอบเขตของ Scopes ที่รองรับ
-ตามข้อกำหนดของ PSU SSO Provider ระบบรองรับเฉพาะ Scopes ต่อไปนี้:
-- `openid` - พื้นฐานสำหรับ OpenID Connect (จำเป็น)
-- `profile` - ข้อมูลโปรไฟล์ผู้ใช้ (จำเป็น)
-- `email` - ที่อยู่อีเมลผู้ใช้ (จำเป็น)
-
-**หมายเหตุสำคัญ**: PSU SSO ไม่รองรับ Scopes ประเภท `phone` และ `address` ดังนั้นระบบจึงได้ลบตัวเลือกเหล่านี้ออกจากหน้าจัดการ Client Applications เพื่อป้องกันความสับสน
-
-### การกำหนดค่า Scopes
-- Scopes ถูกกำหนดค่าแบบ Fixed เป็น `openid,profile,email` สำหรับ Client ทุกตัว
-- ไม่สามารถแก้ไขได้จาก Admin Panel เนื่องจากการกำหนดค่าขึ้นอยู่กับ Provider Configuration
-- การขอ Scopes จะได้รับ Claims ที่ Provider รองรับเท่านั้น
-
----
-
-## 🆕 Extended Claims Support (V.3)
-
-**SSO-Authen V.3** รองรับ **Extended Claims** จาก PSU SSO ทำให้คุณสามารถใช้ข้อมูลผู้ใช้ที่ละเอียดยิ่งขึ้นสำหรับ Authorization และ Personalization
-
-### ข้อมูลที่ได้รับทั้งหมด (14 ฟิลด์)
-
-เมื่อผู้ใช้ล็อกอินผ่าน PSU SSO คุณจะได้รับข้อมูล:
-
-**Basic Claims (7 ฟิลด์)** - รับจากทุก Provider:
-- `id` - รหัสผู้ใช้ (PSU ID)
-- `username` - username
-- `name` - ชื่อ-นามสกุล (ภาษาไทย)
-- `firstName` - ชื่อ
-- `lastName` - นามสกุล
-- `email` - อีเมล
-- `department` - ภาควิชา/คณะ
-
-**Extended Claims (7 ฟิลด์)** - เฉพาะ PSU SSO:
-- `position` - ตำแหน่งงาน (เช่น "อาจารย์", "นักวิชาการ")
-- `campus` - วิทยาเขต (เช่น "หาดใหญ่", "ปัตตานี")
-- `officeName` - ชื่อสำนักงาน/หน่วยงาน
-- `facultyId` - รหัสคณะ (เช่น "31" = คณะวิทยาศาสตร์)
-- `departmentId` - รหัสภาควิชา
-- `campusId` - รหัสวิทยาเขต (เช่น "01" = หาดใหญ่)
-- `groups` - กลุ่มผู้ใช้ (array เช่น `["staff", "it-admin"]`)
-
-### การเปรียบเทียบ Provider
-
-| Claim Type | PSU SSO | Google | Microsoft | Auth0 | Okta |
-|------------|---------|--------|-----------|-------|------|
-| **Basic Claims (7 fields)** |
-| `id` | ✅ psu_id | ✅ sub | ✅ oid | ✅ sub | ✅ sub |
-| `username` | ✅ preferred_username | ✅ email | ✅ preferred_username | ✅ nickname | ✅ preferred_username |
-| `name` | ✅ display_name_th | ✅ name | ✅ name | ✅ name | ✅ name |
-| `email` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `firstName` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `lastName` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `department` | ✅ department_th | ❌ null | ❌ null | ❌ null | ❌ null |
-| **Extended Claims (7 fields)** |
-| `position` | ✅ position_th | ❌ null | ❌ null | ❌ null | ❌ null |
-| `campus` | ✅ campus_th | ❌ null | ❌ null | ❌ null | ❌ null |
-| `officeName` | ✅ office_name_th | ❌ null | ❌ null | ❌ null | ❌ null |
-| `facultyId` | ✅ faculty_id | ❌ null | ❌ null | ❌ null | ❌ null |
-| `departmentId` | ✅ department_id | ❌ null | ❌ null | ❌ null | ❌ null |
-| `campusId` | ✅ campus_id | ❌ null | ❌ null | ❌ null | ❌ null |
-| `groups` | ✅ groups (array) | ❌ null | ❌ null | ❌ null | ✅ groups |
-
-### ตัวอย่าง JWT Payload ที่คุณจะได้รับ
-
-```json
-{
-  "iss": "sso-authen-service",
-  "iat": 1700000000,
-  "exp": 1700003600,
-  "data": {
-    // Basic Claims
-    "id": 123,
-    "email": "somchai.j@psu.ac.th",
-    "name": "นายสมชาย ใจดี",
-    "firstName": "สมชาย",
-    "lastName": "ใจดี",
-    "username": "somchai.j",
-    "department": "คณะวิทยาศาสตร์",
-    
-    // Extended Claims (PSU SSO only)
-    "position": "นักวิชาการคอมพิวเตอร์",
-    "campus": "หาดใหญ่",
-    "officeName": "สำนักบริการคอมพิวเตอร์",
-    "facultyId": "31",
-    "departmentId": "3101",
-    "campusId": "01",
-    "groups": ["staff", "it-admin"],
-    
-    // Application-specific fields (from your User Handler)
-    "role": "admin"
-  }
-}
-```
-
-### กรณีการใช้งาน (Use Cases)
-
-**1. Faculty-Based Authorization**
 ```php
-// อนุญาตเฉพาะคณะวิทยาศาสตร์
-if ($user['facultyId'] === '31') {
-    grantAccess();
-}
+// sso-authen/config/config.php
+
+define('JWT_SECRET_KEY', 'YOUR_SUPER_SECRET_KEY_FOR_JWT_GENERATION_THAT_IS_VERY_LONG');
+define('JWT_EXPIRATION', 3600); // อายุของ Token (วินาที)
 ```
 
-**2. Campus-Specific Resources**
-```javascript
-// แสดงทรัพยากรเฉพาะวิทยาเขต
-if (user.campusId === '01') {
-    loadHatYaiResources();
-}
+### 7. เข้าใช้งาน Admin Panel
+
+เปิด Browser ไปที่ `http://your-domain.com/admin/public/` และล็อกอินด้วยบัญชีผู้ดูแลระบบ:
+
 ```
-
-**3. Group-Based Permissions**
-```php
-// ตรวจสอบกลุ่ม IT Admin
-$groups = json_decode($user['groups'], true) ?? [];
-if (in_array('it-admin', $groups)) {
-    showAdminPanel();
-}
+Email: admin@psu.ac.th
+Password: (ใช้โหมด Development โดยอัตโนมัติ)
 ```
-
-### ⚠️ สำคัญ: Null Handling
-
-Provider อื่นที่ไม่ใช่ PSU SSO (เช่น Google, Microsoft) จะให้ค่า `null` สำหรับ Extended Claims:
-
-```javascript
-// ✅ ตรวจสอบ null ก่อนใช้เสมอ
-const position = user.position || 'N/A';
-const groups = user.groups || [];
-
-if (user.facultyId !== null) {
-    // ใช้ facultyId ได้
-}
-```
-
-### 📚 อ่านเพิ่มเติม
-
-สำหรับรายละเอียดการใช้งาน Extended Claims:
-- ดู [`CLAIMS_UPDATE.md`](./CLAIMS_UPDATE.md) - คู่มือฉบับสมบูรณ์
-- ดู [`admin/public/api-docs-v3.html`](./admin/public/api-docs-v3.html) - API Documentation
-- ดู [`examples/JWT Mode/php-client/api/user-handler.php`](./examples/JWT%20Mode/php-client/api/user-handler.php) - Code Examples
 
 ---
 
@@ -384,7 +249,7 @@ if (user.facultyId !== null) {
 
 ### 1. ลงทะเบียนแอปพลิเคชัน
 
-ติดต่อผู้ดูแลระบบของ sso-authen เพื่อขอ client_id และลงทะเบียนข้อมูลต่างๆ ของแอปคุณในไฟล์ config.php กลาง
+ติดต่อผู้ดูแลระบบของ sso-authen เพื่อขอ client_id และลงทะเบียนข้อมูลต่างๆ ของแอปคุณในระบบผ่าน Admin Panel
 
 ### 2. สร้างลิงก์ Login และ Logout
 ในแอปพลิเคชันของคุณ ให้สร้างลิงก์ไปยัง sso-authen Service ให้ถูกต้องตามรูปแบบ
@@ -392,7 +257,7 @@ if (user.facultyId !== null) {
 * Login Link: ต้องมี client_id และ redirect_uri
 
 ```html
-<a href="[https://auth.your-org.com/public/login.php?client_id=my_react_app&redirect_uri=http://localhost:3000/auth/callback](https://auth.your-org.com/public/login.php?client_id=my_react_app&redirect_uri=http://localhost:3000/auth/callback)">
+<a href="https://auth.your-org.com/public/login.php?client_id=my_react_app&redirect_uri=http://localhost:3000/auth/callback">
     Login
 </a>
 ```
@@ -400,7 +265,7 @@ if (user.facultyId !== null) {
 * Logout Link: ต้องมี post_logout_redirect_uri
 
 ```html
-<a href="[https://auth.your-org.com/public/logout.php?post_logout_redirect_uri=http://localhost:3000/logout-success](https://auth.your-org.com/public/logout.php?post_logout_redirect_uri=http://localhost:3000/logout-success)">
+<a href="https://auth.your-org.com/public/logout.php?post_logout_redirect_uri=http://localhost:3000/logout-success">
     Logout
 </a>
 ```
@@ -485,7 +350,14 @@ Authorization: Bearer <your_jwt_token>
     "firstName": "Test",
     "lastName": "User",
     "email": "test.u@example.com",
-    "department": "IT Department"
+    "department": "IT Department",
+    "position": "Software Engineer",
+    "campus": "Main Campus",
+    "officeName": "IT Department",
+    "facultyId": "F01",
+    "departmentId": "D0101",
+    "campusId": "C01",
+    "groups": ["staff", "developer"]
   },
   "ssoUserInfo": {
     "sub": "user123",
@@ -531,7 +403,7 @@ define('DB_CHARSET', 'utf8mb4');
 
 ### 2. สร้างตารางสมาชิก (สำหรับแอปพลิเคชัน ถ้ายังไม่มี)
 
-รันคำสั่ง SQL นี้ในฐานข้อมูลของแอปพลิเคชันเพื่อสร้างตาราง `users`
+รันคำสั่ง SQL นี้ในฐานข้อมูลของแอปพลิเคชันเพื่อสร้างตาราง `users` พร้อมรองรับ Extended Claims:
 
 ```sql
 CREATE TABLE `users` (
@@ -539,11 +411,24 @@ CREATE TABLE `users` (
   `user_id` varchar(255) DEFAULT NULL,
   `email` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
+  `first_name` varchar(255) DEFAULT NULL,
+  `last_name` varchar(255) DEFAULT NULL,
   `role` varchar(50) NOT NULL DEFAULT 'subscriber',
+  `department` varchar(255) DEFAULT NULL,
+  `position` varchar(255) DEFAULT NULL,
+  `campus` varchar(255) DEFAULT NULL,
+  `office_name` varchar(255) DEFAULT NULL,
+  `faculty_id` varchar(50) DEFAULT NULL,
+  `department_id` varchar(50) DEFAULT NULL,
+  `campus_id` varchar(50) DEFAULT NULL,
+  `groups` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
+  UNIQUE KEY `email` (`email`),
+  KEY `idx_faculty_id` (`faculty_id`),
+  KEY `idx_department_id` (`department_id`),
+  KEY `idx_campus_id` (`campus_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
@@ -591,12 +476,26 @@ function findOrCreateUser(array $normalizedUser, object $ssoUserInfo): array {
             // --- กรณีที่ 1: พบผู้ใช้ในระบบ (สมาชิกเก่า) ---
 
             // อัปเดตข้อมูลล่าสุด (เผื่อมีการเปลี่ยนชื่อ-สกุล)
-            $updateStmt = $pdo->prepare(
-                "UPDATE users SET name = ?, user_id = ? WHERE id = ?"
-            );
+            $updateStmt = $pdo->prepare("
+                UPDATE users SET 
+                    name = ?, user_id = ?, first_name = ?, last_name = ?,
+                    department = ?, position = ?, campus = ?, office_name = ?,
+                    faculty_id = ?, department_id = ?, campus_id = ?, `groups` = ?
+                WHERE id = ?
+            ");
             $updateStmt->execute([
                 $normalizedUser['name'],
                 $normalizedUser['id'], // user_id
+                $normalizedUser['firstName'] ?? null,
+                $normalizedUser['lastName'] ?? null,
+                $normalizedUser['department'] ?? null,
+                $normalizedUser['position'] ?? null,
+                $normalizedUser['campus'] ?? null,
+                $normalizedUser['officeName'] ?? null,
+                $normalizedUser['facultyId'] ?? null,
+                $normalizedUser['departmentId'] ?? null,
+                $normalizedUser['campusId'] ?? null,
+                isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null,
                 $user['id']
             ]);
             
@@ -610,14 +509,28 @@ function findOrCreateUser(array $normalizedUser, object $ssoUserInfo): array {
             $defaultRole = 'subscriber';
 
             // เตรียมข้อมูลและสร้างผู้ใช้ใหม่
-            $insertStmt = $pdo->prepare(
-                "INSERT INTO users (user_id, email, name, role) VALUES (?, ?, ?, ?)"
-            );
+            $insertStmt = $pdo->prepare("
+                INSERT INTO users (
+                    user_id, email, name, first_name, last_name, role,
+                    department, position, campus, office_name,
+                    faculty_id, department_id, campus_id, `groups`
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
             $insertStmt->execute([
                 $normalizedUser['id'], // user_id
                 $normalizedUser['email'],
                 $normalizedUser['name'],
-                $defaultRole
+                $normalizedUser['firstName'] ?? null,
+                $normalizedUser['lastName'] ?? null,
+                $defaultRole,
+                $normalizedUser['department'] ?? null,
+                $normalizedUser['position'] ?? null,
+                $normalizedUser['campus'] ?? null,
+                $normalizedUser['officeName'] ?? null,
+                $normalizedUser['facultyId'] ?? null,
+                $normalizedUser['departmentId'] ?? null,
+                $normalizedUser['campusId'] ?? null,
+                isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null
             ]);
 
             $newUserId = $pdo->lastInsertId();
@@ -628,7 +541,17 @@ function findOrCreateUser(array $normalizedUser, object $ssoUserInfo): array {
                 'user_id' => $normalizedUser['id'],
                 'email' => $normalizedUser['email'],
                 'name' => $normalizedUser['name'],
-                'role' => $defaultRole
+                'first_name' => $normalizedUser['firstName'] ?? null,
+                'last_name' => $normalizedUser['lastName'] ?? null,
+                'role' => $defaultRole,
+                'department' => $normalizedUser['department'] ?? null,
+                'position' => $normalizedUser['position'] ?? null,
+                'campus' => $normalizedUser['campus'] ?? null,
+                'office_name' => $normalizedUser['officeName'] ?? null,
+                'faculty_id' => $normalizedUser['facultyId'] ?? null,
+                'department_id' => $normalizedUser['departmentId'] ?? null,
+                'campus_id' => $normalizedUser['campusId'] ?? null,
+                'groups' => isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null
             ];
         }
 
@@ -669,12 +592,14 @@ echo "ยินดีต้อนรับ, " . htmlspecialchars($currentUser['n
 ---
 
 ### 💡 บันทึกทางเทคนิค (Technical Notes)
-สำหรับนักพัฒนาที่ต้องการทำความเข้าใจสถาปัตยกรรมเบื้องหลังของ sso-authen V.3
+สำหรับนักพัฒนาที่ต้องการทำความเข้าใจสถาปัตยกรรมเบื้องหลังของ sso-authen V.3.1
 
-* Stateless JWT Flow: หัวใจของ V.3 คือการเปลี่ยนจากการใช้ PHP Session ในการจัดการสถานะล็อกอิน มาเป็นการออก JWT ที่มีการลงลายเซ็น ทำให้บริการเป็นแบบ Stateless และสามารถให้บริการกับ Client ที่หลากหลายได้โดยไม่จำเป็นต้องแชร์สถานะร่วมกัน
-* Dynamic Client Configuration: sso-authen ใช้ PHP Session เป็นเพียง "ตัวกลางชั่วคราว" ในการส่งต่อ client_id จาก login.php ไปยัง callback.php เท่านั้น เมื่อ callback.php ทำงาน มันจะใช้ client_id ที่เก็บไว้ใน Session เพื่อดึงการตั้งค่าที่ถูกต้องของแอปนั้นๆ (เช่น user_handler_endpoint, api_secret_key) จาก $authorized_clients มาใช้งานแบบไดนามิก
+* Stateless JWT Flow: หัวใจของ V.3.1 คือการเปลี่ยนจากการใช้ PHP Session ในการจัดการสถานะล็อกอิน มาเป็นการออก JWT ที่มีการลงลายเซ็น ทำให้บริการเป็นแบบ Stateless และสามารถให้บริการกับ Client ที่หลากหลายได้โดยไม่จำเป็นต้องแชร์สถานะร่วมกัน
+* Dynamic Client Configuration: sso-authen ใช้ฐานข้อมูลในการจัดเก็บข้อมูล client applications แทนการ hard-code ทำให้สามารถจัดการ client ได้แบบไดนามิกผ่าน Admin Panel
 * API Contract is Key: การแยกหน้าที่ระหว่าง "Authentication" (โดย sso-authen) และ "Authorization" (โดย Client App) เกิดขึ้นผ่าน user_handler_endpoint การที่ Client App จัดการฐานข้อมูลผู้ใช้และกำหนดสิทธิ์ (role) ของตัวเอง ทำให้ sso-authen ไม่ต้องยุ่งเกี่ยวกับตรรกะภายในของแต่ละแอปเลย
 * Backward Compatibility: การตั้งค่า user_handler_endpoint เป็น null สำหรับ Client ใดๆ ใน config.php จะทำให้ SsoHandler สลับไปทำงานใน "Legacy Mode" โดยจะเรียกใช้ findOrCreateUser() จากไฟล์ user_handler.php และสร้าง $_SESSION โดยตรง เหมาะสำหรับแอปพลิเคชัน PHP รุ่นเก่าที่ไม่ต้องการปรับปรุงเป็น JWT Flow
 * Security:
-  *  Redirect URI Validation: login.php จะตรวจสอบ redirect_uri ที่ Client ส่งมากับค่าที่ลงทะเบียนไว้ใน config.php ทุกครั้ง เพื่อป้องกันการโจมตีแบบ Open Redirect
+  *  Redirect URI Validation: login.php จะตรวจสอบ redirect_uri ที่ Client ส่งมากับค่าที่ลงทะเบียนไว้ในฐานข้อมูลทุกครั้ง เพื่อป้องกันการโจมตีแบบ Open Redirect
   *  State Parameter: ไลบรารี jumbojett/openid-connect-php ที่ใช้ภายในมีการจัดการ state parameter โดยอัตโนมัติ เพื่อป้องกันการโจมตีแบบ CSRF ระหว่างการ Redirect
+  *  Audit Logging: ระบบบันทึกกิจกรรมทุกอย่างของการยืนยันตัวตนและจัดการระบบเพื่อความปลอดภัย
+  *  OAuth Scope Management: ระบบจัดการ OAuth scopes แบบอัตโนมัติให้สอดคล้องกับข้อกำหนดของ PSU SSO โดยไม่อนุญาตให้เลือก scopes ที่ไม่รองรับ
