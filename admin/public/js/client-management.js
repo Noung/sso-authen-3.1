@@ -498,14 +498,13 @@ function saveClient() {
                                             </button>
                                         </div>
                                         <div class="form-text text-muted">
-                                            <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
-                                            <strong>Security Note:</strong> Keep this secret key secure and never expose it in client-side code.
+                                            <i class="fas fa-exclamation-triangle me-1 text-warning"></i>This is the API secret key used to manage the users in your application. Keep this secret key secure and never expose it in client-side code.
                                         </div>
                                     </div>` : ''}
                                     
                                     ${isJWTMode ? `
                                     <div class="mb-0">
-                                        <label class="form-label fw-bold">JWT Secret:</label>
+                                        <label class="form-label fw-bold">JWT Secret Key:</label>
                                         <div class="input-group">
                                             <input type="password" class="form-control secret-field" value="Loading JWT secret..." readonly id="newJwtSecret">
                                             <button class="btn btn-outline-secondary toggle-btn" data-target="newJwtSecret" title="Show/Hide JWT Secret">
@@ -516,8 +515,8 @@ function saveClient() {
                                             </button>
                                         </div>
                                         <div class="form-text text-muted">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            This is the shared JWT secret used to verify tokens. Same for all clients.
+                                            <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
+                                            This is the shared JWT secret key used to verify tokens. Keep this secret key secure and never expose it in client-side code.
                                         </div>
                                     </div>` : ''}
                                 </div>
