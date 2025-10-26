@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "ask": [
+      "Read(!C:\\laragon\\www\\sso-authen-3/**)",
+      "Edit(!C:\\laragon\\www\\sso-authen-3/**)"
+    ],
+    "allow": [
+      "Read(C:\\laragon\\www\\sso-authen-3/**)",
+      "Edit(C:\\laragon\\www\\sso-authen-3/**)"
+    ]
+  },
+  "memoryImport": {},
+  "monitoring": {}
+}
