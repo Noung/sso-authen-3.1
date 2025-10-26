@@ -12,13 +12,13 @@ ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 
 // Load autoloader when available
+$autoloadLoaded = false;
 if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require_once __DIR__ . '/../vendor/autoload.php';
-}
-
-// Load main project autoloader (conditional)
-if (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
+    $autoloadLoaded = true;
+} elseif (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
     require_once __DIR__ . '/../../vendor/autoload.php';
+    $autoloadLoaded = true;
 } else {
     // For now, manually include required files
     require_once __DIR__ . '/../src/Database/Connection.php';
@@ -56,6 +56,19 @@ $config = require __DIR__ . '/../config/admin_config.php';
 // Start session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
+}
+
+// Ensure Connection class is available before using it
+if (!class_exists('SsoAdmin\Database\Connection')) {
+    // Try to manually load it if it's not already loaded
+    if (file_exists(__DIR__ . '/../src/Database/Connection.php')) {
+        require_once __DIR__ . '/../src/Database/Connection.php';
+    }
+}
+
+// Double-check that the class exists now
+if (!class_exists('SsoAdmin\Database\Connection')) {
+    die('FATAL ERROR: SsoAdmin\Database\Connection class could not be loaded');
 }
 
 // Initialize database connection
@@ -714,6 +727,10 @@ function renderSettingsPage()
                                         <table class="table table-striped table-hover history-table" id="historyTable">
                                             <thead>
                                                 <tr>
+                                                    <th>ID</th>
+                                                    <th>Secret Key</th>
+                                                    <th>Created By</th>
+                                                    <th>Created At</th>
                                                     <th>ID</th>
                                                     <th>Secret Key</th>
                                                     <th>Created By</th>
