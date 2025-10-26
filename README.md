@@ -138,15 +138,33 @@ sequenceDiagram
 
 ## 🚀 การติดตั้งและตั้งค่า (Installation & Configuration)
 
-### 1. ติดตั้งบริการกลาง
+### 1. ติดตั้งบริการหลัก
 
 ติดตั้ง sso-authen บน Server หรือ Subdomain ของตัวเอง (เช่น https://auth.your-org.com) จากนั้นใน Terminal ให้เข้าไปที่ไดเรกทอรีแล้วรันคำสั่ง:
 
 ```bash
+# ติดตั้ง dependencies สำหรับบริการหลัก
 composer install
 ```
 
-### 2. ตั้งค่าฐานข้อมูล
+### 2. ติดตั้ง Admin Panel
+
+Admin Panel มี dependencies ของตัวเองที่ต้องติดตั้งแยกต่างหาก:
+
+```bash
+# เข้าไปในไดเรกทอรี admin
+cd admin
+
+# ติดตั้ง dependencies สำหรับ Admin Panel
+composer install
+
+# กลับไปที่ไดเรกทอรีหลัก
+cd ..
+```
+
+**หมายเหตุสำคัญ:** ต้องรัน `composer install` ทั้งในไดเรกทอรีหลักและในไดเรกทอรี `admin/` เพื่อให้ระบบทำงานได้อย่างถูกต้อง หากรันเฉพาะที่ไดเรกทอรีหลักจะทำให้ Admin Panel ไม่สามารถโหลดคลาสที่จำเป็นได้
+
+### 3. ตั้งค่าฐานข้อมูล
 
 สร้างฐานข้อมูล MySQL ใหม่:
 
@@ -160,7 +178,7 @@ CREATE DATABASE sso_authen CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 php database/install.php
 ```
 
-### 3. ตั้งค่า `admin/config/admin_config.php`
+### 4. ตั้งค่า `admin/config/admin_config.php`
 
 เปิดไฟล์ `admin/config/admin_config.php` และกำหนดค่าการเชื่อมต่อฐานข้อมูล:
 
@@ -175,7 +193,7 @@ php database/install.php
 ],
 ```
 
-### 4. ตั้งค่า `config/config.php`
+### 5. ตั้งค่า `config/config.php`
 
 เปิดไฟล์ `sso-authen/config/config.php` และกำหนดค่า Provider:
 
@@ -184,7 +202,7 @@ php database/install.php
 $activeProvider = 'psu'; // ตัวอย่าง: 'psu', 'google', 'microsoft', 'auth0', 'okta'
 ```
 
-### 5. ตั้งค่า Provider Configuration
+### 6. ตั้งค่า Provider Configuration
 
 เปิดไฟล์ `config/providers/{provider}.php` และกำหนดค่า:
 
@@ -221,7 +239,7 @@ return [
 ];
 ```
 
-### 6. เข้าใช้งาน Admin Panel
+### 7. เข้าใช้งาน Admin Panel
 
 เปิด Browser ไปที่ `http://your-domain.com/admin/public/` และล็อกอินด้วยบัญชีผู้ดูแลระบบ:
 
@@ -231,6 +249,202 @@ Password: (ใช้โหมด Development โดยอัตโนมัต�
 ```
 
 JWT Secret Key จะตั้งค่าผ่านเมนู **System Configuration** ใน Admin Panel
+
+---
+
+## 🗄️ การเตรียมฐานข้อมูลสำหรับแอปพลิเคชันของคุณ
+
+เมื่อคุณต้องการเชื่อมต่อแอปพลิเคชันของคุณกับ `sso-authen` คุณจะต้องเตรียมฐานข้อมูลสำหรับจัดการข้อมูลผู้ใช้ภายในแอปของคุณเอง
+
+### 1. สร้างตารางผู้ใช้ (Users Table)
+
+ตัวอย่างโครงสร้างตารางผู้ใช้ขั้นต้น:
+
+```sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    first_name VARCHAR(255) NULL,
+    last_name VARCHAR(255) NULL,
+    role VARCHAR(50) DEFAULT 'user',
+    department VARCHAR(255) NULL,
+    position VARCHAR(255) NULL,
+    campus VARCHAR(255) NULL,
+    office_name VARCHAR(255) NULL,
+    faculty_id VARCHAR(50) NULL,
+    department_id VARCHAR(50) NULL,
+    campus_id VARCHAR(50) NULL,
+    `groups` TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_email (email),
+    INDEX idx_user_id (user_id),
+    INDEX idx_role (role)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### 2. สร้างตารางอื่นๆ ตามความจำเป็น
+
+คุณอาจต้องการสร้างตารางเพิ่มเติมสำหรับแอปพลิเคชันของคุณ เช่น:
+- ตาราง Roles และ Permissions (สำหรับระบบสิทธิ์ซับซ้อน)
+- ตาราง Sessions (หากต้องการจัดการ Session อย่างละเอียด)
+- ตาราง Logs (สำหรับบันทึกกิจกรรมของผู้ใช้)
+
+---
+
+## 🔧 การตั้งค่า Legacy Mode (สำหรับแอป PHP รุ่นเก่า)
+
+สำหรับแอปพลิเคชัน PHP รุ่นเก่าที่ไม่สามารถใช้ JWT ได้ ระบบรองรับการทำงานในโหมด Legacy Mode ซึ่ง sso-authen จะสร้าง Session ให้โดยตรง
+
+### 1. สร้างไฟล์ `user_handler.php`
+
+ในแอปพลิเคชันของคุณ ให้สร้างไฟล์ `api/user_handler.php` ที่มีหน้าที่จัดการข้อมูลผู้ใช้:
+
+```php
+<?php
+/**
+ * api/user_handler.php
+ * เทมเพลตสำหรับจัดการข้อมูลผู้ใช้ในฐานข้อมูลของแอปพลิเคชัน ที่แต่ละแอปพลิเคชันต้องสร้างขึ้นเอง
+ */
+
+/**
+ * ค้นหาผู้ใช้จากฐานข้อมูลด้วยข้อมูลจาก SSO หากไม่พบจะสร้างผู้ใช้ใหม่
+ *
+ * @param array $normalizedUser ข้อมูลผู้ใช้ที่ผ่านการแปลงชื่อฟิลด์เป็นมาตรฐานแล้ว
+ * @param object $ssoUserInfo ข้อมูลผู้ใช้ดิบที่ได้จาก PSU SSO
+ * @return array ข้อมูลผู้ใช้จากฐานข้อมูลภายในของแอปพลิเคชัน (รวม role)
+ */
+function findOrCreateUser(array $normalizedUser, object $ssoUserInfo): array
+{
+    // 1. เรียกใช้ไฟล์ตั้งค่าฐานข้อมูล
+    require_once __DIR__ . '/db_config.php';
+
+    // 2. ตั้งค่าการเชื่อมต่อ PDO
+    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
+
+    try {
+        // 3. เชื่อมต่อฐานข้อมูล
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+
+        // 4. ค้นหาผู้ใช้จากอีเมล (หรือ user_id ถ้าต้องการ)
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$normalizedUser['email']]);
+        $user = $stmt->fetch();
+
+        if ($user) {
+            // --- กรณีที่ 1: พบผู้ใช้ในระบบ (สมาชิกเก่า) ---
+
+            // อัปเดตข้อมูลล่าสุด (เผื่อมีการเปลี่ยนชื่อ-สกุล)
+            $updateStmt = $pdo->prepare("
+                UPDATE users SET
+                    name = ?, user_id = ?, first_name = ?, last_name = ?,
+                    department = ?, position = ?, campus = ?, office_name = ?,
+                    faculty_id = ?, department_id = ?, campus_id = ?, `groups` = ?
+                WHERE id = ?
+            ");
+            $updateStmt->execute([
+                $normalizedUser['name'],
+                $normalizedUser['id'], // user_id
+                $normalizedUser['firstName'] ?? null,
+                $normalizedUser['lastName'] ?? null,
+                $normalizedUser['department'] ?? null,
+                $normalizedUser['position'] ?? null,
+                $normalizedUser['campus'] ?? null,
+                $normalizedUser['officeName'] ?? null,
+                $normalizedUser['facultyId'] ?? null,
+                $normalizedUser['departmentId'] ?? null,
+                $normalizedUser['campusId'] ?? null,
+                isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null,
+                $user['id']
+            ]);
+
+            // คืนค่าข้อมูลผู้ใช้จากฐานข้อมูลของเรา
+            return $user;
+
+        } else {
+            // --- กรณีที่ 2: ไม่พบผู้ใช้ในระบบ (สมาชิกใหม่) ---
+
+            // กำหนด Role เริ่มต้น
+            $defaultRole = 'user';
+
+            // เตรียมข้อมูลและสร้างผู้ใช้ใหม่
+            $insertStmt = $pdo->prepare("
+                INSERT INTO users (
+                    user_id, email, name, first_name, last_name, role,
+                    department, position, campus, office_name,
+                    faculty_id, department_id, campus_id, `groups`
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $insertStmt->execute([
+                $normalizedUser['id'], // user_id
+                $normalizedUser['email'],
+                $normalizedUser['name'],
+                $normalizedUser['firstName'] ?? null,
+                $normalizedUser['lastName'] ?? null,
+                $defaultRole,
+                $normalizedUser['department'] ?? null,
+                $normalizedUser['position'] ?? null,
+                $normalizedUser['campus'] ?? null,
+                $normalizedUser['officeName'] ?? null,
+                $normalizedUser['facultyId'] ?? null,
+                $normalizedUser['departmentId'] ?? null,
+                $normalizedUser['campusId'] ?? null,
+                isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null
+            ]);
+
+            $newUserId = $pdo->lastInsertId();
+
+            // คืนค่าข้อมูลผู้ใช้ใหม่ที่เพิ่งสร้าง
+            return [
+                'id' => $newUserId,
+                'user_id' => $normalizedUser['id'],
+                'email' => $normalizedUser['email'],
+                'name' => $normalizedUser['name'],
+                'first_name' => $normalizedUser['firstName'] ?? null,
+                'last_name' => $normalizedUser['lastName'] ?? null,
+                'role' => $defaultRole,
+                'department' => $normalizedUser['department'] ?? null,
+                'position' => $normalizedUser['position'] ?? null,
+                'campus' => $normalizedUser['campus'] ?? null,
+                'office_name' => $normalizedUser['officeName'] ?? null,
+                'faculty_id' => $normalizedUser['facultyId'] ?? null,
+                'department_id' => $normalizedUser['departmentId'] ?? null,
+                'campus_id' => $normalizedUser['campusId'] ?? null,
+                'groups' => isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null
+            ];
+        }
+
+    } catch (\PDOException $e) {
+        // หากมีปัญหาในการเชื่อมต่อหรือคิวรีฐานข้อมูล ให้หยุดการทำงานและแสดงข้อผิดพลาด
+        // ในระบบจริง ควรจะบันทึก Log แทนการ die()
+        throw new \PDOException($e->getMessage(), (int)$e->getCode());
+    }
+}
+```
+
+### 2. สร้างไฟล์ `db_config.php`
+
+สร้างไฟล์ `api/db_config.php` สำหรับการตั้งค่าการเชื่อมต่อฐานข้อมูล:
+
+```php
+<?php
+// api/db_config.php
+
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'your_app_database'); // <-- แก้ไขชื่อฐานข้อมูลของคุณ
+define('DB_USER', 'root');              // <-- User ของฐานข้อมูล
+define('DB_PASS', '');                  // <-- Password ของฐานข้อมูล
+define('DB_CHARSET', 'utf8mb4');
+?>
+```
 
 ---
 
@@ -321,12 +535,81 @@ if (token) {
 }
 ```
 
-ขั้นตอนที่ 5: ป้องกันหน้าเพจและเรียกใช้ API
+### 5: ป้องกันหน้าเพจและเรียกใช้ API
 สำหรับแอป PHP: ใช้ $_SESSION ที่สร้างขึ้นในหน้า Callback เพื่อตรวจสอบการล็อกอิน
 สำหรับแอป JS: นำ jwt_token ที่เก็บไว้ใน localStorage มาแนบกับ Authorization Header ในทุกๆ Request ที่ส่งไปยัง Backend ของคุณ
 
 ```JS
 Authorization: Bearer <your_jwt_token>
+```
+
+---
+
+## 🛡️ การป้องกันหน้าเพจ (Auth Guard)
+
+### 1. สำหรับแอป PHP (Legacy Mode)
+
+สำหรับทุกหน้าที่ต้องการการยืนยันตัวตน ให้เพิ่มโค้ด "ยามเฝ้าประตู" (Auth Guard) ไว้ที่บรรทัดบนสุดของไฟล์:
+
+```php
+<?php
+// protected_page.php
+
+if (!session_id()) {
+    session_start();
+}
+
+// ตรวจสอบสถานะการล็อกอิน
+if (!isset($_SESSION['user_is_logged_in']) || !$_SESSION['user_is_logged_in']) {
+    // ถ้ายังไม่ได้ล็อกอิน ให้ส่งไปหน้า login ของไลบรารี
+    header("Location: /sso-authen/public/login.php");
+    exit;
+}
+
+// หากล็อกอินแล้ว สามารถดึงข้อมูลผู้ใช้จาก Session มาใช้งานได้
+$currentUser = $_SESSION['user_info'];
+echo "ยินดีต้อนรับ, " . htmlspecialchars($currentUser['name']);
+```
+
+### 2. สำหรับแอปที่ใช้ JWT Mode
+
+สำหรับแอปที่ใช้ JWT Mode คุณต้องตรวจสอบ Token ในแต่ละ Request:
+
+```php
+<?php
+// protected_api.php
+
+require 'vendor/autoload.php';
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
+// ดึง Token จาก Header
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? '';
+$jwt = null;
+
+if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    $jwt = $matches[1];
+}
+
+if (!$jwt) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Token not provided']);
+    exit;
+}
+
+try {
+    $decoded = JWT::decode($jwt, new Key(JWT_SHARED_SECRET_KEY, 'HS256'));
+    $userInfo = (array) $decoded->data;
+    
+    // ใช้ข้อมูลผู้ใช้
+    echo "ยินดีต้อนรับ, " . htmlspecialchars($userInfo['name']);
+    
+} catch (\Exception $e) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Invalid token']);
+    exit;
+}
 ```
 
 ---
@@ -397,211 +680,122 @@ Authorization: Bearer <your_jwt_token>
 ```php
 <?php // db_config.php
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'your_database_name');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_NAME', 'your_app_database');
+define('DB_USER', 'your_db_username');
+define('DB_PASS', 'your_db_password');
 define('DB_CHARSET', 'utf8mb4');
+?>
 ```
 
-### 2. สร้างตารางสมาชิก (สำหรับแอปพลิเคชัน ถ้ายังไม่มี)
+### 2. ตั้งค่า API Secret Key (สำหรับเว็บแอปพลิเคชัน)
 
-รันคำสั่ง SQL นี้ในฐานข้อมูลของแอปพลิเคชันเพื่อสร้างตาราง `users` พร้อมรองรับ Extended Claims:
-
-```sql
-CREATE TABLE `users` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` varchar(255) DEFAULT NULL,
-  `email` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `first_name` varchar(255) DEFAULT NULL,
-  `last_name` varchar(255) DEFAULT NULL,
-  `role` varchar(50) NOT NULL DEFAULT 'subscriber',
-  `department` varchar(255) DEFAULT NULL,
-  `position` varchar(255) DEFAULT NULL,
-  `campus` varchar(255) DEFAULT NULL,
-  `office_name` varchar(255) DEFAULT NULL,
-  `faculty_id` varchar(50) DEFAULT NULL,
-  `department_id` varchar(50) DEFAULT NULL,
-  `campus_id` varchar(50) DEFAULT NULL,
-  `groups` text DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`),
-  KEY `idx_faculty_id` (`faculty_id`),
-  KEY `idx_department_id` (`department_id`),
-  KEY `idx_campus_id` (`campus_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
-
-### 3. สร้างไฟล์จัดการผู้ใช้ของเว็บแอปใน Legacy Mode (user_handler.php)
-
-ในโปรเจกต์หลักของคุณ (your-webapp) สร้างไฟล์ `user_handler.php` ที่มีฟังก์ชัน `findOrCreateUser()` เพื่อค้นหาหรือสร้างผู้ใช้ตามข้อมูลที่ได้รับจาก SSO เพื่อจัดการกับฐานข้อมูลสมาชิกของแอปพลิเคชันคุณเอง
+เมื่อลงทะเบียนแอปใน Admin Panel แล้ว ให้นำ API Secret Key ที่ได้ไปกำหนดในเว็บแอปพลิเคชันของคุณ:
 
 ```php
 <?php
-/**
- * www/user_handler.php
- * เทมเพลตสำหรับจัดการข้อมูลผู้ใช้ในฐานข้อมูลของแอปพลิเคชัน
- * นี่คือไฟล์ "สัญญาใจ" ที่แต่ละแอปพลิเคชันต้องสร้างขึ้นเอง
- */
-
-/**
- * ค้นหาผู้ใช้จากฐานข้อมูลด้วยข้อมูลจาก SSO หากไม่พบจะสร้างผู้ใช้ใหม่
- *
- * @param array $normalizedUser ข้อมูลผู้ใช้ที่ผ่านการแปลงชื่อฟิลด์เป็นมาตรฐานแล้ว
- * @param object $ssoUserInfo ข้อมูลผู้ใช้ดิบที่ได้จาก Provider SSO
- * @return array ข้อมูลผู้ใช้จากฐานข้อมูลภายในของแอปพลิเคชัน (รวม role)
- */
-function findOrCreateUser(array $normalizedUser, object $ssoUserInfo): array {
-    // 1. เรียกใช้ไฟล์ตั้งค่าฐานข้อมูล
-    require_once __DIR__ . '/db_config.php';
-
-    // 2. ตั้งค่าการเชื่อมต่อ PDO
-    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
-    $options = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-    ];
-
-    try {
-        // 3. เชื่อมต่อฐานข้อมูล
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-
-        // 4. ค้นหาผู้ใช้จากอีเมล (หรือ user_id ถ้าต้องการ)
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->execute([$normalizedUser['email']]);
-        $user = $stmt->fetch();
-
-        if ($user) {
-            // --- กรณีที่ 1: พบผู้ใช้ในระบบ (สมาชิกเก่า) ---
-
-            // อัปเดตข้อมูลล่าสุด (เผื่อมีการเปลี่ยนชื่อ-สกุล)
-            $updateStmt = $pdo->prepare("
-                UPDATE users SET 
-                    name = ?, user_id = ?, first_name = ?, last_name = ?,
-                    department = ?, position = ?, campus = ?, office_name = ?,
-                    faculty_id = ?, department_id = ?, campus_id = ?, `groups` = ?
-                WHERE id = ?
-            ");
-            $updateStmt->execute([
-                $normalizedUser['name'],
-                $normalizedUser['id'], // user_id
-                $normalizedUser['firstName'] ?? null,
-                $normalizedUser['lastName'] ?? null,
-                $normalizedUser['department'] ?? null,
-                $normalizedUser['position'] ?? null,
-                $normalizedUser['campus'] ?? null,
-                $normalizedUser['officeName'] ?? null,
-                $normalizedUser['facultyId'] ?? null,
-                $normalizedUser['departmentId'] ?? null,
-                $normalizedUser['campusId'] ?? null,
-                isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null,
-                $user['id']
-            ]);
-            
-            // คืนค่าข้อมูลผู้ใช้จากฐานข้อมูลของเรา
-            return $user;
-
-        } else {
-            // --- กรณีที่ 2: ไม่พบผู้ใช้ในระบบ (สมาชิกใหม่) ---
-
-            // กำหนด Role เริ่มต้น
-            $defaultRole = 'subscriber';
-
-            // เตรียมข้อมูลและสร้างผู้ใช้ใหม่
-            $insertStmt = $pdo->prepare("
-                INSERT INTO users (
-                    user_id, email, name, first_name, last_name, role,
-                    department, position, campus, office_name,
-                    faculty_id, department_id, campus_id, `groups`
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            $insertStmt->execute([
-                $normalizedUser['id'], // user_id
-                $normalizedUser['email'],
-                $normalizedUser['name'],
-                $normalizedUser['firstName'] ?? null,
-                $normalizedUser['lastName'] ?? null,
-                $defaultRole,
-                $normalizedUser['department'] ?? null,
-                $normalizedUser['position'] ?? null,
-                $normalizedUser['campus'] ?? null,
-                $normalizedUser['officeName'] ?? null,
-                $normalizedUser['facultyId'] ?? null,
-                $normalizedUser['departmentId'] ?? null,
-                $normalizedUser['campusId'] ?? null,
-                isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null
-            ]);
-
-            $newUserId = $pdo->lastInsertId();
-
-            // คืนค่าข้อมูลผู้ใช้ใหม่ที่เพิ่งสร้าง
-            return [
-                'id' => $newUserId,
-                'user_id' => $normalizedUser['id'],
-                'email' => $normalizedUser['email'],
-                'name' => $normalizedUser['name'],
-                'first_name' => $normalizedUser['firstName'] ?? null,
-                'last_name' => $normalizedUser['lastName'] ?? null,
-                'role' => $defaultRole,
-                'department' => $normalizedUser['department'] ?? null,
-                'position' => $normalizedUser['position'] ?? null,
-                'campus' => $normalizedUser['campus'] ?? null,
-                'office_name' => $normalizedUser['officeName'] ?? null,
-                'faculty_id' => $normalizedUser['facultyId'] ?? null,
-                'department_id' => $normalizedUser['departmentId'] ?? null,
-                'campus_id' => $normalizedUser['campusId'] ?? null,
-                'groups' => isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null
-            ];
-        }
-
-    } catch (\PDOException $e) {
-        // หากมีปัญหาในการเชื่อมต่อหรือคิวรีฐานข้อมูล ให้หยุดการทำงานและแสดงข้อผิดพลาด
-        // ในระบบจริง ควรจะบันทึก Log แทนการ die()
-        throw new \PDOException($e->getMessage(), (int)$e->getCode());
-    }
-}
-```
-
-### 4. การป้องกันหน้าเพจ (Auth Guard) กรณีเว็บแอป PHP
-
-สำหรับทุกหน้าที่ต้องการการยืนยันตัวตน ให้เพิ่มโค้ด "ยามเฝ้าประตู" (Auth Guard) ไว้ที่บรรทัดบนสุดของไฟล์
-
-ตัวอย่าง:
-
-```php
-<?php
-// protected_page.php
-
-if (!session_id()) {
-    session_start();
-}
-
-// ตรวจสอบสถานะการล็อกอิน
-if (!isset($_SESSION['user_is_logged_in']) || !$_SESSION['user_is_logged_in']) {
-    // ถ้ายังไม่ได้ล็อกอิน ให้ส่งไปหน้า login ของไลบรารี
-    header("Location: /sso-authen/public/login.php");
-    exit;
-}
-
-// หากล็อกอินแล้ว สามารถดึงข้อมูลผู้ใช้จาก Session มาใช้งานได้
-$currentUser = $_SESSION['user_info'];
-echo "ยินดีต้อนรับ, " . htmlspecialchars($currentUser['name']);
+// app_config.php
+const APP_API_SECRET_KEY = 'YOUR_GENERATED_API_SECRET_KEY';
+?>
 ```
 
 ---
 
-### 💡 บันทึกทางเทคนิค (Technical Notes)
-สำหรับนักพัฒนาที่ต้องการทำความเข้าใจสถาปัตยกรรมเบื้องหลังของ sso-authen V.3.1
+## 🛠️ แนวทางแก้ไขปัญหาที่พบบ่อย (Troubleshooting)
 
-* Stateless JWT Flow: หัวใจของ V.3.1 คือการเปลี่ยนจากการใช้ PHP Session ในการจัดการสถานะล็อกอิน มาเป็นการออก JWT ที่มีการลงลายเซ็น ทำให้บริการเป็นแบบ Stateless และสามารถให้บริการกับ Client ที่หลากหลายได้โดยไม่จำเป็นต้องแชร์สถานะร่วมกัน
-* Dynamic Client Configuration: sso-authen ใช้ฐานข้อมูลในการจัดเก็บข้อมูล client applications แทนการ hard-code ทำให้สามารถจัดการ client ได้แบบไดนามิกผ่าน Admin Panel
-* API Contract is Key: การแยกหน้าที่ระหว่าง "Authentication" (โดย sso-authen) และ "Authorization" (โดย Client App) เกิดขึ้นผ่าน user_handler_endpoint การที่ Client App จัดการฐานข้อมูลผู้ใช้และกำหนดสิทธิ์ (role) ของตัวเอง ทำให้ sso-authen ไม่ต้องยุ่งเกี่ยวกับตรรกะภายในของแต่ละแอปเลย
-* Backward Compatibility: การตั้งค่า user_handler_endpoint เป็น null สำหรับ Client ใดๆ ใน config.php จะทำให้ SsoHandler สลับไปทำงานใน "Legacy Mode" โดยจะเรียกใช้ findOrCreateUser() จากไฟล์ user_handler.php และสร้าง $_SESSION โดยตรง เหมาะสำหรับแอปพลิเคชัน PHP รุ่นเก่าที่ไม่ต้องการปรับปรุงเป็น JWT Flow
-* Security:
-  *  Redirect URI Validation: login.php จะตรวจสอบ redirect_uri ที่ Client ส่งมากับค่าที่ลงทะเบียนไว้ในฐานข้อมูลทุกครั้ง เพื่อป้องกันการโจมตีแบบ Open Redirect
-  *  State Parameter: ไลบรารี jumbojett/openid-connect-php ที่ใช้ภายในมีการจัดการ state parameter โดยอัตโนมัติ เพื่อป้องกันการโจมตีแบบ CSRF ระหว่างการ Redirect
-  *  Audit Logging: ระบบบันทึกกิจกรรมทุกอย่างของการยืนยันตัวตนและจัดการระบบเพื่อความปลอดภัย
-  *  OAuth Scope Management: ระบบจัดการ OAuth scopes แบบอัตโนมัติให้สอดคล้องกับข้อกำหนดของ PSU SSO โดยไม่อนุญาตให้เลือก scopes ที่ไม่รองรับ
+### ปัญหา: Admin Panel ไม่สามารถโหลดหน้าเว็บได้ หรือขึ้นข้อความ "Class not found"
+
+**สาเหตุ:** ปัญหานี้เกิดจากการไม่ได้ติดตั้ง dependencies สำหรับ Admin Panel อย่างถูกต้อง
+
+**วิธีแก้ไข:**
+
+1. ตรวจสอบว่าได้รัน `composer install` ในทั้งสองไดเรกทอรีแล้ว:
+   ```bash
+   # ติดตั้ง dependencies สำหรับบริการหลัก
+   composer install
+   
+   # ติดตั้ง dependencies สำหรับ Admin Panel
+   cd admin
+   composer install
+   cd ..
+   ```
+
+2. ตรวจสอบว่าโฟลเดอร์ `vendor/` ถูกสร้างขึ้นในทั้งสองไดเรกทอรี:
+   - `/vendor/` (สำหรับบริการหลัก)
+   - `/admin/vendor/` (สำหรับ Admin Panel)
+
+3. หากยังมีปัญหา ให้ลองลบทิ้งโฟลเดอร์ `vendor/` และ `composer.lock` แล้วรัน `composer install` ใหม่:
+   ```bash
+   # สำหรับบริการหลัก
+   rm -rf vendor composer.lock
+   composer install
+   
+   # สำหรับ Admin Panel
+   cd admin
+   rm -rf vendor composer.lock
+   composer install
+   cd ..
+   ```
+
+### ปัญหา: ไม่สามารถเชื่อมต่อฐานข้อมูลได้
+
+**สาเหตุ:** การตั้งค่าการเชื่อมต่อฐานข้อมูลไม่ถูกต้อง
+
+**วิธีแก้ไข:**
+
+1. ตรวจสอบการตั้งค่าใน `config/config.php` (สำหรับบริการหลัก)
+2. ตรวจสอบการตั้งค่าใน `admin/config/admin_config.php` (สำหรับ Admin Panel)
+3. ตรวจสอบว่าเซิร์ฟเวอร์ฐานข้อมูลทำงานอยู่
+4. ตรวจสอบว่าฐานข้อมูล `sso_authen` ถูกสร้างแล้ว
+
+### ปัญหา: ไม่สามารถ Login ด้วย PSU SSO ได้
+
+**สาเหตุ:** การตั้งค่า Provider ไม่ถูกต้อง หรือ Redirect URI ไม่ตรงกับที่ลงทะเบียน
+
+**วิธีแก้ไข:**
+
+1. ตรวจสอบการตั้งค่าใน `config/providers/psu.php`
+2. ตรวจสอบว่า `redirectUri` ตรงกับที่ลงทะเบียนในระบบ PSU SSO
+3. ตรวจสอบว่า URL ของเว็บแอปสามารถเข้าถึงได้จากภายนอก (ไม่ใช่ localhost)
+
+---
+
+## 📈 การตรวจสอบและบำรุงรักษา (Monitoring & Maintenance)
+
+### 1. ตรวจสอบ Log Files
+
+ระบบจะบันทึกกิจกรรมสำคัญไว้ในไฟล์ log:
+- `admin/storage/logs/` - ไฟล์ log ของ Admin Panel
+- ตรวจสอบ error log ของ web server สำหรับข้อผิดพลาดของระบบ
+
+### 2. สำรองข้อมูลฐานข้อมูล
+
+ควรตั้งค่าระบบสำรองข้อมูลฐานข้อมูลเป็นประจำ:
+```bash
+mysqldump -u username -p sso_authen > backup/sso_authen_backup_$(date +%Y%m%d).sql
+```
+
+### 3. อัปเดต Security Keys
+
+ควรเปลี่ยน JWT Secret Key เป็นระยะๆ ผ่าน Admin Panel:
+1. เข้าเมนู **System Configuration**
+2. คลิก **Generate New Secret Key**
+3. บันทึก Key ใหม่และอัปเดตในแอปพลิเคชันที่เชื่อมต่อ
+
+---
+
+## 📚 แหล่งข้อมูลเพิ่มเติม (Additional Resources)
+
+* **PSU SSO Documentation:** https://psusso.psu.ac.th/docs
+* **OpenID Connect Specification:** https://openid.net/connect/
+* **Firebase PHP-JWT Library:** https://github.com/firebase/php-jwt
+* **OIDC PHP Library:** https://github.com/jumbojett/OpenID-Connect-PHP
+
+---
+
+## 📞 ติดต่อสอบถาม (Contact)
+
+หากมีข้อสงสัยหรือพบปัญหาในการติดตั้ง สามารถติดต่อได้ที่:
+- Email: kittisak.k@psu.ac.th
+- GitHub Issues: https://github.com/Noung/sso-authen-3/issues
+
+---
