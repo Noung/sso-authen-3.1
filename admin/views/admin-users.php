@@ -420,11 +420,12 @@
                     <table class="table table-hover" id="adminUsersTable">
                         <thead class="table-dark">
                             <tr>
-                                <th style="width: 30%">Name</th>
-                                <th style="width: 30%">Email</th>
-                                <th style="width: 15%">Role</th>
+                                <th style="width: 25%">Name</th>
+                                <th style="width: 25%">Email</th>
+                                <th style="width: 10%">Role</th>
                                 <th style="width: 10%">Status</th>
-                                <th style="width: 15%">Created</th>
+                                <th style="width: 10%">Created</th>
+                                <th style="width: 10%">Last Login</th>
                                 <th style="width: 10%">Actions</th>
                             </tr>
                         </thead>
@@ -445,6 +446,11 @@
                         <td class="text-center">
                             <span title="${new Date(user.created_at).toLocaleString('th-TH')}">
                                 ${createdDate}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span title="${user.last_login ? new Date(user.last_login).toLocaleString('th-TH') : 'Never'}">
+                                ${user.last_login ? new Date(user.last_login).toLocaleDateString('th-TH') : 'Never'}
                             </span>
                         </td>
                         <td class="text-center">
