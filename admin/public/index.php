@@ -24,11 +24,53 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require_once __DIR__ . '/../src/Database/Connection.php';
     require_once __DIR__ . '/../src/Models/Client.php';
     require_once __DIR__ . '/../src/Models/AdminUser.php';
-    require_once __DIR__ . '/../src/Models/BackupManager.php'; // Add this line
+    require_once __DIR__ . '/../src/Models/BackupManager.php';
     require_once __DIR__ . '/../src/Controllers/AuthController.php';
     require_once __DIR__ . '/../src/Controllers/ClientController.php';
     require_once __DIR__ . '/../src/Controllers/DashboardController.php';
     require_once __DIR__ . '/../src/Controllers/AdminUserController.php';
+}
+
+// Ensure all SsoAdmin classes are available before using them
+$requiredClasses = [
+    'SsoAdmin\Database\Connection',
+    'SsoAdmin\Controllers\AuthController',
+    'SsoAdmin\Controllers\ClientController',
+    'SsoAdmin\Controllers\DashboardController',
+    'SsoAdmin\Controllers\AdminUserController',
+    'SsoAdmin\Models\Client',
+    'SsoAdmin\Models\AdminUser',
+    'SsoAdmin\Models\BackupManager'
+];
+
+foreach ($requiredClasses as $class) {
+    if (!class_exists($class)) {
+        // Try to manually load it if it's not already loaded
+        $classMap = [
+            'SsoAdmin\Database\Connection' => '/../src/Database/Connection.php',
+            'SsoAdmin\Controllers\AuthController' => '/../src/Controllers/AuthController.php',
+            'SsoAdmin\Controllers\ClientController' => '/../src/Controllers/ClientController.php',
+            'SsoAdmin\Controllers\DashboardController' => '/../src/Controllers/DashboardController.php',
+            'SsoAdmin\Controllers\AdminUserController' => '/../src/Controllers/AdminUserController.php',
+            'SsoAdmin\Models\Client' => '/../src/Models/Client.php',
+            'SsoAdmin\Models\AdminUser' => '/../src/Models/AdminUser.php',
+            'SsoAdmin\Models\BackupManager' => '/../src/Models/BackupManager.php'
+        ];
+        
+        if (isset($classMap[$class])) {
+            $file = __DIR__ . $classMap[$class];
+            if (file_exists($file)) {
+                require_once $file;
+            }
+        }
+    }
+}
+
+// Double-check that all required classes exist now
+foreach ($requiredClasses as $class) {
+    if (!class_exists($class)) {
+        die("FATAL ERROR: Required class '$class' could not be loaded");
+    }
 }
 
 // Use statements - moved to top of file
@@ -37,6 +79,7 @@ use SsoAdmin\Controllers\AuthController;
 use SsoAdmin\Controllers\ClientController;
 use SsoAdmin\Controllers\DashboardController;
 use SsoAdmin\Controllers\AdminUserController;
+use SsoAdmin\Models\Client;
 
 // Load environment variables
 if (file_exists(__DIR__ . '/../.env')) {
@@ -727,10 +770,6 @@ function renderSettingsPage()
                                         <table class="table table-striped table-hover history-table" id="historyTable">
                                             <thead>
                                                 <tr>
-                                                    <th>ID</th>
-                                                    <th>Secret Key</th>
-                                                    <th>Created By</th>
-                                                    <th>Created At</th>
                                                     <th>ID</th>
                                                     <th>Secret Key</th>
                                                     <th>Created By</th>
