@@ -13,7 +13,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
     exit;
 }
 
-// Handle login POST request
+// Handle login POST request (development mode)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
@@ -31,6 +31,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Get base path
 $basePath = dirname($_SERVER['SCRIPT_NAME']);
+
+// Check for error messages
+$errorMessage = '';
+if (isset($_GET['error'])) {
+    $errorMessage = $_GET['message'] ?? 'An unknown error occurred';
+    
+    // Make the error message more user-friendly
+    if ($errorMessage === 'User not authorized to access admin panel') {
+        $errorMessage = 'You are not authorized to access the admin panel. Please contact your system administrator.';
+    } elseif (strpos($errorMessage, 'API Endpoint returned HTTP status') !== false) {
+        $errorMessage = 'Authentication service is temporarily unavailable. Please try again later.';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -49,28 +62,47 @@ $basePath = dirname($_SERVER['SCRIPT_NAME']);
         body {
             font-family: 'Bai Jamjuree', sans-serif;
         }
+        .login-card {
+            border-radius: 15px;
+        }
+        .btn-oidc {
+            background-color: #4285f4;
+            border-color: #4285f4;
+            color: white;
+        }
+        .btn-oidc:hover {
+            background-color: #3367d6;
+            border-color: #3367d6;
+        }
     </style>
 </head>
 <body class="bg-light">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-4">
-                <div class="card shadow mt-5">
+                <div class="card shadow mt-5 login-card">
                     <div class="card-body">
                         <div class="text-center mb-4">
                             <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
                             <h3>SSO-Authen Admin Panel</h3>
-                            <p class="text-muted">Login with SSO</p>
+                            <p class="text-muted">Choose your preferred login method</p>
                         </div>
                         
-                        <div class="d-grid">
-                            <button onclick="devLogin()" class="btn btn-primary btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                        <?php if ($errorMessage): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error:</strong> <?php echo htmlspecialchars($errorMessage); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="auth/login.php" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login with SSO
+                            </a>
+                            
+                            <button onclick="devLogin()" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-user-gear me-2"></i>Login with Dev Mode
                             </button>
-                        </div>
-                        
-                        <div class="text-center mt-3">
-                            <small class="text-muted">Development Mode - Click to login as admin</small>
                         </div>
                         
                         <div class="text-center mt-4">
@@ -85,15 +117,11 @@ $basePath = dirname($_SERVER['SCRIPT_NAME']);
                     </div>
                 </div>
                 
-                <div class="text-center mt-3">
-                    <a href="<?php echo $basePath; ?>/simple_admin.php" class="btn btn-secondary">
-                        <i class="fas fa-cog me-1"></i>Simple Admin (Backup)
-                    </a>
-                </div>
             </div>
         </div>
     </div>
     
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function devLogin() {
             // Show loading

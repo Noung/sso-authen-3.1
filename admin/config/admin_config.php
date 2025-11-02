@@ -30,10 +30,10 @@ return [
     
     'auth' => [
         'oidc' => [
-            'provider_url' => 'http://localhost:8080/sso-authen-3/public/',
-            'client_id' => 'admin-panel',
-            'client_secret' => 'admin-panel-secret-key',
-            'redirect_uri' => 'http://localhost:8080/sso-authen-3/admin/public/auth/callback',
+            'provider_url' => 'https://accounts.google.com',
+            'client_id' => '841929617973-4mld7p3iich53cou6aor1dunipnumtqq.apps.googleusercontent.com',
+            'client_secret' => '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',
+            'redirect_uri' => 'http://localhost/sso-authen-3/admin/public/auth/callback.php',
             'scopes' => ['openid', 'profile', 'email'],
         ],
         'development' => [
