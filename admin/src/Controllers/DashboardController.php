@@ -358,11 +358,13 @@ class DashboardController
         // Define role-based access
         $isAdmin = in_array($userRole, ['admin', 'super_admin']);
         $isSuperAdmin = ($userRole === 'super_admin');
+        $isViewer = ($userRole === 'viewer');
         
         // Debug: Log the user role and permissions
         error_log('Dashboard page - User role: ' . $userRole);
         error_log('Dashboard page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
         error_log('Dashboard page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
+        error_log('Dashboard page - Is viewer: ' . ($isViewer ? 'true' : 'false'));
 
         return '<!DOCTYPE html>
 <html lang="th">
@@ -421,13 +423,12 @@ class DashboardController
                             </a>
                         </li>
                         ' : '') . '
-                        ' . ($isAdmin || $isSuperAdmin ? '
+                        <!-- Viewers should also see Usage Statistics -->
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/statistics">
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
-                        ' : '') . '
                         ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/admin-users">
@@ -480,13 +481,12 @@ class DashboardController
                             </a>
                         </li>
                         ' : '') . '
-                        ' . ($isAdmin || $isSuperAdmin ? '
+                        <!-- Viewers should also see Usage Statistics -->
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/statistics">
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
-                        ' : '') . '
                         ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/admin-users">

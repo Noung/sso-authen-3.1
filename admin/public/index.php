@@ -2866,10 +2866,12 @@ function renderStatisticsPage()
     // Define role-based access
     $isAdmin = in_array($userRole, ['admin', 'super_admin']);
     $isSuperAdmin = ($userRole === 'super_admin');
+    $isViewer = ($userRole === 'viewer');
     
     // Debug: Log role checks
     error_log('Statistics page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
     error_log('Statistics page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
+    error_log('Statistics page - Is viewer: ' . ($isViewer ? 'true' : 'false'));
     
     // Build the sidebar HTML with role-based visibility
     $mobileSidebar = '
@@ -2889,6 +2891,7 @@ function renderStatisticsPage()
         </li>';
     }
     
+    // Viewers should also see Usage Statistics
     $mobileSidebar .= '
         <li class="nav-item">
             <a class="nav-link active" href="' . $basePath . '/statistics">
@@ -2949,6 +2952,7 @@ function renderStatisticsPage()
         </li>';
     }
     
+    // Viewers should also see Usage Statistics
     $desktopSidebar .= '
         <li class="nav-item">
             <a class="nav-link active" href="' . $basePath . '/statistics">
