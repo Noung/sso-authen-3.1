@@ -825,17 +825,14 @@ function renderSettingsPage()
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
-                                    <i class="fas fa-book me-2"></i>API Documentation
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="' . $basePath . '/claims-update.html" target="_blank">
-                                    <i class="fas fa-certificate me-2"></i>Extended Claims
+                                    <i class="fas fa-book me-2"></i>Documentation
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </div>
+
+                <!-- Main content -->
 
                 <!-- Main content -->
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
@@ -3072,11 +3069,13 @@ function renderStatisticsPage()
         <div class="container-fluid">
             <!-- Mobile Menu Toggle -->
             <button class="btn mobile-menu-toggle d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle navigation">
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
+                <i class="fas fa-bars"></i>
+            </button>
+            
             <a class="navbar-brand" href="' . $basePath . '">
                 <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
+            
             <div class="navbar-nav ms-auto">
                 <div class="dropdown">
                     <button class="btn btn-link nav-link dropdown-toggle text-white text-decoration-none" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
