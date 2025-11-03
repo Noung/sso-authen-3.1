@@ -1470,6 +1470,74 @@ function handleApiToggleAdminUserStatus($id)
     }
 }
 
+function handleApiToggleStatus($id)
+{
+    checkAdminAuth();
+    header('Content-Type: application/json');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'PATCH') {
+        echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+        http_response_code(405);
+        return;
+    }
+
+    // Check if the current admin user has permission to toggle this client's status
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+    
+    // For admins, verify they created this client
+    if ($userRole === 'admin') {
+        require_once __DIR__ . '/../src/Models/Client.php';
+        $client = SsoAdmin\Models\Client::getById((int)$id);
+        if (!$client || $client['created_by'] !== $adminEmail) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied: You can only toggle status for clients you created'
+            ]);
+            http_response_code(403);
+            return;
+        }
+    }
+
+    $controller = new ClientController();
+
+    $mockRequest = new stdClass();
+    $mockResponse = new class {
+        public $content = '';
+        public function getBody()
+        {
+            return $this;
+        }
+        public function write($content)
+        {
+            $this->content = $content;
+        }
+        public function withHeader($name, $value)
+        {
+            header("$name: $value");
+            return $this;
+        }
+        public function withStatus($code)
+        {
+            http_response_code($code);
+            return $this;
+        }
+    };
+
+    $args = ['id' => $id];
+
+    try {
+        $controller->toggleStatus($mockRequest, $mockResponse, $args);
+        echo $mockResponse->content;
+    } catch (Exception $e) {
+        error_log('Exception in handleApiToggleStatus: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiToggleStatus: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    }
+}
+
 function handleApiAdminUserRoles()
 {
     checkAdminAuth();
@@ -1690,6 +1758,24 @@ function handleApiClientById($id)
     checkAdminAuth();
     header('Content-Type: application/json');
 
+    // Check if the current admin user has permission to access this client
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+    
+    // For admins, verify they created this client
+    if ($userRole === 'admin') {
+        require_once __DIR__ . '/../src/Models/Client.php';
+        $client = SsoAdmin\Models\Client::getById((int)$id);
+        if (!$client || $client['created_by'] !== $adminEmail) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied: You can only access clients you created'
+            ]);
+            http_response_code(403);
+            return;
+        }
+    }
+
     $controller = new ClientController();
     $method = $_SERVER['REQUEST_METHOD'];
 
@@ -1756,56 +1842,6 @@ function handleApiClientById($id)
 }
 
 
-
-function handleApiToggleStatus($id)
-{
-    checkAdminAuth();
-    header('Content-Type: application/json');
-
-    if ($_SERVER['REQUEST_METHOD'] !== 'PATCH') {
-        echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-        http_response_code(405);
-        return;
-    }
-
-    $controller = new ClientController();
-
-    $mockRequest = new stdClass();
-    $mockResponse = new class {
-        public $content = '';
-        public function getBody()
-        {
-            return $this;
-        }
-        public function write($content)
-        {
-            $this->content = $content;
-        }
-        public function withHeader($name, $value)
-        {
-            header("$name: $value");
-            return $this;
-        }
-        public function withStatus($code)
-        {
-            http_response_code($code);
-            return $this;
-        }
-    };
-
-    $args = ['id' => $id];
-
-    try {
-        $controller->toggleStatus($mockRequest, $mockResponse, $args);
-        echo $mockResponse->content;
-    } catch (Exception $e) {
-        error_log('Exception in handleApiToggleStatus: ' . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
-    } catch (Error $e) {
-        error_log('Error in handleApiToggleStatus: ' . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
-    }
-}
 
 /**
  * Handle JWT Secret API with enhanced security
@@ -2145,6 +2181,24 @@ function handleApiIndividualClientStatistics($clientId)
 
     try {
         require_once __DIR__ . '/../src/Models/UsageStatistics.php';
+        require_once __DIR__ . '/../src/Models/Client.php';
+
+        // Check if the current admin user has permission to view this client
+        $userRole = $_SESSION['admin_role'] ?? 'viewer';
+        $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+        
+        // For admins, verify they created this client
+        if ($userRole === 'admin') {
+            $client = SsoAdmin\Models\Client::getById((int)$clientId);
+            if (!$client || $client['created_by'] !== $adminEmail) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Access denied: You can only view statistics for clients you created'
+                ]);
+                http_response_code(403);
+                return;
+            }
+        }
 
         $days = isset($_GET['days']) ? (int)$_GET['days'] : 30;
         $days = max(1, min(365, $days)); // Limit between 1-365 days

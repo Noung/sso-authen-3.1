@@ -29,6 +29,18 @@ class UsageStatistics
      */
     public function getClientStatistics($clientId, $days = 30)
     {
+        // Check if the current admin user has permission to view this client's statistics
+        $userRole = $_SESSION['admin_role'] ?? 'viewer';
+        $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+        
+        // For admins, verify they created this client
+        if ($userRole === 'admin') {
+            $client = Connection::fetchOne('SELECT * FROM clients WHERE id = ?', [$clientId]);
+            if (!$client || $client['created_by'] !== $adminEmail) {
+                return ['error' => 'Access denied: You can only view statistics for clients you created'];
+            }
+        }
+
         // Get client basic info
         $client = Connection::fetchOne('SELECT * FROM clients WHERE id = ?', [$clientId]);
         if (!$client) {
@@ -194,7 +206,19 @@ class UsageStatistics
      */
     private function getTotalClientsCount()
     {
-        $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients');
+        // Check admin role from session
+        $userRole = $_SESSION['admin_role'] ?? 'viewer';
+        $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+
+        // For admins, only count clients they created
+        // For super admins, count all clients
+        if ($userRole === 'admin') {
+            $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients WHERE created_by = ?', [$adminEmail]);
+        } else {
+            // Super admins and viewers see all clients
+            $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients');
+        }
+        
         return $result ? (int)$result['count'] : 0;
     }
 
@@ -203,7 +227,19 @@ class UsageStatistics
      */
     private function getActiveClientsCount()
     {
-        $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients WHERE status = "active"');
+        // Check admin role from session
+        $userRole = $_SESSION['admin_role'] ?? 'viewer';
+        $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+
+        // For admins, only count clients they created
+        // For super admins, count all clients
+        if ($userRole === 'admin') {
+            $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients WHERE status = "active" AND created_by = ?', [$adminEmail]);
+        } else {
+            // Super admins and viewers see all clients
+            $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients WHERE status = "active"');
+        }
+        
         return $result ? (int)$result['count'] : 0;
     }
 
@@ -270,24 +306,54 @@ class UsageStatistics
      */
     private function getClientActivitySummary($days)
     {
-        $stmt = $this->db->prepare("
-            SELECT 
-                c.id,
-                c.client_name,
-                c.client_id,
-                c.status,
-                COUNT(al.id) as total_activities,
-                COUNT(DISTINCT al.action) as unique_actions,
-                COUNT(DISTINCT al.admin_email) as unique_admins,
-                MAX(al.created_at) as last_activity,
-                (SELECT COUNT(*) FROM audit_logs WHERE resource_type = 'authentication' AND resource_id = c.client_id AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_requests
-            FROM clients c
-            LEFT JOIN audit_logs al ON (c.id = al.resource_id AND al.resource_type = 'client' 
-                                       AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY))
-            GROUP BY c.id, c.client_name, c.client_id, c.status
-            ORDER BY total_activities DESC
-        ");
-        $stmt->execute([$days, $days]);
+        // Check admin role from session
+        $userRole = $_SESSION['admin_role'] ?? 'viewer';
+        $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+
+        // For admins, only show clients they created
+        // For super admins, show all clients
+        if ($userRole === 'admin') {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    c.id,
+                    c.client_name,
+                    c.client_id,
+                    c.status,
+                    COUNT(al.id) as total_activities,
+                    COUNT(DISTINCT al.action) as unique_actions,
+                    COUNT(DISTINCT al.admin_email) as unique_admins,
+                    MAX(al.created_at) as last_activity,
+                    (SELECT COUNT(*) FROM audit_logs WHERE resource_type = 'authentication' AND resource_id = c.client_id AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_requests
+                FROM clients c
+                LEFT JOIN audit_logs al ON (c.id = al.resource_id AND al.resource_type = 'client' 
+                                           AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY))
+                WHERE c.created_by = ?
+                GROUP BY c.id, c.client_name, c.client_id, c.status
+                ORDER BY total_activities DESC
+            ");
+            $stmt->execute([$days, $days, $adminEmail]);
+        } else {
+            // Super admins and viewers see all clients
+            $stmt = $this->db->prepare("
+                SELECT 
+                    c.id,
+                    c.client_name,
+                    c.client_id,
+                    c.status,
+                    COUNT(al.id) as total_activities,
+                    COUNT(DISTINCT al.action) as unique_actions,
+                    COUNT(DISTINCT al.admin_email) as unique_admins,
+                    MAX(al.created_at) as last_activity,
+                    (SELECT COUNT(*) FROM audit_logs WHERE resource_type = 'authentication' AND resource_id = c.client_id AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_requests
+                FROM clients c
+                LEFT JOIN audit_logs al ON (c.id = al.resource_id AND al.resource_type = 'client' 
+                                           AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY))
+                GROUP BY c.id, c.client_name, c.client_id, c.status
+                ORDER BY total_activities DESC
+            ");
+            $stmt->execute([$days, $days]);
+        }
+        
         return $stmt->fetchAll();
     }
 
