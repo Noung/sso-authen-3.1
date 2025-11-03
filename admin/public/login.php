@@ -19,13 +19,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode($input, true);
     
     if (isset($data['action']) && $data['action'] === 'dev_login') {
-        $_SESSION['admin_logged_in'] = true;
-        $_SESSION['admin_email'] = 'admin@psu.ac.th';
-        $_SESSION['admin_name'] = 'System Administrator';
-        
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true]);
-        exit;
+        try {
+            // Load configuration
+            $adminConfig = require __DIR__ . '/../config/admin_config.php';
+            
+            // Initialize database connection
+            require_once __DIR__ . '/../src/Database/Connection.php';
+            \SsoAdmin\Database\Connection::init($adminConfig['database']);
+            
+            // Get user role from database
+            require_once __DIR__ . '/../src/Models/AdminUser.php';
+            $adminUser = \SsoAdmin\Models\AdminUser::getByEmail('admin@psu.ac.th');
+            $userRole = $adminUser['role'] ?? 'super_admin';
+            
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['admin_email'] = 'admin@psu.ac.th';
+            $_SESSION['admin_name'] = 'System Administrator';
+            $_SESSION['admin_role'] = $userRole;
+            
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true]);
+            exit;
+        } catch (Exception $e) {
+            error_log('Dev login error: ' . $e->getMessage());
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            exit;
+        }
     }
 }
 
@@ -136,7 +156,7 @@ if (isset($_GET['error'])) {
                 }
             });
             
-            fetch("login.php", {
+            fetch("", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

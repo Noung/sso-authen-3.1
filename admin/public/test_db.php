@@ -1,45 +1,40 @@
 <?php
+// Test database connection and admin user
 
-// Test script to check database connection
-
-// Enable error reporting
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-echo "Testing database connection...\n";
+require_once __DIR__ . '/../src/Database/Connection.php';
 
 // Load configuration
 $config = require __DIR__ . '/../config/admin_config.php';
-$dbConfig = $config['database'];
-
-echo "Database config:\n";
-print_r($dbConfig);
 
 try {
-    // Try to create a PDO connection directly
-    $dsn = sprintf(
-        'mysql:host=%s;port=%d;dbname=%s;charset=%s',
-        $dbConfig['host'],
-        $dbConfig['port'],
-        $dbConfig['database'],
-        $dbConfig['charset']
-    );
+    // Initialize database connection
+    \SsoAdmin\Database\Connection::init($config['database']);
     
-    echo "DSN: $dsn\n";
-    
-    $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], $dbConfig['options']);
+    // Test connection
+    $pdo = \SsoAdmin\Database\Connection::getPdo();
     echo "Database connection successful!\n";
     
-    // Try a simple query
-    $stmt = $pdo->query('SELECT 1');
-    $result = $stmt->fetch();
-    echo "Simple query result: ";
-    print_r($result);
+    // Check if admin user exists
+    $sql = "SELECT * FROM admin_users WHERE email = ? AND status = 'active'";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['admin@psu.ac.th']);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($user) {
+        echo "Admin user found:\n";
+        print_r($user);
+    } else {
+        echo "Admin user not found!\n";
+    }
+    
+    // Check all admin users
+    echo "\nAll admin users:\n";
+    $sql = "SELECT * FROM admin_users";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    print_r($users);
     
 } catch (Exception $e) {
-    echo "Database connection failed: " . $e->getMessage() . "\n";
-} catch (Error $e) {
-    echo "Database connection error: " . $e->getMessage() . "\n";
+    echo "Error: " . $e->getMessage() . "\n";
 }
-
-echo "Test completed.\n";

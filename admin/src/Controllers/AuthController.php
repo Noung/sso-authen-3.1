@@ -109,11 +109,15 @@ class AuthController
             
             // Validate that the user is authorized as admin
             if ($this->isAdminUser($userInfo['email'])) {
+                // Get user role from database
+                $adminUserData = $this->getAdminUserData($userInfo['email']);
+                
                 // Set admin session
                 $_SESSION['admin_logged_in'] = true;
                 $_SESSION['admin_email'] = $userInfo['email'];
                 $_SESSION['admin_name'] = $userInfo['name'] ?? $userInfo['email'];
                 $_SESSION['admin_user_info'] = $userInfo;
+                $_SESSION['admin_role'] = $adminUserData['role'] ?? 'viewer';
                 
                 // Update last login time
                 $this->updateLastLogin($userInfo['email']);
@@ -315,6 +319,34 @@ class AuthController
             ]);
         } catch (\Exception $e) {
             error_log('Audit log error: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Get admin user data including role
+     */
+    private function getAdminUserData($email)
+    {
+        try {
+            $adminConfig = require __DIR__ . '/../../config/admin_config.php';
+            
+            $dsn = sprintf(
+                'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+                $adminConfig['database']['host'],
+                $adminConfig['database']['port'],
+                $adminConfig['database']['database'],
+                $adminConfig['database']['charset']
+            );
+
+            $pdo = new PDO($dsn, $adminConfig['database']['username'], $adminConfig['database']['password'], $adminConfig['database']['options']);
+            
+            $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE email = ? AND status = 'active' LIMIT 1");
+            $stmt->execute([$email]);
+            
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Exception $e) {
+            error_log('Admin user data fetch error: ' . $e->getMessage());
+            return [];
         }
     }
 }

@@ -122,9 +122,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
     if (isset($data['action']) && $data['action'] === 'dev_login') {
+        // Get user role from database
+        require_once __DIR__ . '/../src/Models/AdminUser.php';
+        $adminUser = \SsoAdmin\Models\AdminUser::getByEmail('admin@psu.ac.th');
+        $userRole = $adminUser['role'] ?? 'super_admin';
+        
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_email'] = 'admin@psu.ac.th';
         $_SESSION['admin_name'] = 'System Administrator';
+        $_SESSION['admin_role'] = $userRole;
         header('Content-Type: application/json');
         echo json_encode(['success' => true]);
         exit;
@@ -347,6 +353,97 @@ function checkAdminAuth()
     return true;
 }
 
+/**
+ * Check if current user has viewer role or higher
+ */
+function checkViewerRole()
+{
+    // First ensure user is authenticated
+    if (!checkAdminAuth()) {
+        return false;
+    }
+    
+    // Get user role from session
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Viewer role is the lowest, so any authenticated user has at least viewer access
+    return true;
+}
+
+/**
+ * Check if current user has admin role or higher
+ */
+function checkAdminRole()
+{
+    // First ensure user is authenticated
+    if (!checkAdminAuth()) {
+        return false;
+    }
+    
+    // Get user role from session
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Admin roles: admin, super_admin
+    $adminRoles = ['admin', 'super_admin'];
+    return in_array($userRole, $adminRoles);
+}
+
+/**
+ * Check if current user has super admin role
+ */
+function checkSuperAdminRole()
+{
+    // First ensure user is authenticated
+    if (!checkAdminAuth()) {
+        return false;
+    }
+    
+    // Get user role from session
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Only super_admin has super admin access
+    return $userRole === 'super_admin';
+}
+
+/**
+ * Require viewer role or higher, redirect if not authorized
+ */
+function requireViewerRole()
+{
+    if (!checkViewerRole()) {
+        // Redirect to dashboard or show error
+        $basePath = $GLOBALS['admin_base_path'];
+        header('Location: ' . $basePath . '/');
+        exit;
+    }
+}
+
+/**
+ * Require admin role or higher, redirect if not authorized
+ */
+function requireAdminRole()
+{
+    if (!checkAdminRole()) {
+        // Redirect to dashboard or show error
+        $basePath = $GLOBALS['admin_base_path'];
+        header('Location: ' . $basePath . '/');
+        exit;
+    }
+}
+
+/**
+ * Require super admin role, redirect if not authorized
+ */
+function requireSuperAdminRole()
+{
+    if (!checkSuperAdminRole()) {
+        // Redirect to dashboard or show error
+        $basePath = $GLOBALS['admin_base_path'];
+        header('Location: ' . $basePath . '/');
+        exit;
+    }
+}
+
 function handleDashboard()
 {
     checkAdminAuth();
@@ -431,7 +528,7 @@ function handleAuthLogout()
 
 function handleClientsPage()
 {
-    checkAdminAuth();
+    requireAdminRole();
 
     // Include the clients view
     $viewPath = __DIR__ . '/../views/clients.php';
@@ -448,15 +545,9 @@ function handleStatisticsPage()
     echo renderStatisticsPage();
 }
 
-function handleSettingsPage()
-{
-    checkAdminAuth();
-    echo renderSettingsPage();
-}
-
 function handleAdminUsersPage()
 {
-    checkAdminAuth();
+    requireSuperAdminRole();
 
     // Include the admin users view
     $viewPath = __DIR__ . '/../views/admin-users.php';
@@ -478,7 +569,7 @@ function handleAdminUsersPage()
 
 function handleBackupRestorePage()
 {
-    checkAdminAuth();
+    requireSuperAdminRole();
     
     // Include the backup restore view
     $viewPath = __DIR__ . '/../views/backup-restore.php';
@@ -501,6 +592,12 @@ function handleBackupRestorePage()
             echo '<h1>Backup & Restore</h1><p>View file not found.</p>';
         }
     }
+}
+
+function handleSettingsPage()
+{
+    requireSuperAdminRole();
+    echo renderSettingsPage();
 }
 
 function renderSettingsPage()
