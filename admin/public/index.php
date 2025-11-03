@@ -3072,13 +3072,11 @@ function renderStatisticsPage()
         <div class="container-fluid">
             <!-- Mobile Menu Toggle -->
             <button class="btn mobile-menu-toggle d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i>
-            </button>
-            
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
             <a class="navbar-brand" href="' . $basePath . '">
                 <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
-            
             <div class="navbar-nav ms-auto">
                 <div class="dropdown">
                     <button class="btn btn-link nav-link dropdown-toggle text-white text-decoration-none" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -3086,6 +3084,16 @@ function renderStatisticsPage()
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><h6 class="dropdown-header"><i class="fas fa-user me-2"></i>' . $adminName . '</h6></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Name:</strong> ' . htmlspecialchars($_SESSION['admin_name'] ?? 'Unknown') . '
+                        </li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Email:</strong> ' . htmlspecialchars($_SESSION['admin_email'] ?? 'Unknown') . '
+                        </li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Role:</strong> ' . ucfirst(htmlspecialchars($_SESSION['admin_role'] ?? 'Viewer')) . '
+                        </li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="' . $basePath . '/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign out</a></li>
                     </ul>

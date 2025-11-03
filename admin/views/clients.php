@@ -94,6 +94,16 @@
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><h6 class="dropdown-header"><i class="fas fa-user me-2"></i><?php echo $adminName; ?></h6></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Name:</strong> <?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Unknown'); ?>
+                        </li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Email:</strong> <?php echo htmlspecialchars($_SESSION['admin_email'] ?? 'Unknown'); ?>
+                        </li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Role:</strong> <?php echo ucfirst(htmlspecialchars($_SESSION['admin_role'] ?? 'Viewer')); ?>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="<?php echo $basePath; ?>/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign out</a></li>
                     </ul>
                 </div>
