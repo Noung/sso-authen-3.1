@@ -353,6 +353,16 @@ class DashboardController
     {
         $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
         $adminName = $_SESSION['admin_name'] ?? 'Administrator';
+        $userRole = $_SESSION['admin_role'] ?? 'viewer';
+        
+        // Define role-based access
+        $isAdmin = in_array($userRole, ['admin', 'super_admin']);
+        $isSuperAdmin = ($userRole === 'super_admin');
+        
+        // Debug: Log the user role and permissions
+        error_log('Dashboard page - User role: ' . $userRole);
+        error_log('Dashboard page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
+        error_log('Dashboard page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
 
         return '<!DOCTYPE html>
 <html lang="th">
@@ -404,31 +414,41 @@ class DashboardController
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
+                        ' . ($isAdmin || $isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/clients">
                                 <i class="fas fa-users me-2"></i>Client Applications
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isAdmin || $isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/statistics">
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/admin-users">
                                 <i class="fas fa-user-shield me-2"></i>Admin Users
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/backup-restore">
                                 <i class="fas fa-database me-2"></i>Backup & Restore
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/settings">
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
                         </li>
+                        ' : '') . '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
@@ -453,31 +473,41 @@ class DashboardController
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
+                        ' . ($isAdmin || $isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/clients">
                                 <i class="fas fa-users me-2"></i>Client Applications
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isAdmin || $isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/statistics">
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/admin-users">
                                 <i class="fas fa-user-shield me-2"></i>Admin Users
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/backup-restore">
                                 <i class="fas fa-database me-2"></i>Backup & Restore
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/settings">
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
                         </li>
+                        ' : '') . '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation

@@ -156,7 +156,7 @@ if (isset($_GET['error'])) {
                 }
             });
             
-            fetch("", {
+            fetch("index.php", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

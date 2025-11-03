@@ -7,6 +7,10 @@
 // Start session
 session_start();
 
+// Debug: Log session ID and session data
+error_log('Callback.php - Session ID: ' . session_id());
+error_log('Callback.php - Session data: ' . print_r($_SESSION, true));
+
 try {
     // Include autoloader
     require_once __DIR__ . '/../../../vendor/autoload.php';

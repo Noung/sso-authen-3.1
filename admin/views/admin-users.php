@@ -5,6 +5,19 @@
     <?php
     $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Debug: Log session variables
+    error_log('Admin users page - Session data: ' . print_r($_SESSION, true));
+    
+    // Define role-based access
+    $isAdmin = in_array($userRole, ['admin', 'super_admin']);
+    $isSuperAdmin = ($userRole === 'super_admin');
+    
+    // Debug: Log the user role and permissions
+    error_log('Admin users page - User role: ' . $userRole);
+    error_log('Admin users page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
+    error_log('Admin users page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
     ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -97,31 +110,39 @@
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
+                        <?php if ($isAdmin || $isSuperAdmin): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/clients">
                                 <i class="fas fa-users me-2"></i>Client Applications
                             </a>
                         </li>
+                        <?php endif; ?>
+                        <?php if ($isAdmin || $isSuperAdmin): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
+                        <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link active" href="<?php echo $basePath; ?>/admin-users">
                                 <i class="fas fa-user-shield me-2"></i>Admin Users
                             </a>
                         </li>
+                        <?php if ($isSuperAdmin): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
                                 <i class="fas fa-database me-2"></i>Backup & Restore
                             </a>
                         </li>
+                        <?php endif; ?>
+                        <?php if ($isSuperAdmin): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/settings">
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
                         </li>
+                        <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
@@ -146,31 +167,39 @@
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
+                        <?php if ($isAdmin || $isSuperAdmin): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/clients">
                                 <i class="fas fa-users me-2"></i>Client Applications
                             </a>
                         </li>
+                        <?php endif; ?>
+                        <?php if ($isAdmin || $isSuperAdmin): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
+                        <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link active" href="<?php echo $basePath; ?>/admin-users">
                                 <i class="fas fa-user-shield me-2"></i>Admin Users
                             </a>
                         </li>
+                        <?php if ($isSuperAdmin): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
                                 <i class="fas fa-database me-2"></i>Backup & Restore
                             </a>
                         </li>
+                        <?php endif; ?>
+                        <?php if ($isSuperAdmin): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/settings">
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
                         </li>
+                        <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation

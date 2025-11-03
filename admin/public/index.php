@@ -127,10 +127,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $adminUser = \SsoAdmin\Models\AdminUser::getByEmail('admin@psu.ac.th');
         $userRole = $adminUser['role'] ?? 'super_admin';
         
+        // Debug: Log the user role
+        error_log('Dev login - User role: ' . $userRole);
+        error_log('Dev login - Admin user data: ' . print_r($adminUser, true));
+        
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_email'] = 'admin@psu.ac.th';
         $_SESSION['admin_name'] = 'System Administrator';
         $_SESSION['admin_role'] = $userRole;
+        
+        // Debug: Log session variables
+        error_log('Dev login - Session variables: ' . print_r($_SESSION, true));
+        
         header('Content-Type: application/json');
         echo json_encode(['success' => true]);
         exit;
@@ -163,7 +171,9 @@ try {
     // Enhanced debug logging
     error_log('Admin Panel - Path: ' . $path . ', REQUEST_URI: ' . $_SERVER['REQUEST_URI']);
     error_log('Admin Panel - Method: ' . $_SERVER['REQUEST_METHOD']);
+    error_log('Admin Panel - Session ID: ' . session_id());
     error_log('Admin Panel - Session logged in: ' . (isset($_SESSION['admin_logged_in']) ? 'YES' : 'NO'));
+    error_log('Admin Panel - Session data: ' . print_r($_SESSION, true));
 
     // Route handling
     switch ($path) {
@@ -542,6 +552,8 @@ function handleClientsPage()
 function handleStatisticsPage()
 {
     checkAdminAuth();
+    // Debug: Log session variables before rendering
+    error_log('Statistics page - Session data in handleStatisticsPage: ' . print_r($_SESSION, true));
     echo renderStatisticsPage();
 }
 
@@ -604,6 +616,11 @@ function renderSettingsPage()
 {
     // Get the base path from GLOBALS
     $basePath = $GLOBALS['admin_base_path'];
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Define role-based access
+    $isAdmin = in_array($userRole, ['admin', 'super_admin']);
+    $isSuperAdmin = ($userRole === 'super_admin');
     
     // Get current JWT secret key from config
     $currentSecret = '';
@@ -627,6 +644,19 @@ function renderSettingsPage()
     
     $basePath = $GLOBALS['admin_base_path'];
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Debug: Log session variables
+    error_log('Settings page - Session data: ' . print_r($_SESSION, true));
+    
+    // Define role-based access
+    $isAdmin = in_array($userRole, ['admin', 'super_admin']);
+    $isSuperAdmin = ($userRole === 'super_admin');
+    
+    // Debug: Log the user role and permissions
+    error_log('Settings page - User role: ' . $userRole);
+    error_log('Settings page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
+    error_log('Settings page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
 
     $html = '
     <!DOCTYPE html>
@@ -764,16 +794,20 @@ function renderSettingsPage()
                                     <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                                 </a>
                             </li>
+                            <?php if ($isAdmin || $isSuperAdmin): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/clients">
                                     <i class="fas fa-users me-2"></i>Client Applications
                                 </a>
                             </li>
+                            <?php endif; ?>
+                            <?php if ($isAdmin || $isSuperAdmin): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/statistics">
                                     <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                                 </a>
                             </li>
+                            <?php endif; ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/admin-users">
                                     <i class="fas fa-user-shield me-2"></i>Admin Users
@@ -2460,7 +2494,7 @@ function renderSimpleLoginPage()
     
     <script>
         function devLogin() {
-            fetch("' . $basePath . '", {
+            fetch("' . $basePath . '/index.php", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -2823,6 +2857,139 @@ function renderStatisticsPage()
 {
     $basePath = $GLOBALS['admin_base_path'];
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Debug: Log session variables
+    error_log('Statistics page - Session data in renderStatisticsPage: ' . print_r($_SESSION, true));
+    error_log('Statistics page - User role: ' . $userRole);
+    
+    // Define role-based access
+    $isAdmin = in_array($userRole, ['admin', 'super_admin']);
+    $isSuperAdmin = ($userRole === 'super_admin');
+    
+    // Debug: Log role checks
+    error_log('Statistics page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
+    error_log('Statistics page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
+    
+    // Build the sidebar HTML with role-based visibility
+    $mobileSidebar = '
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+        </li>';
+    
+    if ($isAdmin || $isSuperAdmin) {
+        $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/clients">
+                <i class="fas fa-users me-2"></i>Client Applications
+            </a>
+        </li>';
+    }
+    
+    $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link active" href="' . $basePath . '/statistics">
+                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+            </a>
+        </li>';
+    
+    if ($isSuperAdmin) {
+        $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/admin-users">
+                <i class="fas fa-user-shield me-2"></i>Admin Users
+            </a>
+        </li>';
+    }
+    
+    if ($isSuperAdmin) {
+        $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/backup-restore">
+                <i class="fas fa-database me-2"></i>Backup & Restore
+            </a>
+        </li>';
+    }
+    
+    if ($isSuperAdmin) {
+        $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/settings">
+                <i class="fas fa-cog me-2"></i>System Configuration
+            </a>
+        </li>';
+    }
+    
+    $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
+                <i class="fas fa-book me-2"></i>Documentation
+            </a>
+        </li>
+    </ul>';
+    
+    // Build the desktop sidebar HTML with role-based visibility
+    $desktopSidebar = '
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+        </li>';
+    
+    if ($isAdmin || $isSuperAdmin) {
+        $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/clients">
+                <i class="fas fa-users me-2"></i>Client Applications
+            </a>
+        </li>';
+    }
+    
+    $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link active" href="' . $basePath . '/statistics">
+                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+            </a>
+        </li>';
+    
+    if ($isSuperAdmin) {
+        $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/admin-users">
+                <i class="fas fa-user-shield me-2"></i>Admin Users
+            </a>
+        </li>';
+    }
+    
+    if ($isSuperAdmin) {
+        $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/backup-restore">
+                <i class="fas fa-database me-2"></i>Backup & Restore
+            </a>
+        </li>';
+    }
+    
+    if ($isSuperAdmin) {
+        $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/settings">
+                <i class="fas fa-cog me-2"></i>System Configuration
+            </a>
+        </li>';
+    }
+    
+    $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
+                <i class="fas fa-book me-2"></i>Documentation
+            </a>
+        </li>
+    </ul>';
 
     return '<!DOCTYPE html>
 <html lang="th">
@@ -2880,86 +3047,14 @@ function renderStatisticsPage()
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                 </div>
                 <div class="offcanvas-body p-0">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/clients">
-                                <i class="fas fa-users me-2"></i>Client Applications
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="' . $basePath . '/statistics">
-                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/admin-users">
-                                <i class="fas fa-user-shield me-2"></i>Admin Users
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/backup-restore">
-                                <i class="fas fa-database me-2"></i>Backup & Restore
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/settings">
-                                <i class="fas fa-cog me-2"></i>System Configuration
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
-                                <i class="fas fa-book me-2"></i>Documentation
-                            </a>
-                        </li>
-                    </ul>
+                    ' . $mobileSidebar . '
                 </div>
             </div>
 
             <!-- Sidebar - Desktop -->
             <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
                 <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/clients">
-                                <i class="fas fa-users me-2"></i>Client Applications
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="' . $basePath . '/statistics">
-                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/admin-users">
-                                <i class="fas fa-user-shield me-2"></i>Admin Users
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/backup-restore">
-                                <i class="fas fa-database me-2"></i>Backup & Restore
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                                <a class="nav-link" href="' . $basePath . '/settings">
-                                    <i class="fas fa-cog me-2"></i>System Configuration
-                                </a>
-                            </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
-                                <i class="fas fa-book me-2"></i>Documentation
-                            </a>
-                        </li>
-                    </ul>
+                    ' . $desktopSidebar . '
                 </div>
             </nav>
 

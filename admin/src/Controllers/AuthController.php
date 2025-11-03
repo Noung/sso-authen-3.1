@@ -107,10 +107,16 @@ class AuthController
             // Handle callback and get user info
             $userInfo = $handler->handleCallback($clientConfig);
             
+            // Debug: Log user info
+            error_log('OIDC Callback - User info: ' . print_r($userInfo, true));
+            
             // Validate that the user is authorized as admin
             if ($this->isAdminUser($userInfo['email'])) {
                 // Get user role from database
                 $adminUserData = $this->getAdminUserData($userInfo['email']);
+                
+                // Debug: Log admin user data
+                error_log('OIDC Callback - Admin user data: ' . print_r($adminUserData, true));
                 
                 // Set admin session
                 $_SESSION['admin_logged_in'] = true;
@@ -118,6 +124,9 @@ class AuthController
                 $_SESSION['admin_name'] = $userInfo['name'] ?? $userInfo['email'];
                 $_SESSION['admin_user_info'] = $userInfo;
                 $_SESSION['admin_role'] = $adminUserData['role'] ?? 'viewer';
+                
+                // Debug: Log session variables
+                error_log('OIDC Callback - Session variables set: ' . print_r($_SESSION, true));
                 
                 // Update last login time
                 $this->updateLastLogin($userInfo['email']);
