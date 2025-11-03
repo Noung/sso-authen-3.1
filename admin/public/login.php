@@ -81,6 +81,10 @@ if (isset($_GET['error'])) {
         }
         body {
             font-family: 'Bai Jamjuree', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
         }
         .login-card {
             border-radius: 15px;
@@ -96,7 +100,7 @@ if (isset($_GET['error'])) {
         }
     </style>
 </head>
-<body class="bg-light">
+<body>
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-4">
