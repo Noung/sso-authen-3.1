@@ -142,6 +142,24 @@ class ClientController
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
             }
 
+            // Check if the current admin user has permission to update this client
+            $userRole = $_SESSION['admin_role'] ?? 'viewer';
+            $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+            
+            // For admins, verify they created this client
+            if ($userRole === 'admin') {
+                $client = Client::getById($id);
+                if (!$client || $client['created_by'] !== $adminEmail) {
+                    $body = $response->getBody();
+                    $body->write(json_encode([
+                        'success' => false,
+                        'message' => 'Access denied: You can only update clients you created'
+                    ]));
+
+                    return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+                }
+            }
+
             $client = Client::update($id, $data);
 
             // Log activity
@@ -176,6 +194,24 @@ class ClientController
     {
         try {
             $id = (int)$args['id'];
+
+            // Check if the current admin user has permission to delete this client
+            $userRole = $_SESSION['admin_role'] ?? 'viewer';
+            $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+            
+            // For admins, verify they created this client
+            if ($userRole === 'admin') {
+                $client = Client::getById($id);
+                if (!$client || $client['created_by'] !== $adminEmail) {
+                    $body = $response->getBody();
+                    $body->write(json_encode([
+                        'success' => false,
+                        'message' => 'Access denied: You can only delete clients you created'
+                    ]));
+
+                    return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+                }
+            }
 
             // Get client name for logging
             $client = Client::getById($id);
@@ -248,6 +284,24 @@ class ClientController
         try {
             $id = (int)$args['id'];
 
+            // Check if the current admin user has permission to toggle this client's status
+            $userRole = $_SESSION['admin_role'] ?? 'viewer';
+            $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+            
+            // For admins, verify they created this client
+            if ($userRole === 'admin') {
+                $client = Client::getById($id);
+                if (!$client || $client['created_by'] !== $adminEmail) {
+                    $body = $response->getBody();
+                    $body->write(json_encode([
+                        'success' => false,
+                        'message' => 'Access denied: You can only toggle status for clients you created'
+                    ]));
+
+                    return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+                }
+            }
+
             $client = Client::getById($id);
             if (!$client) {
                 $body = $response->getBody();
@@ -265,8 +319,6 @@ class ClientController
 
             // Log activity
             $this->logActivity('client_status_changed', "Changed status of client: {$client['client_name']} to {$newStatus}", $id);
-
-
 
             $body = $response->getBody();
             $body->write(json_encode([

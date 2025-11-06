@@ -353,6 +353,18 @@ class DashboardController
     {
         $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
         $adminName = $_SESSION['admin_name'] ?? 'Administrator';
+        $userRole = $_SESSION['admin_role'] ?? 'viewer';
+        
+        // Define role-based access
+        $isAdmin = in_array($userRole, ['admin', 'super_admin']);
+        $isSuperAdmin = ($userRole === 'super_admin');
+        $isViewer = ($userRole === 'viewer');
+        
+        // Debug: Log the user role and permissions
+        error_log('Dashboard page - User role: ' . $userRole);
+        error_log('Dashboard page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
+        error_log('Dashboard page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
+        error_log('Dashboard page - Is viewer: ' . ($isViewer ? 'true' : 'false'));
 
         return '<!DOCTYPE html>
 <html lang="th">
@@ -386,6 +398,16 @@ class DashboardController
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><h6 class="dropdown-header"><i class="fas fa-user me-2"></i>' . $adminName . '</h6></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Name:</strong> ' . htmlspecialchars($_SESSION['admin_name'] ?? 'Unknown') . '
+                        </li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Email:</strong> ' . htmlspecialchars($_SESSION['admin_email'] ?? 'Unknown') . '
+                        </li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Role:</strong> ' . ucfirst(htmlspecialchars($_SESSION['admin_role'] ?? 'Viewer')) . '
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="' . $basePath . '/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign out</a></li>
                     </ul>
                 </div>
@@ -404,31 +426,40 @@ class DashboardController
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
+                        ' . ($isAdmin || $isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/clients">
                                 <i class="fas fa-users me-2"></i>Client Applications
                             </a>
                         </li>
+                        ' : '') . '
+                        <!-- Viewers should also see Usage Statistics -->
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/statistics">
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/admin-users">
                                 <i class="fas fa-user-shield me-2"></i>Admin Users
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/backup-restore">
                                 <i class="fas fa-database me-2"></i>Backup & Restore
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/settings">
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
                         </li>
+                        ' : '') . '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
@@ -453,31 +484,40 @@ class DashboardController
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
+                        ' . ($isAdmin || $isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/clients">
                                 <i class="fas fa-users me-2"></i>Client Applications
                             </a>
                         </li>
+                        ' : '') . '
+                        <!-- Viewers should also see Usage Statistics -->
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/statistics">
                                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                             </a>
                         </li>
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/admin-users">
                                 <i class="fas fa-user-shield me-2"></i>Admin Users
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/backup-restore">
                                 <i class="fas fa-database me-2"></i>Backup & Restore
                             </a>
                         </li>
+                        ' : '') . '
+                        ' . ($isSuperAdmin ? '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/settings">
                                 <i class="fas fa-cog me-2"></i>System Configuration
                             </a>
                         </li>
+                        ' : '') . '
                         <li class="nav-item">
                             <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
                                 <i class="fas fa-book me-2"></i>Documentation
@@ -847,20 +887,68 @@ class DashboardController
                 return;
             }
 
-            let html = "<div class=\"list-group list-group-flush\">";
+            let html = "<div class=\"timeline-container\">";
             activities.forEach(activity => {
                 const date = new Date(activity.created_at).toLocaleString("th-TH");
-                html += "<div class=\"list-group-item\">"+
-                    "<div class=\"d-flex w-100 justify-content-between\">"+
-                        "<h6 class=\"mb-1\">" + activity.description + "</h6>"+
-                        "<small>" + date + "</small>"+
-                    "</div>"+
-                    "<small class=\"text-muted\">Action: " + activity.action + "</small>"+
-                "</div>";
+                const timeAgo = getTimeAgo(new Date(activity.created_at));
+                
+                // Determine icon and color based on action type
+                let icon = "fas fa-history";
+                let bgColor = "bg-primary";
+                let category = "General";
+                
+                if (activity.action.includes("client")) {
+                    icon = "fas fa-users";
+                    bgColor = "bg-success";
+                    category = "Client Management";
+                } else if (activity.action.includes("admin")) {
+                    icon = "fas fa-user-shield";
+                    bgColor = "bg-info";
+                    category = "Admin Activity";
+                } else if (activity.action.includes("auth")) {
+                    icon = "fas fa-sign-in-alt";
+                    bgColor = "bg-warning";
+                    category = "Authentication";
+                } else if (activity.action.includes("jwt")) {
+                    icon = "fas fa-key";
+                    bgColor = "bg-danger";
+                    category = "Security";
+                }
+                
+                html += `
+                <div class="timeline-item">
+                    <div class="timeline-badge ${bgColor}">
+                        <i class="${icon} text-white"></i>
+                    </div>
+                    <div class="timeline-content card shadow-sm">
+                        <div class="card-body p-3">
+                            <h6 class="mb-1">${activity.description}</h6>
+                            <p class="text-muted small mb-1">${category}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">${timeAgo}</small>
+                                <small class="text-muted">${date}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
             });
             html += "</div>";
             
             container.innerHTML = html;
+        }
+
+        // Helper function to calculate time ago
+        function getTimeAgo(date) {
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+            
+            if (seconds < 60) return "เมื่อสักครู่";
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return minutes + " นาทีที่แล้ว";
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return hours + " ชั่วโมงที่แล้ว";
+            const days = Math.floor(hours / 24);
+            return days + " วันที่แล้ว";
         }
 
         function refreshStats() {
@@ -923,6 +1011,73 @@ class DashboardController
         }
         .admin-content {
             margin-bottom: 20px;
+        }
+        
+        /* Timeline Styles */
+        .timeline-container {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 15px;
+            height: 100%;
+            width: 2px;
+            background: #e9ecef;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .timeline-badge {
+            position: absolute;
+            left: -24px;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        
+        .timeline-content {
+            margin-left: 20px;
+            border: none;
+            border-left: 2px solid #e9ecef;
+        }
+        
+        .timeline-content:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 767.98px) {
+            .timeline-container {
+                padding-left: 20px;
+            }
+            
+            .timeline-container::before {
+                left: 10px;
+            }
+            
+            .timeline-badge {
+                left: -19px;
+                width: 25px;
+                height: 25px;
+                font-size: 0.7rem;
+            }
+            
+            .timeline-content {
+                margin-left: 15px;
+            }
         }
     </style>
 </body>

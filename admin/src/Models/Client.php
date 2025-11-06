@@ -40,6 +40,17 @@ class Client
             $conditions = [];
             $params = [];
 
+            // Check admin role from session
+            $userRole = $_SESSION['admin_role'] ?? 'viewer';
+            $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+
+            // For admins, only show clients they created
+            // For super admins, show all clients
+            if ($userRole === 'admin') {
+                $conditions[] = 'created_by = ?';
+                $params[] = $adminEmail;
+            }
+
             if (!empty($search)) {
                 $conditions[] = '(client_name LIKE ? OR client_id LIKE ? OR app_redirect_uri LIKE ?)';
                 $searchParam = '%' . $search . '%';
@@ -219,6 +230,15 @@ class Client
                 throw new Exception('Client not found');
             }
 
+            // Check if the current admin user has permission to update this client
+            $userRole = $_SESSION['admin_role'] ?? 'viewer';
+            $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+            
+            // For admins, verify they created this client
+            if ($userRole === 'admin' && $existing['created_by'] !== $adminEmail) {
+                throw new Exception('Access denied: You can only update clients you created');
+            }
+
             // Build update query
             $updateFields = [];
             $params = [];
@@ -276,6 +296,15 @@ class Client
             $existing = self::getById($id);
             if (!$existing) {
                 throw new Exception('Client not found');
+            }
+
+            // Check if the current admin user has permission to delete this client
+            $userRole = $_SESSION['admin_role'] ?? 'viewer';
+            $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+            
+            // For admins, verify they created this client
+            if ($userRole === 'admin' && $existing['created_by'] !== $adminEmail) {
+                throw new Exception('Access denied: You can only delete clients you created');
             }
 
             // Soft delete by setting status to inactive (recommended)

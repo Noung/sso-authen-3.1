@@ -7,32 +7,39 @@
 // Start session
 session_start();
 
-// Include autoloader
-require_once __DIR__ . '/../../../vendor/autoload.php';
-require_once __DIR__ . '/../../../admin/vendor/autoload.php';
-
-// Include the AuthController directly since autoloading might not work in this context
-require_once __DIR__ . '/../../src/Controllers/AuthController.php';
-
-use SsoAdmin\Controllers\AuthController;
+// Debug: Log session ID and session data
+error_log('Callback.php - Session ID: ' . session_id());
+error_log('Callback.php - Session data: ' . print_r($_SESSION, true));
 
 try {
-    // Create AuthController instance
-    $authController = new AuthController();
+    // Include autoloader
+    require_once __DIR__ . '/../../../vendor/autoload.php';
+    require_once __DIR__ . '/../../../admin/vendor/autoload.php';
 
-    // Create mock request and response objects
-    $request = new \stdClass();
-    $response = new \stdClass();
+    // Include the AuthController directly since autoloading might not work in this context
+    require_once __DIR__ . '/../../src/Controllers/AuthController.php';
+
+    // Create AuthController instance
+    $authController = new \SsoAdmin\Controllers\AuthController();
 
     // Handle callback
-    $authController->callback($request, $response);
+    $authController->callback();
 
-    // If we reach here, redirect to dashboard
-    header('Location: ../index.php');
-    exit;
 } catch (Exception $e) {
     error_log('OIDC Callback Error: ' . $e->getMessage());
-    // Redirect to login with error
-    header('Location: ../login.php?error=auth_failed');
+    
+    // Parse and format the error message for better user experience
+    $errorMessage = $e->getMessage();
+    
+    // Extract JSON error message if present
+    if (preg_match('/Response: (\{.*\})/', $errorMessage, $matches)) {
+        $jsonResponse = json_decode($matches[1], true);
+        if (isset($jsonResponse['error'])) {
+            $errorMessage = $jsonResponse['error'];
+        }
+    }
+    
+    // Redirect to login with clean error message
+    header('Location: ../login.php?error=auth_failed&message=' . urlencode($errorMessage));
     exit;
 }

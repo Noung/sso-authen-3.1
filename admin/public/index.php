@@ -122,9 +122,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
     if (isset($data['action']) && $data['action'] === 'dev_login') {
+        // Get user role from database
+        require_once __DIR__ . '/../src/Models/AdminUser.php';
+        $adminUser = \SsoAdmin\Models\AdminUser::getByEmail('admin@psu.ac.th');
+        $userRole = $adminUser['role'] ?? 'super_admin';
+        
+        // Debug: Log the user role
+        error_log('Dev login - User role: ' . $userRole);
+        error_log('Dev login - Admin user data: ' . print_r($adminUser, true));
+        
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_email'] = 'admin@psu.ac.th';
         $_SESSION['admin_name'] = 'System Administrator';
+        $_SESSION['admin_role'] = $userRole;
+        
+        // Debug: Log session variables
+        error_log('Dev login - Session variables: ' . print_r($_SESSION, true));
+        
         header('Content-Type: application/json');
         echo json_encode(['success' => true]);
         exit;
@@ -157,7 +171,9 @@ try {
     // Enhanced debug logging
     error_log('Admin Panel - Path: ' . $path . ', REQUEST_URI: ' . $_SERVER['REQUEST_URI']);
     error_log('Admin Panel - Method: ' . $_SERVER['REQUEST_METHOD']);
+    error_log('Admin Panel - Session ID: ' . session_id());
     error_log('Admin Panel - Session logged in: ' . (isset($_SESSION['admin_logged_in']) ? 'YES' : 'NO'));
+    error_log('Admin Panel - Session data: ' . print_r($_SESSION, true));
 
     // Route handling
     switch ($path) {
@@ -347,6 +363,97 @@ function checkAdminAuth()
     return true;
 }
 
+/**
+ * Check if current user has viewer role or higher
+ */
+function checkViewerRole()
+{
+    // First ensure user is authenticated
+    if (!checkAdminAuth()) {
+        return false;
+    }
+    
+    // Get user role from session
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Viewer role is the lowest, so any authenticated user has at least viewer access
+    return true;
+}
+
+/**
+ * Check if current user has admin role or higher
+ */
+function checkAdminRole()
+{
+    // First ensure user is authenticated
+    if (!checkAdminAuth()) {
+        return false;
+    }
+    
+    // Get user role from session
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Admin roles: admin, super_admin
+    $adminRoles = ['admin', 'super_admin'];
+    return in_array($userRole, $adminRoles);
+}
+
+/**
+ * Check if current user has super admin role
+ */
+function checkSuperAdminRole()
+{
+    // First ensure user is authenticated
+    if (!checkAdminAuth()) {
+        return false;
+    }
+    
+    // Get user role from session
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Only super_admin has super admin access
+    return $userRole === 'super_admin';
+}
+
+/**
+ * Require viewer role or higher, redirect if not authorized
+ */
+function requireViewerRole()
+{
+    if (!checkViewerRole()) {
+        // Redirect to dashboard or show error
+        $basePath = $GLOBALS['admin_base_path'];
+        header('Location: ' . $basePath . '/');
+        exit;
+    }
+}
+
+/**
+ * Require admin role or higher, redirect if not authorized
+ */
+function requireAdminRole()
+{
+    if (!checkAdminRole()) {
+        // Redirect to dashboard or show error
+        $basePath = $GLOBALS['admin_base_path'];
+        header('Location: ' . $basePath . '/');
+        exit;
+    }
+}
+
+/**
+ * Require super admin role, redirect if not authorized
+ */
+function requireSuperAdminRole()
+{
+    if (!checkSuperAdminRole()) {
+        // Redirect to dashboard or show error
+        $basePath = $GLOBALS['admin_base_path'];
+        header('Location: ' . $basePath . '/');
+        exit;
+    }
+}
+
 function handleDashboard()
 {
     checkAdminAuth();
@@ -431,7 +538,7 @@ function handleAuthLogout()
 
 function handleClientsPage()
 {
-    checkAdminAuth();
+    requireAdminRole();
 
     // Include the clients view
     $viewPath = __DIR__ . '/../views/clients.php';
@@ -445,18 +552,14 @@ function handleClientsPage()
 function handleStatisticsPage()
 {
     checkAdminAuth();
+    // Debug: Log session variables before rendering
+    error_log('Statistics page - Session data in handleStatisticsPage: ' . print_r($_SESSION, true));
     echo renderStatisticsPage();
-}
-
-function handleSettingsPage()
-{
-    checkAdminAuth();
-    echo renderSettingsPage();
 }
 
 function handleAdminUsersPage()
 {
-    checkAdminAuth();
+    requireSuperAdminRole();
 
     // Include the admin users view
     $viewPath = __DIR__ . '/../views/admin-users.php';
@@ -478,7 +581,7 @@ function handleAdminUsersPage()
 
 function handleBackupRestorePage()
 {
-    checkAdminAuth();
+    requireSuperAdminRole();
     
     // Include the backup restore view
     $viewPath = __DIR__ . '/../views/backup-restore.php';
@@ -503,10 +606,21 @@ function handleBackupRestorePage()
     }
 }
 
+function handleSettingsPage()
+{
+    requireSuperAdminRole();
+    echo renderSettingsPage();
+}
+
 function renderSettingsPage()
 {
     // Get the base path from GLOBALS
     $basePath = $GLOBALS['admin_base_path'];
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Define role-based access
+    $isAdmin = in_array($userRole, ['admin', 'super_admin']);
+    $isSuperAdmin = ($userRole === 'super_admin');
     
     // Get current JWT secret key from config
     $currentSecret = '';
@@ -530,6 +644,19 @@ function renderSettingsPage()
     
     $basePath = $GLOBALS['admin_base_path'];
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Debug: Log session variables
+    error_log('Settings page - Session data: ' . print_r($_SESSION, true));
+    
+    // Define role-based access
+    $isAdmin = in_array($userRole, ['admin', 'super_admin']);
+    $isSuperAdmin = ($userRole === 'super_admin');
+    
+    // Debug: Log the user role and permissions
+    error_log('Settings page - User role: ' . $userRole);
+    error_log('Settings page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
+    error_log('Settings page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
 
     $html = '
     <!DOCTYPE html>
@@ -667,16 +794,20 @@ function renderSettingsPage()
                                     <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                                 </a>
                             </li>
+                            <?php if ($isAdmin || $isSuperAdmin): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/clients">
                                     <i class="fas fa-users me-2"></i>Client Applications
                                 </a>
                             </li>
+                            <?php endif; ?>
+                            <?php if ($isAdmin || $isSuperAdmin): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/statistics">
                                     <i class="fas fa-chart-bar me-2"></i>Usage Statistics
                                 </a>
                             </li>
+                            <?php endif; ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/admin-users">
                                     <i class="fas fa-user-shield me-2"></i>Admin Users
@@ -694,17 +825,14 @@ function renderSettingsPage()
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
-                                    <i class="fas fa-book me-2"></i>API Documentation
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="' . $basePath . '/claims-update.html" target="_blank">
-                                    <i class="fas fa-certificate me-2"></i>Extended Claims
+                                    <i class="fas fa-book me-2"></i>Documentation
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </div>
+
+                <!-- Main content -->
 
                 <!-- Main content -->
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
@@ -1339,6 +1467,74 @@ function handleApiToggleAdminUserStatus($id)
     }
 }
 
+function handleApiToggleStatus($id)
+{
+    checkAdminAuth();
+    header('Content-Type: application/json');
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'PATCH') {
+        echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+        http_response_code(405);
+        return;
+    }
+
+    // Check if the current admin user has permission to toggle this client's status
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+    
+    // For admins, verify they created this client
+    if ($userRole === 'admin') {
+        require_once __DIR__ . '/../src/Models/Client.php';
+        $client = SsoAdmin\Models\Client::getById((int)$id);
+        if (!$client || $client['created_by'] !== $adminEmail) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied: You can only toggle status for clients you created'
+            ]);
+            http_response_code(403);
+            return;
+        }
+    }
+
+    $controller = new ClientController();
+
+    $mockRequest = new stdClass();
+    $mockResponse = new class {
+        public $content = '';
+        public function getBody()
+        {
+            return $this;
+        }
+        public function write($content)
+        {
+            $this->content = $content;
+        }
+        public function withHeader($name, $value)
+        {
+            header("$name: $value");
+            return $this;
+        }
+        public function withStatus($code)
+        {
+            http_response_code($code);
+            return $this;
+        }
+    };
+
+    $args = ['id' => $id];
+
+    try {
+        $controller->toggleStatus($mockRequest, $mockResponse, $args);
+        echo $mockResponse->content;
+    } catch (Exception $e) {
+        error_log('Exception in handleApiToggleStatus: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    } catch (Error $e) {
+        error_log('Error in handleApiToggleStatus: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+    }
+}
+
 function handleApiAdminUserRoles()
 {
     checkAdminAuth();
@@ -1559,6 +1755,24 @@ function handleApiClientById($id)
     checkAdminAuth();
     header('Content-Type: application/json');
 
+    // Check if the current admin user has permission to access this client
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+    
+    // For admins, verify they created this client
+    if ($userRole === 'admin') {
+        require_once __DIR__ . '/../src/Models/Client.php';
+        $client = SsoAdmin\Models\Client::getById((int)$id);
+        if (!$client || $client['created_by'] !== $adminEmail) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Access denied: You can only access clients you created'
+            ]);
+            http_response_code(403);
+            return;
+        }
+    }
+
     $controller = new ClientController();
     $method = $_SERVER['REQUEST_METHOD'];
 
@@ -1625,56 +1839,6 @@ function handleApiClientById($id)
 }
 
 
-
-function handleApiToggleStatus($id)
-{
-    checkAdminAuth();
-    header('Content-Type: application/json');
-
-    if ($_SERVER['REQUEST_METHOD'] !== 'PATCH') {
-        echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-        http_response_code(405);
-        return;
-    }
-
-    $controller = new ClientController();
-
-    $mockRequest = new stdClass();
-    $mockResponse = new class {
-        public $content = '';
-        public function getBody()
-        {
-            return $this;
-        }
-        public function write($content)
-        {
-            $this->content = $content;
-        }
-        public function withHeader($name, $value)
-        {
-            header("$name: $value");
-            return $this;
-        }
-        public function withStatus($code)
-        {
-            http_response_code($code);
-            return $this;
-        }
-    };
-
-    $args = ['id' => $id];
-
-    try {
-        $controller->toggleStatus($mockRequest, $mockResponse, $args);
-        echo $mockResponse->content;
-    } catch (Exception $e) {
-        error_log('Exception in handleApiToggleStatus: ' . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
-    } catch (Error $e) {
-        error_log('Error in handleApiToggleStatus: ' . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
-    }
-}
 
 /**
  * Handle JWT Secret API with enhanced security
@@ -2014,6 +2178,24 @@ function handleApiIndividualClientStatistics($clientId)
 
     try {
         require_once __DIR__ . '/../src/Models/UsageStatistics.php';
+        require_once __DIR__ . '/../src/Models/Client.php';
+
+        // Check if the current admin user has permission to view this client
+        $userRole = $_SESSION['admin_role'] ?? 'viewer';
+        $adminEmail = $_SESSION['admin_email'] ?? 'admin';
+        
+        // For admins, verify they created this client
+        if ($userRole === 'admin') {
+            $client = SsoAdmin\Models\Client::getById((int)$clientId);
+            if (!$client || $client['created_by'] !== $adminEmail) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Access denied: You can only view statistics for clients you created'
+                ]);
+                http_response_code(403);
+                return;
+            }
+        }
 
         $days = isset($_GET['days']) ? (int)$_GET['days'] : 30;
         $days = max(1, min(365, $days)); // Limit between 1-365 days
@@ -2363,7 +2545,7 @@ function renderSimpleLoginPage()
     
     <script>
         function devLogin() {
-            fetch("' . $basePath . '", {
+            fetch("' . $basePath . '/index.php", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -2726,6 +2908,143 @@ function renderStatisticsPage()
 {
     $basePath = $GLOBALS['admin_base_path'];
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
+    $userRole = $_SESSION['admin_role'] ?? 'viewer';
+    
+    // Debug: Log session variables
+    error_log('Statistics page - Session data in renderStatisticsPage: ' . print_r($_SESSION, true));
+    error_log('Statistics page - User role: ' . $userRole);
+    
+    // Define role-based access
+    $isAdmin = in_array($userRole, ['admin', 'super_admin']);
+    $isSuperAdmin = ($userRole === 'super_admin');
+    $isViewer = ($userRole === 'viewer');
+    
+    // Debug: Log role checks
+    error_log('Statistics page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
+    error_log('Statistics page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
+    error_log('Statistics page - Is viewer: ' . ($isViewer ? 'true' : 'false'));
+    
+    // Build the sidebar HTML with role-based visibility
+    $mobileSidebar = '
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+        </li>';
+    
+    if ($isAdmin || $isSuperAdmin) {
+        $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/clients">
+                <i class="fas fa-users me-2"></i>Client Applications
+            </a>
+        </li>';
+    }
+    
+    // Viewers should also see Usage Statistics
+    $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link active" href="' . $basePath . '/statistics">
+                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+            </a>
+        </li>';
+    
+    if ($isSuperAdmin) {
+        $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/admin-users">
+                <i class="fas fa-user-shield me-2"></i>Admin Users
+            </a>
+        </li>';
+    }
+    
+    if ($isSuperAdmin) {
+        $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/backup-restore">
+                <i class="fas fa-database me-2"></i>Backup & Restore
+            </a>
+        </li>';
+    }
+    
+    if ($isSuperAdmin) {
+        $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/settings">
+                <i class="fas fa-cog me-2"></i>System Configuration
+            </a>
+        </li>';
+    }
+    
+    $mobileSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
+                <i class="fas fa-book me-2"></i>Documentation
+            </a>
+        </li>
+    </ul>';
+    
+    // Build the desktop sidebar HTML with role-based visibility
+    $desktopSidebar = '
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+        </li>';
+    
+    if ($isAdmin || $isSuperAdmin) {
+        $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/clients">
+                <i class="fas fa-users me-2"></i>Client Applications
+            </a>
+        </li>';
+    }
+    
+    // Viewers should also see Usage Statistics
+    $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link active" href="' . $basePath . '/statistics">
+                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+            </a>
+        </li>';
+    
+    if ($isSuperAdmin) {
+        $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/admin-users">
+                <i class="fas fa-user-shield me-2"></i>Admin Users
+            </a>
+        </li>';
+    }
+    
+    if ($isSuperAdmin) {
+        $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/backup-restore">
+                <i class="fas fa-database me-2"></i>Backup & Restore
+            </a>
+        </li>';
+    }
+    
+    if ($isSuperAdmin) {
+        $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/settings">
+                <i class="fas fa-cog me-2"></i>System Configuration
+            </a>
+        </li>';
+    }
+    
+    $desktopSidebar .= '
+        <li class="nav-item">
+            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
+                <i class="fas fa-book me-2"></i>Documentation
+            </a>
+        </li>
+    </ul>';
 
     return '<!DOCTYPE html>
 <html lang="th">
@@ -2765,6 +3084,16 @@ function renderStatisticsPage()
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><h6 class="dropdown-header"><i class="fas fa-user me-2"></i>' . $adminName . '</h6></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Name:</strong> ' . htmlspecialchars($_SESSION['admin_name'] ?? 'Unknown') . '
+                        </li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Email:</strong> ' . htmlspecialchars($_SESSION['admin_email'] ?? 'Unknown') . '
+                        </li>
+                        <li class="dropdown-item-text small text-muted ms-3 me-3">
+                            <strong>Role:</strong> ' . ucfirst(htmlspecialchars($_SESSION['admin_role'] ?? 'Viewer')) . '
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="' . $basePath . '/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign out</a></li>
                     </ul>
                 </div>
@@ -2783,86 +3112,14 @@ function renderStatisticsPage()
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                 </div>
                 <div class="offcanvas-body p-0">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/clients">
-                                <i class="fas fa-users me-2"></i>Client Applications
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="' . $basePath . '/statistics">
-                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/admin-users">
-                                <i class="fas fa-user-shield me-2"></i>Admin Users
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/backup-restore">
-                                <i class="fas fa-database me-2"></i>Backup & Restore
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/settings">
-                                <i class="fas fa-cog me-2"></i>System Configuration
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
-                                <i class="fas fa-book me-2"></i>Documentation
-                            </a>
-                        </li>
-                    </ul>
+                    ' . $mobileSidebar . '
                 </div>
             </div>
 
             <!-- Sidebar - Desktop -->
             <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
                 <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/clients">
-                                <i class="fas fa-users me-2"></i>Client Applications
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="' . $basePath . '/statistics">
-                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/admin-users">
-                                <i class="fas fa-user-shield me-2"></i>Admin Users
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/backup-restore">
-                                <i class="fas fa-database me-2"></i>Backup & Restore
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                                <a class="nav-link" href="' . $basePath . '/settings">
-                                    <i class="fas fa-cog me-2"></i>System Configuration
-                                </a>
-                            </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
-                                <i class="fas fa-book me-2"></i>Documentation
-                            </a>
-                        </li>
-                    </ul>
+                    ' . $desktopSidebar . '
                 </div>
             </nav>
 
