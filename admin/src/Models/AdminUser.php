@@ -49,9 +49,9 @@ class AdminUser
             if (!filter_var($userData['email'], FILTER_VALIDATE_EMAIL)) {
                 throw new Exception('Invalid email format');
             }
-            
+
             $existing = self::getByEmail($userData['email']);
-            
+
             if ($existing) {
                 // Update existing user
                 $sql = "
@@ -205,9 +205,9 @@ class AdminUser
             if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
                 throw new Exception('Invalid email format');
             }
-            
+
             Connection::beginTransaction();
-            
+
             $sql = "
                 INSERT INTO admin_users (email, name, role, status) 
                 VALUES (?, ?, ?, ?)
@@ -218,12 +218,12 @@ class AdminUser
                 $data['role'] ?? 'admin',
                 $data['status'] ?? 'active'
             ];
-            
+
             Connection::query($sql, $params);
             $id = Connection::lastInsertId();
-            
+
             Connection::commit();
-            
+
             return self::getById($id);
         } catch (Exception $e) {
             Connection::rollback();
@@ -244,28 +244,28 @@ class AdminUser
             if (isset($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
                 throw new Exception('Invalid email format');
             }
-            
+
             // Build dynamic update query
             $fields = [];
             $params = [];
-            
+
             foreach ($data as $key => $value) {
                 // Only allow updating specific fields
-                if (in_array($key, ['email', 'name', 'role', 'status'])) {
+                if (in_array($key, ['email', 'name', 'role', 'status', 'position', 'campus', 'office_name', 'faculty_id', 'department_id', 'campus_id', 'groups', 'provider'])) {
                     $fields[] = "$key = ?";
                     $params[] = $value;
                 }
             }
-            
+
             if (empty($fields)) {
                 return self::getById($id);
             }
-            
+
             $params[] = $id;
-            
+
             $sql = "UPDATE admin_users SET " . implode(', ', $fields) . " WHERE id = ?";
             Connection::query($sql, $params);
-            
+
             return self::getById($id);
         } catch (Exception $e) {
             throw new Exception('Error updating admin user: ' . $e->getMessage());
