@@ -6,14 +6,14 @@
     $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
-    
+
     // Debug: Log session variables
     error_log('Admin users page - Session data: ' . print_r($_SESSION, true));
-    
+
     // Define role-based access
     $isAdmin = in_array($userRole, ['admin', 'super_admin']);
     $isSuperAdmin = ($userRole === 'super_admin');
-    
+
     // Debug: Log the user role and permissions
     error_log('Admin users page - User role: ' . $userRole);
     error_log('Admin users page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
@@ -63,7 +63,7 @@
         .text-small {
             font-size: 0.9rem;
         }
-        
+
         .admin-content {
             margin-bottom: 20px;
         }
@@ -79,19 +79,23 @@
             <button class="btn mobile-menu-toggle d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
-            
+
             <a class="navbar-brand" href="<?php echo $basePath; ?>">
                 <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
-            
+
             <div class="navbar-nav ms-auto">
                 <div class="dropdown">
                     <button class="btn btn-link nav-link dropdown-toggle text-white text-decoration-none" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-user me-1"></i><span class="d-none d-sm-inline"><?php echo $adminName; ?></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><h6 class="dropdown-header"><i class="fas fa-user me-2"></i><?php echo $adminName; ?></h6></li>
-                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <h6 class="dropdown-header"><i class="fas fa-user me-2"></i><?php echo $adminName; ?></h6>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li class="dropdown-item-text small text-muted ms-3 me-3">
                             <strong>Name:</strong> <?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Unknown'); ?>
                         </li>
@@ -101,7 +105,9 @@
                         <li class="dropdown-item-text small text-muted ms-3 me-3">
                             <strong>Role:</strong> <?php echo ucfirst(htmlspecialchars($_SESSION['admin_role'] ?? 'Viewer')); ?>
                         </li>
-                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li><a class="dropdown-item" href="<?php echo $basePath; ?>/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign out</a></li>
                     </ul>
                 </div>
@@ -121,18 +127,18 @@
                             </a>
                         </li>
                         <?php if ($isAdmin || $isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/clients">
-                                <i class="fas fa-users me-2"></i>Client Applications
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/clients">
+                                    <i class="fas fa-users me-2"></i>Client Applications
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isAdmin || $isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
-                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
+                                    <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link active" href="<?php echo $basePath; ?>/admin-users">
@@ -140,18 +146,18 @@
                             </a>
                         </li>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
-                                <i class="fas fa-database me-2"></i>Backup & Restore
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
+                                    <i class="fas fa-database me-2"></i>Backup & Restore
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/settings">
-                                <i class="fas fa-cog me-2"></i>System Configuration
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/settings">
+                                    <i class="fas fa-cog me-2"></i>System Configuration
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
@@ -178,18 +184,18 @@
                             </a>
                         </li>
                         <?php if ($isAdmin || $isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/clients">
-                                <i class="fas fa-users me-2"></i>Client Applications
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/clients">
+                                    <i class="fas fa-users me-2"></i>Client Applications
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isAdmin || $isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
-                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
+                                    <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link active" href="<?php echo $basePath; ?>/admin-users">
@@ -197,18 +203,18 @@
                             </a>
                         </li>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
-                                <i class="fas fa-database me-2"></i>Backup & Restore
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
+                                    <i class="fas fa-database me-2"></i>Backup & Restore
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/settings">
-                                <i class="fas fa-cog me-2"></i>System Configuration
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/settings">
+                                    <i class="fas fa-cog me-2"></i>System Configuration
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
@@ -420,8 +426,8 @@
             });
 
             fetch(`${basePath}/api/admin-users?${params}`, {
-                credentials: 'same-origin'
-            })
+                    credentials: 'same-origin'
+                })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -439,7 +445,7 @@
 
         function renderAdminUsersTable(users) {
             const container = document.getElementById('admin-users-table');
-            
+
             if (users.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-5">
@@ -470,12 +476,12 @@
                         </thead>
                         <tbody>
             `;
-            
+
             users.forEach(user => {
                 const createdDate = new Date(user.created_at).toLocaleDateString('th-TH');
                 const statusBadge = getStatusBadge(user.status);
                 const roleBadge = getRoleBadge(user.role);
-                
+
                 html += `
                     <tr>
                         <td><strong>${escapeHtml(user.name)}</strong></td>
@@ -488,8 +494,8 @@
                             </span>
                         </td>
                         <td class="text-center">
-                            <span title="${user.last_login ? new Date(user.last_login).toLocaleString('th-TH') : 'Never'}">
-                                ${user.last_login ? new Date(user.last_login).toLocaleDateString('th-TH') : 'Never'}
+                            <span title="${user.last_login_at ? new Date(user.last_login_at).toLocaleString('th-TH') : 'Never'}">
+                                ${user.last_login_at ? new Date(user.last_login_at).toLocaleDateString('th-TH') : 'Never'}
                             </span>
                         </td>
                         <td class="text-center">
@@ -508,19 +514,22 @@
                     </tr>
                 `;
             });
-            
+
             html += '</tbody></table></div>';
             container.innerHTML = html;
-            
+
             // Initialize DataTable
             if (typeof DataTable !== 'undefined' && document.getElementById('adminUsersTable')) {
                 new DataTable('#adminUsersTable', {
-                    "order": [[4, "desc"]],
+                    "order": [
+                        [4, "desc"]
+                    ],
                     "pageLength": 10,
                     "responsive": true,
-                    "columnDefs": [
-                        { "orderable": false, "targets": [5] }
-                    ]
+                    "columnDefs": [{
+                        "orderable": false,
+                        "targets": [5]
+                    }]
                 });
             }
         }
@@ -546,15 +555,15 @@
         function renderPagination(pagination) {
             const container = document.getElementById('pagination-container');
             const paginationEl = document.getElementById('pagination');
-            
+
             if (pagination.total_pages <= 1) {
                 container.style.display = 'none';
                 return;
             }
-            
+
             container.style.display = 'block';
             let html = '';
-            
+
             // Previous button
             html += `
                 <li class="page-item ${!pagination.has_prev ? 'disabled' : ''}">
@@ -563,11 +572,11 @@
                     </a>
                 </li>
             `;
-            
+
             // Page numbers
             const startPage = Math.max(1, pagination.current_page - 2);
             const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
-            
+
             for (let i = startPage; i <= endPage; i++) {
                 html += `
                     <li class="page-item ${i === pagination.current_page ? 'active' : ''}">
@@ -575,7 +584,7 @@
                     </li>
                 `;
             }
-            
+
             // Next button
             html += `
                 <li class="page-item ${!pagination.has_next ? 'disabled' : ''}">
@@ -584,7 +593,7 @@
                     </a>
                 </li>
             `;
-            
+
             paginationEl.innerHTML = html;
         }
 
@@ -606,7 +615,7 @@
             isEditing = true;
             document.getElementById('modalTitle').textContent = 'Edit Admin User';
             document.getElementById('adminUserEmail').disabled = true;
-            
+
             fetch(`${basePath}/api/admin-users/${id}`)
                 .then(response => response.json())
                 .then(data => {
@@ -652,7 +661,7 @@
             const adminUserId = document.getElementById('adminUserId').value;
             const url = isEditing ? `${basePath}/api/admin-users/${adminUserId}` : `${basePath}/api/admin-users`;
             const method = isEditing ? 'PUT' : 'POST';
-            
+
             // Show loading
             Swal.fire({
                 title: isEditing ? 'Updating Admin User...' : 'Creating Admin User...',
@@ -664,36 +673,36 @@
                     Swal.showLoading();
                 }
             });
-            
+
             fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.close();
-                    bootstrap.Modal.getInstance(document.getElementById('adminUserModal')).hide();
-                    
-                    Swal.fire({
-                        title: '<i class="fas fa-check-circle text-success me-2"></i>Success!',
-                        text: data.message,
-                        icon: 'success',
-                        confirmButtonColor: '#198754'
-                    });
-                    
-                    loadAdminUsers();
-                } else {
-                    Swal.fire('Error', data.message, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error saving admin user:', error);
-                Swal.fire('Error', 'Failed to save admin user', 'error');
-            });
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.close();
+                        bootstrap.Modal.getInstance(document.getElementById('adminUserModal')).hide();
+
+                        Swal.fire({
+                            title: '<i class="fas fa-check-circle text-success me-2"></i>Success!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonColor: '#198754'
+                        });
+
+                        loadAdminUsers();
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving admin user:', error);
+                    Swal.fire('Error', 'Failed to save admin user', 'error');
+                });
         }
 
         function viewAdminUser(id) {
@@ -705,12 +714,12 @@
                         const createdDate = new Date(user.created_at);
                         const updatedDate = new Date(user.updated_at);
                         const lastLoginDate = user.last_login_at ? new Date(user.last_login_at) : null;
-                        
+
                         // Format extended claims data
-                        const groupsDisplay = user.groups ? 
-                            (user.groups.length > 50 ? user.groups.substring(0, 50) + '...' : user.groups) : 
+                        const groupsDisplay = user.groups ?
+                            (user.groups.length > 50 ? user.groups.substring(0, 50) + '...' : user.groups) :
                             'N/A';
-                        
+
                         const content = `
                             <div class="row">
                                 <div class="col-md-6">
@@ -800,7 +809,7 @@
                                 </button>
                             </div>-->
                         `;
-                        
+
                         document.getElementById('adminUserDetailsContent').innerHTML = content;
                         new bootstrap.Modal(document.getElementById('viewAdminUserModal')).show();
                     } else {
@@ -819,7 +828,7 @@
             const actionText = newStatus === 'active' ? 'Activate' : 'Deactivate';
             const actionIcon = newStatus === 'active' ? 'fa-toggle-on' : 'fa-toggle-off';
             const actionColor = newStatus === 'active' ? '#198754' : '#ffc107';
-            
+
             Swal.fire({
                 title: `${actionText} Admin User?`,
                 text: `Are you sure you want to ${action} this admin user?`,
@@ -832,29 +841,29 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch(`${basePath}/api/admin-users/${id}/toggle-status`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                title: '<i class="fas fa-check-circle text-success me-2"></i>Update!',
-                                text: data.message,
-                                icon: 'success',
-                                confirmButtonColor: '#198754'
-                            });
-                            loadAdminUsers();
-                        } else {
-                            Swal.fire('Error', data.message, 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error toggling admin user status:', error);
-                        Swal.fire('Error', 'Failed to toggle admin user status', 'error');
-                    });
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: '<i class="fas fa-check-circle text-success me-2"></i>Update!',
+                                    text: data.message,
+                                    icon: 'success',
+                                    confirmButtonColor: '#198754'
+                                });
+                                loadAdminUsers();
+                            } else {
+                                Swal.fire('Error', data.message, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error toggling admin user status:', error);
+                            Swal.fire('Error', 'Failed to toggle admin user status', 'error');
+                        });
                 }
             });
         }
@@ -868,9 +877,12 @@
                 '"': '&quot;',
                 "'": '&#039;'
             };
-            
-            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+
+            return text.replace(/[&<>"']/g, function(m) {
+                return map[m];
+            });
         }
     </script>
 </body>
+
 </html>
