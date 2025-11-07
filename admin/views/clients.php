@@ -6,14 +6,14 @@
     $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
-    
+
     // Debug: Log session variables
     error_log('Clients page - Session data: ' . print_r($_SESSION, true));
-    
+
     // Define role-based access
     $isAdmin = in_array($userRole, ['admin', 'super_admin']);
     $isSuperAdmin = ($userRole === 'super_admin');
-    
+
     // Debug: Log the user role and permissions
     error_log('Clients page - User role: ' . $userRole);
     error_log('Clients page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
@@ -24,12 +24,13 @@
     <title>SSO-Authen Admin Panel - Client Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="<?php echo $basePath; ?>/css/admin-responsive.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         /* Remove conflicting table-responsive styles */
         /* .table-responsive is now fully controlled by admin-responsive.css */
-        
+
         .btn-group-sm>.btn,
         .btn-sm {
             padding: 0.25rem 0.5rem;
@@ -65,7 +66,7 @@
         .text-small {
             font-size: 0.9rem;
         }
-        
+
         .admin-content {
             margin-bottom: 20px;
         }
@@ -81,19 +82,23 @@
             <button class="btn mobile-menu-toggle d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
-            
+
             <a class="navbar-brand" href="<?php echo $basePath; ?>">
                 <i class="fas fa-shield-alt me-2"></i>SSO-Authen Admin Panel
             </a>
-            
+
             <div class="navbar-nav ms-auto">
                 <div class="dropdown">
                     <button class="btn btn-link nav-link dropdown-toggle text-white text-decoration-none" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-user me-1"></i><span class="d-none d-sm-inline"><?php echo $adminName; ?></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><h6 class="dropdown-header"><i class="fas fa-user me-2"></i><?php echo $adminName; ?></h6></li>
-                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <h6 class="dropdown-header"><i class="fas fa-user me-2"></i><?php echo $adminName; ?></h6>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li class="dropdown-item-text small text-muted ms-3 me-3">
                             <strong>Name:</strong> <?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Unknown'); ?>
                         </li>
@@ -103,7 +108,9 @@
                         <li class="dropdown-item-text small text-muted ms-3 me-3">
                             <strong>Role:</strong> <?php echo ucfirst(htmlspecialchars($_SESSION['admin_role'] ?? 'Viewer')); ?>
                         </li>
-                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li><a class="dropdown-item" href="<?php echo $basePath; ?>/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign out</a></li>
                     </ul>
                 </div>
@@ -128,32 +135,32 @@
                             </a>
                         </li>
                         <?php if ($isAdmin || $isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
-                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
+                                    <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/admin-users">
-                                <i class="fas fa-user-shield me-2"></i>Admin Users
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/admin-users">
+                                    <i class="fas fa-user-shield me-2"></i>Admin Users
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
-                                <i class="fas fa-database me-2"></i>Backup & Restore
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
+                                    <i class="fas fa-database me-2"></i>Backup & Restore
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/settings">
-                                <i class="fas fa-cog me-2"></i>System Configuration
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/settings">
+                                    <i class="fas fa-cog me-2"></i>System Configuration
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
@@ -185,32 +192,32 @@
                             </a>
                         </li>
                         <?php if ($isAdmin || $isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
-                                <i class="fas fa-chart-bar me-2"></i>Usage Statistics
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/statistics">
+                                    <i class="fas fa-chart-bar me-2"></i>Usage Statistics
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/admin-users">
-                                <i class="fas fa-user-shield me-2"></i>Admin Users
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/admin-users">
+                                    <i class="fas fa-user-shield me-2"></i>Admin Users
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
-                                <i class="fas fa-database me-2"></i>Backup & Restore
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/backup-restore">
+                                    <i class="fas fa-database me-2"></i>Backup & Restore
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <?php if ($isSuperAdmin): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo $basePath; ?>/settings">
-                                <i class="fas fa-cog me-2"></i>System Configuration
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo $basePath; ?>/settings">
+                                    <i class="fas fa-cog me-2"></i>System Configuration
+                                </a>
+                            </li>
                         <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="<?php echo $basePath; ?>/api-docs-v3.html" target="_blank">
@@ -299,14 +306,14 @@
                 <div class="card shadow mb-4">
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-9">
                                 <label for="searchInput" class="form-label">Search Clients</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-search"></i></span>
                                     <input type="text" class="form-control" id="searchInput" placeholder="Search by name, client ID, or redirect URI">
                                 </div>
                             </div>
-                            <div class="col-6 col-md-3">
+                            <div class="col-12 col-md-3">
                                 <label for="statusFilter" class="form-label">Status</label>
                                 <select class="form-select" id="statusFilter">
                                     <option value="">All</option>
@@ -316,13 +323,7 @@
                                 </select>
                             </div>
                             <div class="col-6 col-md-3">
-                                <label for="perPageSelect" class="form-label">Per Page</label>
-                                <select class="form-select" id="perPageSelect">
-                                    <option value="10">10</option>
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>
+                                <!-- Placeholder for consistent layout -->
                             </div>
                         </div>
                     </div>
@@ -345,11 +346,7 @@
                             </div>
                         </div>
 
-                        <!-- Pagination -->
-                        <nav aria-label="Client pagination" id="pagination-container" style="display: none;">
-                            <ul class="pagination justify-content-center" id="pagination">
-                            </ul>
-                        </nav>
+
                     </div>
                 </div>
             </main>
@@ -545,15 +542,16 @@
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="<?php echo $basePath; ?>/js/shared.js?v=<?php echo time(); ?>"></script>
     <script src="<?php echo $basePath; ?>/js/client-management.js?v=<?php echo time(); ?>"></script>
     <script>
         const basePath = '<?php echo $basePath; ?>';
-        let currentPage = 1;
         let currentSearch = '';
         let currentStatus = '';
-        let currentPerPage = 10;
         let isEditing = false;
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -581,12 +579,7 @@
                 loadClients();
             });
 
-            // Per page selector
-            document.getElementById('perPageSelect').addEventListener('change', function() {
-                currentPerPage = parseInt(this.value);
-                currentPage = 1;
-                loadClients();
-            });
+
 
             // Form validation
             document.getElementById('clientForm').addEventListener('submit', function(e) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Standalone Login Page for Admin Panel
  * This ensures login always works regardless of routing issues
@@ -17,26 +18,47 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
-    
+
     if (isset($data['action']) && $data['action'] === 'dev_login') {
         try {
             // Load configuration
             $adminConfig = require __DIR__ . '/../config/admin_config.php';
-            
+
             // Initialize database connection
             require_once __DIR__ . '/../src/Database/Connection.php';
             \SsoAdmin\Database\Connection::init($adminConfig['database']);
-            
+
             // Get user role from database
             require_once __DIR__ . '/../src/Models/AdminUser.php';
             $adminUser = \SsoAdmin\Models\AdminUser::getByEmail('admin@psu.ac.th');
             $userRole = $adminUser['role'] ?? 'super_admin';
-            
+
+            // Update last login time for consistency with SSO login
+            try {
+                // Connect to database
+                $dsn = sprintf(
+                    'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+                    $adminConfig['database']['host'],
+                    $adminConfig['database']['port'],
+                    $adminConfig['database']['database'],
+                    $adminConfig['database']['charset']
+                );
+
+                $pdo = new PDO($dsn, $adminConfig['database']['username'], $adminConfig['database']['password'], $adminConfig['database']['options']);
+
+                // Update last login time
+                $stmt = $pdo->prepare("UPDATE admin_users SET last_login_at = NOW() WHERE email = ?");
+                $stmt->execute(['admin@psu.ac.th']);
+            } catch (Exception $e) {
+                error_log('Failed to update last login time: ' . $e->getMessage());
+                // Continue even if update fails
+            }
+
             $_SESSION['admin_logged_in'] = true;
             $_SESSION['admin_email'] = 'admin@psu.ac.th';
             $_SESSION['admin_name'] = 'System Administrator';
             $_SESSION['admin_role'] = $userRole;
-            
+
             header('Content-Type: application/json');
             echo json_encode(['success' => true]);
             exit;
@@ -56,7 +78,7 @@ $basePath = dirname($_SERVER['SCRIPT_NAME']);
 $errorMessage = '';
 if (isset($_GET['error'])) {
     $errorMessage = $_GET['message'] ?? 'An unknown error occurred';
-    
+
     // Make the error message more user-friendly
     if ($errorMessage === 'User not authorized to access admin panel') {
         $errorMessage = 'You are not authorized to access the admin panel. Please contact your system administrator.';
@@ -67,6 +89,7 @@ if (isset($_GET['error'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,6 +102,7 @@ if (isset($_GET['error'])) {
         * {
             font-family: 'Bai Jamjuree', sans-serif;
         }
+
         body {
             font-family: 'Bai Jamjuree', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -86,20 +110,24 @@ if (isset($_GET['error'])) {
             display: flex;
             align-items: center;
         }
+
         .login-card {
             border-radius: 15px;
         }
+
         .btn-oidc {
             background-color: #4285f4;
             border-color: #4285f4;
             color: white;
         }
+
         .btn-oidc:hover {
             background-color: #3367d6;
             border-color: #3367d6;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="row justify-content-center">
@@ -111,24 +139,24 @@ if (isset($_GET['error'])) {
                             <h3>SSO-Authen Admin Panel</h3>
                             <p class="text-muted">Choose your preferred login method</p>
                         </div>
-                        
+
                         <?php if ($errorMessage): ?>
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <strong>Error:</strong> <?php echo htmlspecialchars($errorMessage); ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <strong>Error:</strong> <?php echo htmlspecialchars($errorMessage); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
                         <?php endif; ?>
-                        
+
                         <div class="d-grid gap-2">
                             <a href="auth/login.php" class="btn btn-primary btn-lg">
                                 <i class="fas fa-sign-in-alt me-2"></i>Login with SSO
                             </a>
-                            
+
                             <button onclick="devLogin()" class="btn btn-secondary btn-lg">
                                 <i class="fas fa-user-gear me-2"></i>Login with Dev Mode
                             </button>
                         </div>
-                        
+
                         <div class="text-center mt-4">
                             <hr>
                             <h6>Debug Information:</h6>
@@ -140,11 +168,11 @@ if (isset($_GET['error'])) {
                         </div>
                     </div>
                 </div>
-                
+
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function devLogin() {
@@ -159,47 +187,48 @@ if (isset($_GET['error'])) {
                     Swal.showLoading();
                 }
             });
-            
+
             fetch("index.php", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    action: "dev_login",
-                    email: "admin@psu.ac.th",
-                    name: "System Administrator"
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        action: "dev_login",
+                        email: "admin@psu.ac.th",
+                        name: "System Administrator"
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        title: 'Login Successful!',
-                        text: 'Redirecting to admin panel',
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.href = "index.php";
-                    });
-                } else {
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Login Successful!',
+                            text: 'Redirecting to admin panel',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = "index.php";
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Unable to login',
+                            icon: 'error'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
                     Swal.fire({
                         title: 'Error',
-                        text: 'Unable to login',
+                        text: 'Unable to connect to server',
                         icon: 'error'
                     });
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Unable to connect to server',
-                    icon: 'error'
                 });
-            });
         }
     </script>
 </body>
+
 </html>

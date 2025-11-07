@@ -22,19 +22,17 @@ function updateStatisticsCards(stats) {
 }
 
 function loadClients() {
-    const params = new URLSearchParams({
-        page: currentPage,
-        per_page: currentPerPage,
-        search: currentSearch,
-        status: currentStatus
-    });
+    // Build search parameters with high per_page to get all data
+    const params = new URLSearchParams();
+    params.append('per_page', '1000'); // High value to get all clients
+    if (currentSearch) params.append('search', currentSearch);
+    if (currentStatus) params.append('status', currentStatus);
 
     fetch(`${basePath}/api/clients?${params}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 renderClientsTable(data.data.data);
-                renderPagination(data.data.pagination);
             } else {
                 Swal.fire('Error', data.message, 'error');
             }
@@ -64,17 +62,17 @@ function renderClientsTable(clients) {
 
     let html = `
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover" id="clientsTable">
                 <thead class="table-dark">
                     <tr>
-                        <th style="width: 15%">Client Name</th>
-                        <th style="width: 15%">Client ID</th>
-                        <th style="width: 15%" class="hide-mobile">Redirect URI</th>
-                        <th style="width: 10%">Authen Mode</th>
-                        <th style="width: 10%">Status</th>
-                        <th style="width: 10%" class="hide-mobile">Created</th>
-                        <th style="width: 15%" class="hide-mobile">Created By</th>
-                        <th style="width: 10%">Actions</th>
+                        <th>Client Name</th>
+                        <th>Client ID</th>
+                        <th class="hide-mobile">Redirect URI</th>
+                        <th>Authen Mode</th>
+                        <th>Status</th>
+                        <th class="hide-mobile">Created</th>
+                        <th class="hide-mobile">Created By</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -173,6 +171,44 @@ function renderClientsTable(clients) {
     
     html += '</tbody></table></div>';
     container.innerHTML = html;
+    
+    // Initialize DataTable
+    if (typeof $.fn.dataTable !== 'undefined' && $('#clientsTable').length > 0) {
+        // Destroy existing DataTable if it exists
+        if ($.fn.dataTable.isDataTable('#clientsTable')) {
+            $('#clientsTable').DataTable().destroy();
+        }
+        
+        // Initialize new DataTable
+        $('#clientsTable').DataTable({
+            "order": [
+                [5, "desc"]
+            ],
+            "pageLength": 10,
+            "lengthMenu": [
+                [10, 25, 50, 100],
+                [10, 25, 50, 100]
+            ],
+            "responsive": true,
+            "columnDefs": [{
+                "orderable": false,
+                "targets": [7] // Actions column
+            }],
+            "language": {
+                "search": "Search:",
+                "lengthMenu": "Show _MENU_ entries",
+                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                "infoEmpty": "Showing 0 to 0 of 0 entries",
+                "infoFiltered": "(filtered from _MAX_ total entries)",
+                "paginate": {
+                    "first": "First",
+                    "last": "Last",
+                    "next": "Next",
+                    "previous": "Previous"
+                }
+            }
+        });
+    }
 }
 
 function getStatusBadge(status) {
@@ -184,69 +220,7 @@ function getStatusBadge(status) {
     return badges[status] || '<span class="badge bg-secondary status-badge">Unknown</span>';
 }
 
-function renderPagination(pagination) {
-    const container = document.getElementById('pagination-container');
-    const paginationEl = document.getElementById('pagination');
-    
-    if (pagination.total_pages <= 1) {
-        container.style.display = 'none';
-        return;
-    }
-    
-    container.style.display = 'block';
-    let html = '';
-    
-    // Previous button
-    html += `
-        <li class="page-item ${!pagination.has_prev ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${pagination.current_page - 1})">
-                <i class="fas fa-chevron-left"></i>
-            </a>
-        </li>
-    `;
-    
-    // Page numbers
-    const startPage = Math.max(1, pagination.current_page - 2);
-    const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
-    
-    if (startPage > 1) {
-        html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1)">1</a></li>`;
-        if (startPage > 2) {
-            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-        }
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        html += `
-            <li class="page-item ${i === pagination.current_page ? 'active' : ''}">
-                <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
-            </li>
-        `;
-    }
-    
-    if (endPage < pagination.total_pages) {
-        if (endPage < pagination.total_pages - 1) {
-            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-        }
-        html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${pagination.total_pages})">${pagination.total_pages}</a></li>`;
-    }
-    
-    // Next button
-    html += `
-        <li class="page-item ${!pagination.has_next ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${pagination.current_page + 1})">
-                <i class="fas fa-chevron-right"></i>
-            </a>
-        </li>
-    `;
-    
-    paginationEl.innerHTML = html;
-}
 
-function changePage(page) {
-    currentPage = page;
-    loadClients();
-}
 
 function showAddClientModal() {
     isEditing = false;

@@ -56,7 +56,7 @@ foreach ($requiredClasses as $class) {
             'SsoAdmin\Models\AdminUser' => '/../src/Models/AdminUser.php',
             'SsoAdmin\Models\BackupManager' => '/../src/Models/BackupManager.php'
         ];
-        
+
         if (isset($classMap[$class])) {
             $file = __DIR__ . $classMap[$class];
             if (file_exists($file)) {
@@ -126,19 +126,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once __DIR__ . '/../src/Models/AdminUser.php';
         $adminUser = \SsoAdmin\Models\AdminUser::getByEmail('admin@psu.ac.th');
         $userRole = $adminUser['role'] ?? 'super_admin';
-        
+
+        // Update last login time for consistency with SSO login
+        try {
+            // Load configuration
+            $adminConfig = require __DIR__ . '/../config/admin_config.php';
+
+            // Connect to database
+            $dsn = sprintf(
+                'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+                $adminConfig['database']['host'],
+                $adminConfig['database']['port'],
+                $adminConfig['database']['database'],
+                $adminConfig['database']['charset']
+            );
+
+            $pdo = new PDO($dsn, $adminConfig['database']['username'], $adminConfig['database']['password'], $adminConfig['database']['options']);
+
+            // Update last login time
+            $stmt = $pdo->prepare("UPDATE admin_users SET last_login_at = NOW() WHERE email = ?");
+            $stmt->execute(['admin@psu.ac.th']);
+
+            // Debug: Log successful update
+            error_log('Dev login - Last login updated successfully');
+
+            // Log the successful login to audit logs
+            try {
+                $stmt = $pdo->prepare("
+                    INSERT INTO audit_logs (admin_email, action, resource_type, resource_id, ip_address, user_agent, created_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, NOW())
+                ");
+
+                $stmt->execute([
+                    'admin@psu.ac.th',
+                    'admin_login',
+                    'authentication',
+                    'admin_panel',
+                    $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+                    $_SERVER['HTTP_USER_AGENT'] ?? 'Dev Mode Login'
+                ]);
+
+                error_log('Dev login - Audit log created successfully');
+            } catch (Exception $e) {
+                error_log('Failed to create audit log: ' . $e->getMessage());
+                // Continue even if audit log fails
+            }
+        } catch (Exception $e) {
+            error_log('Failed to update last login time: ' . $e->getMessage());
+            // Continue even if update fails
+        }
+
         // Debug: Log the user role
         error_log('Dev login - User role: ' . $userRole);
         error_log('Dev login - Admin user data: ' . print_r($adminUser, true));
-        
+
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_email'] = 'admin@psu.ac.th';
         $_SESSION['admin_name'] = 'System Administrator';
         $_SESSION['admin_role'] = $userRole;
-        
+
         // Debug: Log session variables
         error_log('Dev login - Session variables: ' . print_r($_SESSION, true));
-        
+
         header('Content-Type: application/json');
         echo json_encode(['success' => true]);
         exit;
@@ -372,10 +421,10 @@ function checkViewerRole()
     if (!checkAdminAuth()) {
         return false;
     }
-    
+
     // Get user role from session
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
-    
+
     // Viewer role is the lowest, so any authenticated user has at least viewer access
     return true;
 }
@@ -389,10 +438,10 @@ function checkAdminRole()
     if (!checkAdminAuth()) {
         return false;
     }
-    
+
     // Get user role from session
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
-    
+
     // Admin roles: admin, super_admin
     $adminRoles = ['admin', 'super_admin'];
     return in_array($userRole, $adminRoles);
@@ -407,10 +456,10 @@ function checkSuperAdminRole()
     if (!checkAdminAuth()) {
         return false;
     }
-    
+
     // Get user role from session
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
-    
+
     // Only super_admin has super admin access
     return $userRole === 'super_admin';
 }
@@ -582,7 +631,7 @@ function handleAdminUsersPage()
 function handleBackupRestorePage()
 {
     requireSuperAdminRole();
-    
+
     // Include the backup restore view
     $viewPath = __DIR__ . '/../views/backup-restore.php';
     if (file_exists($viewPath)) {
@@ -617,18 +666,18 @@ function renderSettingsPage()
     // Get the base path from GLOBALS
     $basePath = $GLOBALS['admin_base_path'];
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
-    
+
     // Define role-based access
     $isAdmin = in_array($userRole, ['admin', 'super_admin']);
     $isSuperAdmin = ($userRole === 'super_admin');
-    
+
     // Get current JWT secret key from config
     $currentSecret = '';
     $configPath = __DIR__ . '/../../config/config.php';
     if (file_exists($configPath)) {
         // Read the config file content
         $configContent = file_get_contents($configPath);
-        
+
         // Use regex to extract the JWT_SECRET_KEY value
         if (preg_match("/define\('JWT_SECRET_KEY',\s*'([^']*)'\);/", $configContent, $matches)) {
             $currentSecret = $matches[1];
@@ -636,23 +685,23 @@ function renderSettingsPage()
             $currentSecret = $matches[1];
         }
     }
-    
+
     // Get secret key history
     require_once __DIR__ . '/../src/Models/JwtSecretHistory.php';
     $historyResult = SsoAdmin\Models\JwtSecretHistory::getAll(1, 50);
     $historyData = $historyResult['data'] ?? [];
-    
+
     $basePath = $GLOBALS['admin_base_path'];
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
-    
+
     // Debug: Log session variables
     error_log('Settings page - Session data: ' . print_r($_SESSION, true));
-    
+
     // Define role-based access
     $isAdmin = in_array($userRole, ['admin', 'super_admin']);
     $isSuperAdmin = ($userRole === 'super_admin');
-    
+
     // Debug: Log the user role and permissions
     error_log('Settings page - User role: ' . $userRole);
     error_log('Settings page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
@@ -907,7 +956,7 @@ function renderSettingsPage()
                                                 </tr>
                                             </thead>
                                             <tbody>';
-                                            
+
     foreach ($historyData as $record) {
         $maskedKey = substr($record['secret_key'], 0, 10) . '**********' . substr($record['secret_key'], -10);
         $html .= '
@@ -930,13 +979,13 @@ function renderSettingsPage()
                                                     <td>' . htmlspecialchars($record['created_at']) . '</td>
                                                     <td>' . htmlspecialchars($record['notes'] ?? 'N/A') . '</td>
                                                     <td>
-                                                        ' . ($record['is_active'] ? 
-                                                            '<span class="badge bg-success">Active</span>' : 
-                                                            '<span class="badge bg-secondary">Inactive</span>') . '
+                                                        ' . ($record['is_active'] ?
+            '<span class="badge bg-success">Active</span>' :
+            '<span class="badge bg-secondary">Inactive</span>') . '
                                                     </td>
                                                 </tr>';
     }
-                                            
+
     $html .= '
                                             </tbody>
                                         </table>
@@ -1153,7 +1202,7 @@ function renderSettingsPage()
         </script>
     </body>
     </html>';
-    
+
     return $html;
 }
 
@@ -1481,7 +1530,7 @@ function handleApiToggleStatus($id)
     // Check if the current admin user has permission to toggle this client's status
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
     $adminEmail = $_SESSION['admin_email'] ?? 'admin';
-    
+
     // For admins, verify they created this client
     if ($userRole === 'admin') {
         require_once __DIR__ . '/../src/Models/Client.php';
@@ -1758,7 +1807,7 @@ function handleApiClientById($id)
     // Check if the current admin user has permission to access this client
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
     $adminEmail = $_SESSION['admin_email'] ?? 'admin';
-    
+
     // For admins, verify they created this client
     if ($userRole === 'admin') {
         require_once __DIR__ . '/../src/Models/Client.php';
@@ -1853,9 +1902,9 @@ function handleApiJwtSecret()
     try {
         // Load JWT secret from history table (active secret)
         require_once __DIR__ . '/../src/Models/JwtSecretHistory.php';
-        
+
         $jwtSecretRecord = SsoAdmin\Models\JwtSecretHistory::getCurrentSecret();
-        
+
         if (!$jwtSecretRecord) {
             echo json_encode([
                 'success' => false,
@@ -2019,7 +2068,7 @@ function handleApiUpdateJwtSecret()
 
         // Read current config
         $configContent = file_get_contents($configPath);
-        
+
         // Backup current config
         $backupPath = __DIR__ . '/../../config/config.php.backup.' . date('Y-m-d_H-i-s');
         file_put_contents($backupPath, $configContent);
@@ -2095,7 +2144,7 @@ function sendJwtSecretUpdateEmail($adminEmail, $newSecret, $ipAddress)
     // In a real implementation, you would send an email here
     // For now, we'll just log it
     error_log("JWT Secret Update Notification: Admin $adminEmail updated JWT secret from IP $ipAddress");
-    
+
     // You could implement actual email sending here using PHPMailer or similar
     // Example:
     /*
@@ -2183,7 +2232,7 @@ function handleApiIndividualClientStatistics($clientId)
         // Check if the current admin user has permission to view this client
         $userRole = $_SESSION['admin_role'] ?? 'viewer';
         $adminEmail = $_SESSION['admin_email'] ?? 'admin';
-        
+
         // For admins, verify they created this client
         if ($userRole === 'admin') {
             $client = SsoAdmin\Models\Client::getById((int)$clientId);
@@ -2909,21 +2958,21 @@ function renderStatisticsPage()
     $basePath = $GLOBALS['admin_base_path'];
     $adminName = $_SESSION['admin_name'] ?? 'Administrator';
     $userRole = $_SESSION['admin_role'] ?? 'viewer';
-    
+
     // Debug: Log session variables
     error_log('Statistics page - Session data in renderStatisticsPage: ' . print_r($_SESSION, true));
     error_log('Statistics page - User role: ' . $userRole);
-    
+
     // Define role-based access
     $isAdmin = in_array($userRole, ['admin', 'super_admin']);
     $isSuperAdmin = ($userRole === 'super_admin');
     $isViewer = ($userRole === 'viewer');
-    
+
     // Debug: Log role checks
     error_log('Statistics page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
     error_log('Statistics page - Is super admin: ' . ($isSuperAdmin ? 'true' : 'false'));
     error_log('Statistics page - Is viewer: ' . ($isViewer ? 'true' : 'false'));
-    
+
     // Build the sidebar HTML with role-based visibility
     $mobileSidebar = '
     <ul class="nav flex-column">
@@ -2932,7 +2981,7 @@ function renderStatisticsPage()
                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
             </a>
         </li>';
-    
+
     if ($isAdmin || $isSuperAdmin) {
         $mobileSidebar .= '
         <li class="nav-item">
@@ -2941,7 +2990,7 @@ function renderStatisticsPage()
             </a>
         </li>';
     }
-    
+
     // Viewers should also see Usage Statistics
     $mobileSidebar .= '
         <li class="nav-item">
@@ -2949,7 +2998,7 @@ function renderStatisticsPage()
                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
             </a>
         </li>';
-    
+
     if ($isSuperAdmin) {
         $mobileSidebar .= '
         <li class="nav-item">
@@ -2958,7 +3007,7 @@ function renderStatisticsPage()
             </a>
         </li>';
     }
-    
+
     if ($isSuperAdmin) {
         $mobileSidebar .= '
         <li class="nav-item">
@@ -2967,7 +3016,7 @@ function renderStatisticsPage()
             </a>
         </li>';
     }
-    
+
     if ($isSuperAdmin) {
         $mobileSidebar .= '
         <li class="nav-item">
@@ -2976,7 +3025,7 @@ function renderStatisticsPage()
             </a>
         </li>';
     }
-    
+
     $mobileSidebar .= '
         <li class="nav-item">
             <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
@@ -2984,7 +3033,7 @@ function renderStatisticsPage()
             </a>
         </li>
     </ul>';
-    
+
     // Build the desktop sidebar HTML with role-based visibility
     $desktopSidebar = '
     <ul class="nav flex-column">
@@ -2993,7 +3042,7 @@ function renderStatisticsPage()
                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
             </a>
         </li>';
-    
+
     if ($isAdmin || $isSuperAdmin) {
         $desktopSidebar .= '
         <li class="nav-item">
@@ -3002,7 +3051,7 @@ function renderStatisticsPage()
             </a>
         </li>';
     }
-    
+
     // Viewers should also see Usage Statistics
     $desktopSidebar .= '
         <li class="nav-item">
@@ -3010,7 +3059,7 @@ function renderStatisticsPage()
                 <i class="fas fa-chart-bar me-2"></i>Usage Statistics
             </a>
         </li>';
-    
+
     if ($isSuperAdmin) {
         $desktopSidebar .= '
         <li class="nav-item">
@@ -3019,7 +3068,7 @@ function renderStatisticsPage()
             </a>
         </li>';
     }
-    
+
     if ($isSuperAdmin) {
         $desktopSidebar .= '
         <li class="nav-item">
@@ -3028,7 +3077,7 @@ function renderStatisticsPage()
             </a>
         </li>';
     }
-    
+
     if ($isSuperAdmin) {
         $desktopSidebar .= '
         <li class="nav-item">
@@ -3037,7 +3086,7 @@ function renderStatisticsPage()
             </a>
         </li>';
     }
-    
+
     $desktopSidebar .= '
         <li class="nav-item">
             <a class="nav-link" href="' . $basePath . '/api-docs-v3.html" target="_blank">
@@ -3466,5 +3515,4 @@ function renderStatisticsPage()
     </script>
 </body>
 </html>';
-
 }
