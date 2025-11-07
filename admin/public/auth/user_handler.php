@@ -1,4 +1,5 @@
 <?php
+
 /**
  * admin/public/auth/user_handler.php
  * User handler for the admin panel - Legacy Mode
@@ -15,7 +16,7 @@ function findOrCreateUser(array $normalizedUser, object $ssoUserInfo): array
 {
     // Load admin configuration
     $config = require __DIR__ . '/../../config/admin_config.php';
-    
+
     // Set up PDO connection using admin config
     $dsn = sprintf(
         'mysql:host=%s;port=%d;dbname=%s;charset=%s',
@@ -24,29 +25,54 @@ function findOrCreateUser(array $normalizedUser, object $ssoUserInfo): array
         $config['database']['database'],
         $config['database']['charset']
     );
-    
+
     $options = $config['database']['options'];
-    
+
     try {
         // Connect to database
         $pdo = new PDO($dsn, $config['database']['username'], $config['database']['password'], $options);
-        
+
         // Search for user by email in admin_users table
         $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE email = ? AND status = 'active'");
         $stmt->execute([$normalizedUser['email']]);
         $user = $stmt->fetch();
-        
+
         if ($user) {
             // Case 1: User found (existing admin)
-            // Update user information with latest data
+            // Update user information with latest data from SSO claims
             $updateStmt = $pdo->prepare(
-                "UPDATE admin_users SET name = ?, updated_at = NOW() WHERE id = ?"
+                "UPDATE admin_users SET name = ?, position = ?, campus = ?, office_name = ?, faculty_id = ?, department_id = ?, campus_id = ?, groups = ?, provider = ?, last_login_at = NOW(), updated_at = NOW() WHERE id = ?"
             );
+
+            // Determine provider from the OIDC configuration
+            $adminConfig = require __DIR__ . '/../../config/admin_config.php';
+            $provider = 'unknown';
+            if (!empty($adminConfig['auth']['oidc']['provider_url'])) {
+                $providerUrl = $adminConfig['auth']['oidc']['provider_url'];
+                if (strpos($providerUrl, 'psu.ac.th') !== false) {
+                    $provider = 'psu';
+                } elseif (strpos($providerUrl, 'google') !== false) {
+                    $provider = 'google';
+                } elseif (strpos($providerUrl, 'microsoft') !== false) {
+                    $provider = 'microsoft';
+                } elseif (strpos($providerUrl, 'auth0') !== false) {
+                    $provider = 'auth0';
+                }
+            }
+
             $updateStmt->execute([
                 $normalizedUser['name'] ?? $normalizedUser['email'],
+                $normalizedUser['position'] ?? null,
+                $normalizedUser['campus'] ?? null,
+                $normalizedUser['officeName'] ?? null,
+                $normalizedUser['facultyId'] ?? null,
+                $normalizedUser['departmentId'] ?? null,
+                $normalizedUser['campusId'] ?? null,
+                isset($normalizedUser['groups']) ? json_encode($normalizedUser['groups']) : null,
+                $provider,
                 $user['id']
             ]);
-            
+
             // Return user data from our database
             return [
                 'id' => $user['id'],
