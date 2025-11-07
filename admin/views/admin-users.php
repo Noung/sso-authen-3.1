@@ -506,16 +506,19 @@
                 }
 
                 // Initialize new DataTable
+                const isMobile = window.innerWidth < 768;
                 $('#adminUsersTable').DataTable({
                     "order": [
                         [4, "desc"]
-                    ],
+                    ],  
                     "pageLength": 10,
                     "lengthMenu": [
                         [10, 25, 50, 100],
                         [10, 25, 50, 100]
                     ],
-                    "responsive": true,
+                    "responsive": false,
+                    "scrollX": isMobile,
+                    "autoWidth": !isMobile,
                     "columnDefs": [{
                         "orderable": false,
                         "targets": [6] // Actions column
@@ -681,7 +684,7 @@
                                     <h5><i class="fas fa-user me-2"></i>User Information</h5>
                                     <table class="table table-borderless">
                                         <tr>
-                                            <td><strong>Name:</strong></td>
+                                            <td width="30%"><strong>Name:</strong></td>
                             <td>${escapeHtml(user.name)}</td>
                                         </tr>
                                         <tr>
@@ -706,7 +709,7 @@
                                     <h5><i class="fas fa-building me-2"></i>Organization Information</h5>
                                     <table class="table table-borderless">
                                         <tr>
-                                            <td><strong>Position:</strong></td>
+                                            <td width="30%"><strong>Position:</strong></td>
                                             <td>${user.position || 'N/A'}</td>
                                         </tr>
                                         <tr>
@@ -737,11 +740,11 @@
                                 </div>
                             </div>
                             <div class="row mt-3">
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <h5><i class="fas fa-calendar me-2"></i>Timestamps</h5>
                                     <table class="table table-borderless">
                                         <tr>
-                                            <td><strong>Created:</strong></td>
+                                            <td width="30%"><strong>Created:</strong></td>
                                             <td>${createdDate.toLocaleString('th-TH')}</td>
                                         </tr>
                                         <tr>

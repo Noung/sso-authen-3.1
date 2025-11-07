@@ -180,6 +180,7 @@ function renderClientsTable(clients) {
         }
         
         // Initialize new DataTable
+        const isMobile = window.innerWidth < 768;
         $('#clientsTable').DataTable({
             "order": [
                 [5, "desc"]
@@ -189,7 +190,9 @@ function renderClientsTable(clients) {
                 [10, 25, 50, 100],
                 [10, 25, 50, 100]
             ],
-            "responsive": true,
+            "responsive": false,
+            "scrollX": isMobile,
+            "autoWidth": !isMobile,
             "columnDefs": [{
                 "orderable": false,
                 "targets": [7] // Actions column
