@@ -755,6 +755,12 @@ function renderSettingsPage()
                 word-break: break-all;
                 margin-top: 5px;
             }
+            
+            @media (max-width: 575.98px) {
+                #time-round {
+                    font-size: 0.9rem;
+                }
+            }
         </style>
     </head>
     <body>
@@ -3110,6 +3116,12 @@ function renderStatisticsPage()
     <style>
         .admin-content {
             margin-bottom: 20px;
+        }
+        
+        @media (max-width: 575.98px) {
+            #time-round {
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
