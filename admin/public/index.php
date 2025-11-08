@@ -3188,13 +3188,29 @@ function renderStatisticsPage()
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2"><i class="fas fa-chart-bar me-2"></i>Usage Statistics <small class="text-muted fs-6" id="demo-indicator" style="display:none"><i class="fas fa-flask me-1"></i>Demo Data Active</small></h1>
                     <div class="btn-toolbar mb-2 mb-md-0 flex-nowrap">
-                        <div class="btn-group me-2">
-                            <select class="form-select" id="periodSelect" onchange="loadStatistics()">
+                        <div class="btn-group me-2 w-100" role="group" aria-label="Period selector">
+                            <!-- Desktop / จอปกติ -->
+                            <select class="form-select d-none d-sm-block" id="periodSelectFull" onchange="onPeriodChange(this)">
                                 <option value="7">Last 7 days</option>
                                 <option value="30" selected>Last 30 days</option>
                                 <option value="90">Last 90 days</option>
                             </select>
+
+                            <!-- Mobile -->
+                            <select class="form-select d-block d-sm-none" id="periodSelectShort" onchange="onPeriodChange(this)">
+                                <option value="7">7 d</option>
+                                <option value="30" selected>30 d</option>
+                                <option value="90">90 d</option>
+                            </select>
+
+                            <!-- Proxy (ซ่อน) ให้ loadStatistics() อ่านค่าเหมือนเดิม -->
+                            <select id="periodSelect" name="period" hidden>
+                                <option value="7"></option>
+                                <option value="30" selected></option>
+                                <option value="90"></option>
+                            </select>
                         </div>
+                        
                         <div class="btn-group">
                             <button type="button" class="btn btn-outline-secondary rounded-0" onclick="loadStatistics()">
                                 <i class="fas fa-sync-alt"></i><span class="d-none d-sm-inline ms-1">Refresh</span>
@@ -3253,6 +3269,34 @@ function renderStatisticsPage()
         
         document.addEventListener("DOMContentLoaded", function() {
             loadStatistics();
+        });
+        
+        function onPeriodChange(source) {
+            const val = source.value;
+            const full = document.getElementById("periodSelectFull");
+            const short = document.getElementById("periodSelectShort");
+            const proxy = document.getElementById("periodSelect");
+
+            if (source !== full)  full.value  = val;
+            if (source !== short) short.value = val;
+            proxy.value = val;
+
+            if (typeof loadStatistics === "function") loadStatistics();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const full  = document.getElementById("periodSelectFull");
+            const short = document.getElementById("periodSelectShort");
+            const proxy = document.getElementById("periodSelect");
+
+            // เลือกค่าเริ่มต้นจาก proxy (ถ้ามี) ไม่งั้นใช้ของ full หรือ fallback เป็น 30
+            const initVal = proxy.value || full.value || "30";
+            full.value = initVal;
+            short.value = initVal;
+            proxy.value = initVal;
+
+            // เรียกครั้งแรกเพื่อให้หน้าแสดงผลตามค่าเริ่มต้น
+            if (typeof loadStatistics === "function") loadStatistics();
         });
         
         function loadStatistics() {
