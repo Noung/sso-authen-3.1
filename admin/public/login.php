@@ -149,11 +149,11 @@ if (isset($_GET['error'])) {
 
                         <div class="d-grid gap-2">
                             <a href="auth/login.php" class="btn btn-primary btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>Login with SSO
+                                <i class="fas fa-sign-in-alt me-2"></i>Sign in with SSO
                             </a>
 
                             <button onclick="devLogin()" class="btn btn-secondary btn-lg">
-                                <i class="fas fa-user-gear me-2"></i>Login with Dev Mode
+                                <i class="fas fa-user-gear me-2"></i>Sign in with Dev Mode
                             </button>
                         </div>
 
