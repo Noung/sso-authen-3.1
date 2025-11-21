@@ -161,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'admin@psu.ac.th',
                     'admin_login',
                     'authentication',
-                    'admin_panel',
+                    'admin-panel',
                     $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
                     $_SERVER['HTTP_USER_AGENT'] ?? 'Dev Mode Login'
                 ]);
@@ -2197,6 +2197,31 @@ function handleApiUsageStatistics()
         $stats = new SsoAdmin\Models\UsageStatistics();
         $data = $stats->getSystemStatistics($days);
 
+        // Map API keys to UI expectations and add computed fields
+        // Alias client_activity_summary -> client_stats
+        if (isset($data['client_activity_summary'])) {
+            $data['client_stats'] = $data['client_activity_summary'];
+        } else {
+            $data['client_stats'] = [];
+        }
+
+        // Compute total_requests (client + admin OIDC) over the selected period
+        $totalRequestsRow = Connection::fetchOne(
+            "SELECT COUNT(*) as count FROM audit_logs WHERE action IN ('auth_success','auth_failed','oidc_auth_success','oidc_auth_failed','oidc_login_initiated','admin_oidc_login_initiated','admin_oidc_auth_success','admin_oidc_auth_failed') AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)",
+            [$days]
+        );
+        $data['total_requests'] = $totalRequestsRow ? (int)$totalRequestsRow['count'] : 0;
+
+        // Compute unique users involved in authentication over the selected period
+        $uniqueUsersRow = Connection::fetchOne(
+            "SELECT COUNT(DISTINCT admin_email) as count FROM audit_logs WHERE resource_type = 'authentication' AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)",
+            [$days]
+        );
+        $data['unique_users'] = $uniqueUsersRow ? (int)$uniqueUsersRow['count'] : 0;
+
+        // Compute average requests per day
+        $data['average_requests_per_day'] = $days > 0 ? round($data['total_requests'] / $days, 2) : 0;
+
         echo json_encode([
             'success' => true,
             'data' => $data
@@ -3211,11 +3236,11 @@ function renderStatisticsPage()
                             </select>
                         </div>
                         
-                        <div class="btn-group">
+                       <!--<div class="btn-group">
                             <button type="button" class="btn btn-outline-secondary rounded-0" onclick="loadStatistics()">
                                 <i class="fas fa-sync-alt"></i><span class="d-none d-sm-inline ms-1">Refresh</span>
                             </button>
-                        </div>
+                        </div>-->
                     </div>
                 </div>
 

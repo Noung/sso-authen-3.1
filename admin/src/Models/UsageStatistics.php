@@ -32,7 +32,7 @@ class UsageStatistics
         // Check if the current admin user has permission to view this client's statistics
         $userRole = $_SESSION['admin_role'] ?? 'viewer';
         $adminEmail = $_SESSION['admin_email'] ?? 'admin';
-        
+
         // For admins, verify they created this client
         if ($userRole === 'admin') {
             $client = Connection::fetchOne('SELECT * FROM clients WHERE id = ?', [$clientId]);
@@ -47,8 +47,8 @@ class UsageStatistics
             return ['error' => 'Client not found'];
         }
 
-        // Add total requests to client data
-        $totalRequests = $this->getClientTotalRequests($client['client_id'], $days);
+        // Add total requests to client data (match both client_id and numeric id)
+        $totalRequests = $this->getClientTotalRequests($client['client_id'], $client['id'], $days);
         $client['total_requests'] = $totalRequests;
 
         // Get activity statistics
@@ -77,16 +77,10 @@ class UsageStatistics
     /**
      * Get total requests for a client
      */
-    private function getClientTotalRequests($clientId, $days)
+    private function getClientTotalRequests($clientIdString, $clientIdNumeric, $days)
     {
-        $stmt = $this->db->prepare("
-            SELECT COUNT(*) as count 
-            FROM audit_logs 
-            WHERE resource_type = 'authentication' 
-                AND resource_id = ? 
-                AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-        ");
-        $stmt->execute([$clientId, $days]);
+        $stmt = $this->db->prepare("\n            SELECT COUNT(*) as count \n            FROM audit_logs \n            WHERE resource_type = 'authentication' \n                AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)\n                AND (BINARY resource_id = BINARY ? OR BINARY resource_id = BINARY CAST(? AS CHAR))\n        ");
+        $stmt->execute([$days, $clientIdString, $clientIdNumeric]);
         $result = $stmt->fetch();
         return $result ? (int)$result['count'] : 0;
     }
@@ -116,21 +110,8 @@ class UsageStatistics
      */
     private function getClientActivityStats($clientId, $days)
     {
-        $stmt = $this->db->prepare("
-            SELECT 
-                action,
-                COUNT(*) as count,
-                COUNT(DISTINCT admin_email) as unique_admins,
-                MIN(created_at) as first_activity,
-                MAX(created_at) as last_activity
-            FROM audit_logs 
-            WHERE (resource_type = 'client' AND resource_id = ?) 
-               OR (resource_type = 'authentication' AND resource_id = ?) 
-               AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-            GROUP BY action
-            ORDER BY count DESC
-        ");
-        $stmt->execute([$clientId, $clientId, $days]);
+        $stmt = $this->db->prepare("\n            SELECT \n                action,\n                COUNT(*) as count,\n                COUNT(DISTINCT admin_email) as unique_admins,\n                MIN(created_at) as first_activity,\n                MAX(created_at) as last_activity\n            FROM audit_logs \n            WHERE (\n                (resource_type = 'client' AND resource_id = ?) \n                OR \n                (resource_type = 'authentication' AND (BINARY resource_id = BINARY (SELECT client_id FROM clients WHERE id = ?) OR BINARY resource_id = BINARY CAST(? AS CHAR)))\n            )\n            AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)\n            GROUP BY action\n            ORDER BY count DESC\n        ");
+        $stmt->execute([$clientId, $clientId, $clientId, $days]);
         return $stmt->fetchAll();
     }
 
@@ -158,23 +139,8 @@ class UsageStatistics
      */
     private function getDailyActivityTrend($clientId, $days)
     {
-        $stmt = $this->db->prepare("
-            SELECT 
-                DATE(created_at) as date,
-                COUNT(*) as total_activities,
-                COUNT(DISTINCT action) as unique_actions,
-                COUNT(DISTINCT admin_email) as unique_users,
-                SUM(CASE WHEN action IN ('oidc_auth_success', 'auth_success') THEN 1 ELSE 0 END) as successful_logins,
-                SUM(CASE WHEN action IN ('oidc_auth_failed', 'auth_failed') THEN 1 ELSE 0 END) as failed_logins
-            FROM audit_logs 
-            WHERE ((resource_type = 'client' AND resource_id = ?) 
-               OR (resource_type = 'authentication' AND resource_id = ?))
-                AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-            GROUP BY DATE(created_at)
-            ORDER BY date DESC
-            LIMIT 30
-        ");
-        $stmt->execute([$clientId, $clientId, $days]);
+        $stmt = $this->db->prepare("\n            SELECT \n                DATE(created_at) as date,\n                COUNT(*) as total_activities,\n                COUNT(DISTINCT action) as unique_actions,\n                COUNT(DISTINCT admin_email) as unique_users,\n                SUM(CASE WHEN action IN ('oidc_auth_success', 'auth_success') THEN 1 ELSE 0 END) as successful_logins,\n                SUM(CASE WHEN action IN ('oidc_auth_failed', 'auth_failed') THEN 1 ELSE 0 END) as failed_logins\n            FROM audit_logs \n            WHERE ((resource_type = 'client' AND resource_id = ?) \n               OR (resource_type = 'authentication' AND (BINARY resource_id = BINARY (SELECT client_id FROM clients WHERE id = ?) OR BINARY resource_id = BINARY CAST(? AS CHAR))))\n                AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)\n            GROUP BY DATE(created_at)\n            ORDER BY date DESC\n            LIMIT 30\n        ");
+        $stmt->execute([$clientId, $clientId, $clientId, $days]);
         return $stmt->fetchAll();
     }
 
@@ -218,7 +184,7 @@ class UsageStatistics
             // Super admins and viewers see all clients
             $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients');
         }
-        
+
         return $result ? (int)$result['count'] : 0;
     }
 
@@ -239,7 +205,7 @@ class UsageStatistics
             // Super admins and viewers see all clients
             $result = Connection::fetchOne('SELECT COUNT(*) as count FROM clients WHERE status = "active"');
         }
-        
+
         return $result ? (int)$result['count'] : 0;
     }
 
@@ -323,10 +289,16 @@ class UsageStatistics
                     COUNT(DISTINCT al.action) as unique_actions,
                     COUNT(DISTINCT al.admin_email) as unique_admins,
                     MAX(al.created_at) as last_activity,
-                    (SELECT COUNT(*) FROM audit_logs WHERE resource_type = 'authentication' AND resource_id = c.client_id AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_requests
+                    (SELECT COUNT(*) FROM audit_logs WHERE resource_type = 'authentication' AND (BINARY resource_id = BINARY c.client_id OR BINARY resource_id = BINARY CAST(c.id AS CHAR)) AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_requests
                 FROM clients c
-                LEFT JOIN audit_logs al ON (c.id = al.resource_id AND al.resource_type = 'client' 
-                                           AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY))
+                LEFT JOIN audit_logs al ON (
+                                            (
+                                                (al.resource_type = 'client' AND al.resource_id = c.id) 
+                                                OR 
+                                                (al.resource_type = 'authentication' AND (BINARY al.resource_id = BINARY c.client_id OR BINARY al.resource_id = BINARY CAST(c.id AS CHAR)))
+                                            )
+                                            AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                                        )
                 WHERE c.created_by = ?
                 GROUP BY c.id, c.client_name, c.client_id, c.status
                 ORDER BY total_activities DESC
@@ -344,16 +316,22 @@ class UsageStatistics
                     COUNT(DISTINCT al.action) as unique_actions,
                     COUNT(DISTINCT al.admin_email) as unique_admins,
                     MAX(al.created_at) as last_activity,
-                    (SELECT COUNT(*) FROM audit_logs WHERE resource_type = 'authentication' AND resource_id = c.client_id AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_requests
+                    (SELECT COUNT(*) FROM audit_logs WHERE resource_type = 'authentication' AND (BINARY resource_id = BINARY c.client_id OR BINARY resource_id = BINARY CAST(c.id AS CHAR)) AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_requests
                 FROM clients c
-                LEFT JOIN audit_logs al ON (c.id = al.resource_id AND al.resource_type = 'client' 
-                                           AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY))
+                LEFT JOIN audit_logs al ON (
+                                            (
+                                                (al.resource_type = 'client' AND al.resource_id = c.id) 
+                                                OR 
+                                                (al.resource_type = 'authentication' AND (BINARY al.resource_id = BINARY c.client_id OR BINARY al.resource_id = BINARY CAST(c.id AS CHAR)))
+                                            )
+                                            AND al.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                                        )
                 GROUP BY c.id, c.client_name, c.client_id, c.status
                 ORDER BY total_activities DESC
             ");
             $stmt->execute([$days, $days]);
         }
-        
+
         return $stmt->fetchAll();
     }
 

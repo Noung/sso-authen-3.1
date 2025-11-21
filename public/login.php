@@ -40,6 +40,9 @@ try {
     // 7. Log the authentication attempt
     try {
         require_once __DIR__ . '/../admin/src/Database/Connection.php';
+        // Initialize database connection properly
+        $adminConfig = require __DIR__ . '/../admin/config/admin_config.php';
+        SsoAdmin\Database\Connection::init($adminConfig['database']);
         $db = SsoAdmin\Database\Connection::getPdo();
 
         $stmt = $db->prepare("

@@ -43,6 +43,9 @@ include __DIR__ . '/partials/header.php';
                 <option value="90">Last 90 days</option>
             </select>
         </div>
+        <!-- <button class="btn btn-sm btn-outline-secondary" id="usageRefreshBtn" onclick="loadStatistics()">
+            <i class="fas fa-sync-alt me-1"></i>Refresh
+        </button> -->
     </div>
 </div>
 
@@ -162,7 +165,9 @@ include __DIR__ . '/partials/header.php';
         tableHtml += '<th>Client Name</th>';
         tableHtml += '<th>Status</th>';
         tableHtml += '<th>Total Activities</th>';
-        tableHtml += '<th>Unique Users</th>';
+        tableHtml += '<th>Authentication Requests</th>';
+        tableHtml += '<th>Unique Actions</th>';
+        tableHtml += '<th>Active Admins</th>';
         tableHtml += '<th>Last Activity</th>';
         tableHtml += '<th>Actions</th>';
         tableHtml += '</tr></thead><tbody>';
@@ -180,8 +185,10 @@ include __DIR__ . '/partials/header.php';
                 tableHtml += '<tr>';
                 tableHtml += `<td><strong>${client.client_name || 'N/A'}</strong><br><small class="text-muted">${client.client_id || ''}</small></td>`;
                 tableHtml += `<td>${statusBadge}</td>`;
-                tableHtml += `<td><span class="badge" style="background:#9B59B6">${client.total_requests || 0}</span></td>`;
-                tableHtml += `<td>${client.unique_users || 0}</td>`;
+                tableHtml += `<td><span class="badge" style="background:#9B59B6">${client.total_activities || 0}</span></td>`;
+                tableHtml += `<td><span class="badge" style="background:#F1C40F">${client.total_requests || 0}</span></td>`;
+                tableHtml += `<td>${client.unique_actions || 0}</td>`;
+                tableHtml += `<td>${client.unique_admins || 0}</td>`;
                 tableHtml += `<td><small>${lastActivity}</small></td>`;
                 tableHtml += `<td><button class="btn btn-sm btn-outline-primary" onclick="viewClientStats(${client.id})"><i class="fas fa-chart-line"></i> Details</button></td>`;
                 tableHtml += '</tr>';

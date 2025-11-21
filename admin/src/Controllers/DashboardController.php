@@ -162,7 +162,7 @@ class DashboardController
     {
         try {
             // Count only authentication-related requests
-            $sql = "SELECT COUNT(*) as count FROM audit_logs WHERE action IN ('auth_success', 'auth_failed', 'oidc_auth_success', 'oidc_auth_failed', 'oidc_login_initiated')";
+            $sql = "SELECT COUNT(*) as count FROM audit_logs WHERE action IN ('auth_success', 'auth_failed', 'oidc_auth_success', 'oidc_auth_failed', 'oidc_login_initiated', 'admin_oidc_login_initiated', 'admin_oidc_auth_success', 'admin_oidc_auth_failed')";
             $result = Connection::fetchOne($sql);
             return $result ? (int)$result['count'] : 0;
         } catch (\Exception $e) {
@@ -324,11 +324,17 @@ class DashboardController
             case 'auth_failed':
                 return "Admin {$adminEmail} เข้าสู่ระบบไม่สำเร็จ";
             case 'oidc_auth_success':
-                return "ผู้ใช้ {$adminEmail} เข้าสู่ระบบผ่าน OIDC สำเร็จ";
+                $clientName = $this->getClientNameFromResource($activity['resource_id']);
+                $clientSuffix = $clientName ? " ({$clientName})" : '';
+                return "ผู้ใช้ {$adminEmail} เข้าสู่ระบบผ่าน OIDC สำเร็จ{$clientSuffix}";
             case 'oidc_auth_failed':
-                return "ผู้ใช้ {$adminEmail} เข้าสู่ระบบผ่าน OIDC ไม่สำเร็จ";
+                $clientName = $this->getClientNameFromResource($activity['resource_id']);
+                $clientSuffix = $clientName ? " ({$clientName})" : '';
+                return "ผู้ใช้ {$adminEmail} เข้าสู่ระบบผ่าน OIDC ไม่สำเร็จ{$clientSuffix}";
             case 'oidc_login_initiated':
-                return "ผู้ใช้ {$adminEmail} เริ่มต้นการเข้าสู่ระบบผ่าน OIDC";
+                $clientName = $this->getClientNameFromResource($activity['resource_id']);
+                $clientSuffix = $clientName ? " ({$clientName})" : '';
+                return "ผู้ใช้ {$adminEmail} เริ่มต้นการเข้าสู่ระบบผ่าน OIDC{$clientSuffix}";
             case 'jwt_secret_viewed':
                 return "Admin {$adminEmail} ดู JWT secret";
             case 'admin_login':
@@ -349,17 +355,42 @@ class DashboardController
     /**
      * Render dashboard HTML page
      */
+    private function getClientNameFromResource($resourceId)
+    {
+        try {
+            // Try match by client_id (string)
+            $row = Connection::fetchOne('SELECT client_name FROM clients WHERE client_id = ? LIMIT 1', [$resourceId]);
+            if ($row && isset($row['client_name'])) {
+                return $row['client_name'];
+            }
+            // Try match by numeric id
+            $numericId = (int)$resourceId;
+            if ($numericId > 0) {
+                $row = Connection::fetchOne('SELECT client_name FROM clients WHERE id = ? LIMIT 1', [$numericId]);
+                if ($row && isset($row['client_name'])) {
+                    return $row['client_name'];
+                }
+            }
+            return null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Render dashboard HTML page
+     */
     private function renderDashboardPage()
     {
         $basePath = $GLOBALS['admin_base_path'] ?? '/sso-authen-3/admin/public';
         $adminName = $_SESSION['admin_name'] ?? 'Administrator';
         $userRole = $_SESSION['admin_role'] ?? 'viewer';
-        
+
         // Define role-based access
         $isAdmin = in_array($userRole, ['admin', 'super_admin']);
         $isSuperAdmin = ($userRole === 'super_admin');
         $isViewer = ($userRole === 'viewer');
-        
+
         // Debug: Log the user role and permissions
         error_log('Dashboard page - User role: ' . $userRole);
         error_log('Dashboard page - Is admin: ' . ($isAdmin ? 'true' : 'false'));
